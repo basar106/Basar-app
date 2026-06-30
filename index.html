@@ -398,7 +398,9 @@
   .chat-input-row input{ flex:1; border:1px solid var(--border); background:var(--fill1); backdrop-filter:blur(8px); border-radius:999px; padding:10px 16px; font-size:14px; color:var(--text); }
   .chat-send{ width:40px; height:40px; border-radius:50%; background:linear-gradient(160deg, rgba(10,132,255,0.96), rgba(0,100,214,0.92)); color:#fff; border:none; font-size:16px; cursor:pointer; flex-shrink:0; box-shadow:inset 0 1px 0 rgba(255,255,255,0.4), 0 4px 12px rgba(10,132,255,0.35); }
 
-  .convo-row{ display:flex; gap:10px; align-items:flex-start; padding:12px; background:var(--card); backdrop-filter:blur(18px) saturate(180%); border:1px solid var(--border); border-radius:16px; margin-bottom:8px; cursor:pointer; }
+  .convo-swipe-wrap{ position:relative; margin-bottom:8px; border-radius:16px; overflow:hidden; }
+  .convo-swipe-bg{ position:absolute; inset:0; display:flex; align-items:center; padding:0 20px; font-weight:700; font-size:13px; color:#fff; }
+  .convo-row{ display:flex; gap:10px; align-items:flex-start; padding:12px; background:var(--card); backdrop-filter:blur(18px) saturate(180%); border:1px solid var(--border); border-radius:16px; margin-bottom:0; cursor:pointer; position:relative; touch-action:pan-y; }
   .convo-mid{ flex:1; min-width:0; }
   .convo-top{ display:flex; justify-content:space-between; gap:8px; font-size:13px; }
   .convo-name{ font-weight:700; color:var(--navy); }
@@ -406,6 +408,7 @@
   .convo-listing{ font-size:11px; color:var(--blue-dark); margin:2px 0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .convo-preview{ font-size:12.5px; color:var(--muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .unread-dot{ width:9px; height:9px; border-radius:50%; background:var(--heart); flex-shrink:0; margin-top:6px; }
+  .archive-toggle{ font-size:12.5px; font-weight:700; color:var(--blue-dark); padding:8px 4px 14px; cursor:pointer; }
 
   .legal-content h2{ font-size:17px; font-weight:800; margin:20px 0 8px; color:var(--navy); }
   .legal-content h2:first-child{ margin-top:0; }
@@ -648,6 +651,7 @@ const I18N = {
     toast_referral_welcome:'Willkommen! Ihr habt beide {n} Tage kostenlose Hervorhebung erhalten 🎁',
     redeem_free_boost:'Kostenlos einlösen ({n} Tage)', toast_free_boost_redeemed:'Kostenloser Boost eingelöst ({n} Tage)',
     view_grid:'Kachelansicht', view_list:'Listenansicht',
+    swipe_delete:'Löschen', swipe_archive:'Archivieren', archived_label:'Archiviert', back_to_inbox:'Zurück',
     confirm_premium:'Premium für {months} Monat(e) aktivieren – {stars} ★ (~{eur} €)?\n(Demo-Zahlung, keine echte Belastung)',
     toast_premium_activated:'Premium aktiviert (Demo)', toast_listing_limit:'Limit von {max} aktiven Anzeigen erreicht – mit Premium unbegrenzt.',
     reset_all_demo_data:'Alle Demo-Daten zurücksetzen', toast_reset_done:'Zurückgesetzt – die App lädt neu …',
@@ -762,6 +766,7 @@ const I18N = {
     toast_referral_welcome:'Welcome! You both received {n} days of free highlight 🎁',
     redeem_free_boost:'Redeem for free ({n} days)', toast_free_boost_redeemed:'Free boost redeemed ({n} days)',
     view_grid:'Grid view', view_list:'List view',
+    swipe_delete:'Delete', swipe_archive:'Archive', archived_label:'Archived', back_to_inbox:'Back',
     confirm_premium:'Activate Premium for {months} month(s) – {stars} ★ (~€{eur})?\n(Demo payment, no real charge)',
     toast_premium_activated:'Premium activated (demo)', toast_listing_limit:'Limit of {max} active listings reached – unlimited with Premium.',
     reset_all_demo_data:'Reset all demo data', toast_reset_done:'Reset done – reloading the app …',
@@ -786,6 +791,7 @@ const State = {
   adminSub:'listings', adminBanTarget:null,
   reportTarget:null, reviewTarget:null, reviewStar:0, replyTarget:null,
   formType:null, pendingImages:null, formDraft:null, promoteTarget:null, justPublished:false, searchStats:{categories:{}}, lastTrackedSearchTerm:'', theme:'light', lang:'de', tgInitData:'', viewMode:'list',
+  hiddenConvos:{}, archivedConvos:[], showArchived:false,
 };
 
 function uid(p){ return (p||'id_') + Date.now().toString(36) + Math.random().toString(36).slice(2,8); }
@@ -900,6 +906,8 @@ async function loadAll(){
   const rlr = await storageGet('basar:lastread', false); State.lastRead = rlr ? JSON.parse(rlr) : {};
   const rss = await storageGet('basar:searchstats', false); State.searchStats = rss ? JSON.parse(rss) : {categories:{}};
   const rsv = await storageGet('basar:savedsearches', false); State.savedSearches = rsv ? JSON.parse(rsv) : [];
+  const rhc = await storageGet('basar:hiddenconvos', false); State.hiddenConvos = rhc ? JSON.parse(rhc) : {};
+  const rac = await storageGet('basar:archivedconvos', false); State.archivedConvos = rac ? JSON.parse(rac) : [];
 
   const existing = State.users[State.myId] || {};
   const isNewAccount = !existing.createdAt;
@@ -970,6 +978,22 @@ async function persistDeals(){ await storageSet('basar:deals', JSON.stringify(St
 async function persistReviews(){ await storageSet('basar:reviews', JSON.stringify(State.reviews), true); }
 async function persistReports(){ await storageSet('basar:reports', JSON.stringify(State.reports), true); }
 async function persistFavorites(){ await storageSet('basar:favorites', JSON.stringify(State.favorites), false); }
+async function persistHiddenConvos(){ await storageSet('basar:hiddenconvos', JSON.stringify(State.hiddenConvos), false); }
+async function persistArchivedConvos(){ await storageSet('basar:archivedconvos', JSON.stringify(State.archivedConvos), false); }
+async function deleteConversation(conversationId){
+  const c = conversationsForMe().find(x=>x.conversationId===conversationId);
+  State.hiddenConvos[conversationId] = c ? c.lastMsg.createdAt : Date.now();
+  State.archivedConvos = State.archivedConvos.filter(id=>id!==conversationId);
+  await persistHiddenConvos(); await persistArchivedConvos(); render();
+}
+async function archiveConversation(conversationId){
+  if(!State.archivedConvos.includes(conversationId)) State.archivedConvos.push(conversationId);
+  await persistArchivedConvos(); render();
+}
+async function unarchiveConversation(conversationId){
+  State.archivedConvos = State.archivedConvos.filter(id=>id!==conversationId);
+  await persistArchivedConvos(); render();
+}
 async function persistPurchases(){ await storageSet('basar:purchases', JSON.stringify(State.purchases), true); }
 async function persistMessages(){ await storageSet('basar:messages', JSON.stringify(State.messages), true); }
 async function persistLastRead(){ await storageSet('basar:lastread', JSON.stringify(State.lastRead), false); }
@@ -1605,9 +1629,13 @@ function conversationsForMe(){
     const otherId = lastMsg.fromId===State.myId ? lastMsg.toId : lastMsg.fromId;
     const unread = lastMsg.fromId!==State.myId && lastMsg.createdAt > (State.lastRead[lastMsg.conversationId]||0);
     return { conversationId:lastMsg.conversationId, listingId:lastMsg.listingId, otherId, lastMsg, unread };
+  }).filter(c=>{
+    const hiddenAt = State.hiddenConvos[c.conversationId];
+    if(hiddenAt && c.lastMsg.createdAt <= hiddenAt) return false;
+    return true;
   }).sort((a,b)=>b.lastMsg.createdAt-a.lastMsg.createdAt);
 }
-function hasUnreadMessages(){ return conversationsForMe().some(c=>c.unread); }
+function hasUnreadMessages(){ return conversationsForMe().some(c=>c.unread && !State.archivedConvos.includes(c.conversationId)); }
 
 const LEGAL_HTML_DE = `
 <h2>Nutzungsbedingungen</h2>
@@ -1809,22 +1837,37 @@ function renderAdminTab(){
 
 function renderMessagesTab(){
   document.getElementById('filters').style.display = 'none';
-  const convos = conversationsForMe();
-  if(convos.length===0) return `<div class="empty"><div class="big">${t('messages_empty')}</div><div class="small">${t('messages_empty_sub')}</div></div>`;
-  return convos.map(c=>{
+  const all = conversationsForMe();
+  const archived = all.filter(c=>State.archivedConvos.includes(c.conversationId));
+  const active = all.filter(c=>!State.archivedConvos.includes(c.conversationId));
+  const convos = State.showArchived ? archived : active;
+
+  const header = State.showArchived
+    ? `<div class="archive-toggle" data-action="closearchive">← ${t('back_to_inbox')}</div>`
+    : (archived.length ? `<div class="archive-toggle" data-action="openarchive">📥 ${t('archived_label')} (${archived.length})</div>` : '');
+
+  if(convos.length===0){
+    return header + `<div class="empty"><div class="big">${t('messages_empty')}</div><div class="small">${t('messages_empty_sub')}</div></div>`;
+  }
+  const rows = convos.map(c=>{
     const other = getUser(c.otherId);
     const listing = State.listings.find(x=>x.id===c.listingId);
     const preview = (c.lastMsg.fromId===State.myId ? t('you_prefix') : '') + c.lastMsg.text;
-    return `<div class="convo-row" data-action="openconvo" data-listingid="${c.listingId}" data-otherid="${c.otherId}">
-      ${avatarHTML(other)}
-      <div class="convo-mid">
-        <div class="convo-top"><span class="convo-name">${escapeHtml(displayName(other))}</span><span class="convo-time">${timeAgo(c.lastMsg.createdAt)}</span></div>
-        <div class="convo-listing">${escapeHtml(listing ? listing.title : t('listing_gone'))}</div>
-        <div class="convo-preview">${escapeHtml(preview)}</div>
+    const isArchived = State.archivedConvos.includes(c.conversationId);
+    return `<div class="convo-swipe-wrap" data-cid="${c.conversationId}" data-archived="${isArchived?1:0}">
+      <div class="convo-swipe-bg"></div>
+      <div class="convo-row" data-action="openconvo" data-listingid="${c.listingId}" data-otherid="${c.otherId}">
+        ${avatarHTML(other)}
+        <div class="convo-mid">
+          <div class="convo-top"><span class="convo-name">${escapeHtml(displayName(other))}</span><span class="convo-time">${timeAgo(c.lastMsg.createdAt)}</span></div>
+          <div class="convo-listing">${escapeHtml(listing ? listing.title : t('listing_gone'))}</div>
+          <div class="convo-preview">${escapeHtml(preview)}</div>
+        </div>
+        ${c.unread ? '<span class="unread-dot"></span>' : ''}
       </div>
-      ${c.unread ? '<span class="unread-dot"></span>' : ''}
     </div>`;
   }).join('');
+  return header + rows;
 }
 
 function render(){
@@ -1913,9 +1956,55 @@ function render(){
   else main.innerHTML = renderProfile();
 
   renderOverlays();
+  if(State.tab==='messages') setupSwipeHandlers();
 }
 
 // ---------- Overlays (Profil, Detailseite, Chat, Modals) ----------
+function setupSwipeHandlers(){
+  document.querySelectorAll('.convo-swipe-wrap').forEach(wrap=>{
+    const row = wrap.querySelector('.convo-row');
+    const bg = wrap.querySelector('.convo-swipe-bg');
+    const cid = wrap.dataset.cid;
+    const isArchived = wrap.dataset.archived==='1';
+    let startX=0, startY=0, dx=0, dragging=false, locked=null;
+    const THRESH = 80;
+    row.addEventListener('touchstart', e=>{
+      startX = e.touches[0].clientX; startY = e.touches[0].clientY; dx=0; dragging=true; locked=null;
+      row.style.transition='none';
+    }, {passive:true});
+    row.addEventListener('touchmove', e=>{
+      if(!dragging) return;
+      const x = e.touches[0].clientX, y = e.touches[0].clientY;
+      const ddx = x-startX, ddy = y-startY;
+      if(locked===null) locked = Math.abs(ddx) > Math.abs(ddy) ? 'x' : 'y';
+      if(locked!=='x') return;
+      dx = ddx;
+      row.style.transform = `translateX(${dx}px)`;
+      if(dx < 0){
+        bg.style.background = 'var(--heart)'; bg.style.justifyContent='flex-end';
+        bg.textContent = Math.abs(dx) > THRESH ? '🗑 '+t('swipe_delete') : '🗑';
+      } else if(dx > 0 && !isArchived){
+        bg.style.background = '#34C759'; bg.style.justifyContent='flex-start';
+        bg.textContent = dx > THRESH ? '📥 '+t('swipe_archive') : '📥';
+      } else { bg.textContent=''; }
+    }, {passive:true});
+    row.addEventListener('touchend', ()=>{
+      dragging=false;
+      row.style.transition='transform .2s';
+      if(Math.abs(dx) > 10){ row.dataset.justSwiped='1'; setTimeout(()=>{ delete row.dataset.justSwiped; }, 300); }
+      if(dx < -THRESH){
+        row.style.transform = 'translateX(-100%)';
+        setTimeout(()=>deleteConversation(cid), 180);
+      } else if(dx > THRESH && !isArchived){
+        row.style.transform = 'translateX(100%)';
+        setTimeout(()=>archiveConversation(cid), 180);
+      } else {
+        row.style.transform = 'translateX(0)';
+      }
+    });
+  });
+}
+
 function renderOverlays(){
   document.querySelectorAll('.profile-overlay, .modal-overlay, .chat-overlay, .fullscreen-overlay').forEach(el=>el.remove());
 
@@ -2704,6 +2793,8 @@ document.addEventListener('click', async (e)=>{
   if(action==='gallerydot'){ State.galleryIndex = parseInt(btn.dataset.idx,10); render(); return; }
   if(action==='openpricefilter'){ State.priceFilterOpen=true; render(); return; }
   if(action==='toggleview'){ State.viewMode = State.viewMode==='grid'?'list':'grid'; storageSet('basar:viewmode', State.viewMode, false); render(); return; }
+  if(action==='openarchive'){ State.showArchived=true; render(); return; }
+  if(action==='closearchive'){ State.showArchived=false; render(); return; }
   if(action==='savesearch') return saveCurrentSearch();
   if(action==='applysavedsearch') return applySavedSearch(btn.dataset.id);
   if(action==='deletesavedsearch') return deleteSavedSearch(btn.dataset.id);
@@ -2737,7 +2828,7 @@ document.addEventListener('click', async (e)=>{
   if(action==='openreply'){ State.replyTarget = btn.dataset.id; render(); return; }
   if(action==='closereply'){ State.replyTarget = null; render(); return; }
   if(action==='submitreply') return submitReply();
-  if(action==='openchat' || action==='openconvo'){ openChat(btn.dataset.listingid, btn.dataset.otherid); return; }
+  if(action==='openchat' || action==='openconvo'){ if(btn.dataset.justSwiped==='1') return; openChat(btn.dataset.listingid, btn.dataset.otherid); return; }
   if(action==='closechat'){ closeChat(); return; }
   if(action==='sendchat') return sendChatMessage();
 });
