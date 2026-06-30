@@ -1,0 +1,2757 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Basar – Kleinanzeigen</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --mesh:
+      radial-gradient(circle at 12% 0%, #FFD9EC 0%, transparent 42%),
+      radial-gradient(circle at 88% 6%, #CFE3FF 0%, transparent 48%),
+      radial-gradient(circle at 15% 95%, #D8F3FF 0%, transparent 42%),
+      radial-gradient(circle at 95% 90%, #E8DBFF 0%, transparent 48%),
+      linear-gradient(160deg,#EFF4FC 0%,#F6F0FB 100%);
+    --navy:#0E2A4A;
+    --blue:#0A84FF; --blue-dark:#0064D6;
+    --yellow:#FFB300; --heart:#FF375F;
+    --bg:#EFF4FC; --card:rgba(255,255,255,0.30); --card-strong:rgba(255,255,255,0.78);
+    --border:rgba(255,255,255,0.6); --line:rgba(15,40,70,0.08);
+    --text:#101F33; --muted:#5C6B7E; --soft:rgba(255,255,255,0.4);
+    --fill1:rgba(255,255,255,0.5); --fill2:rgba(255,255,255,0.68);
+    --blur:18px;
+    --glow:0 8px 28px rgba(20,50,90,0.14), inset 0 1px 0 rgba(255,255,255,0.55);
+  }
+  html[data-theme="dark"]{
+    --mesh:
+      radial-gradient(circle at 12% 0%, rgba(255,90,170,0.22) 0%, transparent 42%),
+      radial-gradient(circle at 88% 6%, rgba(60,140,255,0.28) 0%, transparent 48%),
+      radial-gradient(circle at 15% 95%, rgba(60,210,255,0.16) 0%, transparent 42%),
+      radial-gradient(circle at 95% 90%, rgba(150,90,255,0.22) 0%, transparent 48%),
+      linear-gradient(160deg,#0B1220 0%,#10182A 100%);
+    --navy:#F2F5FA;
+    --blue:#409CFF; --blue-dark:#7FC1FF;
+    --yellow:#FFC846; --heart:#FF5C82;
+    --bg:#0E1626; --card:rgba(255,255,255,0.06); --card-strong:rgba(22,27,40,0.72);
+    --border:rgba(255,255,255,0.14); --line:rgba(255,255,255,0.08);
+    --text:#E7EAF0; --muted:#9AA5B3; --soft:rgba(255,255,255,0.07);
+    --fill1:rgba(255,255,255,0.10); --fill2:rgba(255,255,255,0.14);
+    --glow:0 8px 28px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.08);
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--mesh);
+    background-attachment:fixed;
+    font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Inter',sans-serif;
+    color:var(--text);
+    -webkit-tap-highlight-color:transparent;
+  }
+  .frame{ max-width:480px; margin:0 auto; min-height:100vh; background:transparent; display:flex; flex-direction:column; position:relative; }
+
+  header.top{
+    padding:16px 18px 14px;
+    background:var(--card-strong);
+    backdrop-filter:blur(var(--blur)) saturate(180%);
+    -webkit-backdrop-filter:blur(var(--blur)) saturate(180%);
+    border-bottom:1px solid var(--border);
+    box-shadow:0 1px 0 rgba(255,255,255,0.5) inset, 0 6px 20px rgba(20,50,90,0.06);
+    position:sticky; top:0; z-index:5;
+  }
+  header.top h1{ font-weight:800; font-size:21px; letter-spacing:-0.3px; margin:0 0 1px; color:var(--navy); }
+  header.top p{ margin:0; font-size:11.5px; color:var(--muted); letter-spacing:0.2px; }
+
+  .filters{
+    padding:10px 18px 12px;
+    background:var(--card);
+    backdrop-filter:blur(var(--blur)) saturate(180%);
+    -webkit-backdrop-filter:blur(var(--blur)) saturate(180%);
+    border-bottom:1px solid var(--border);
+    position:sticky; top:64px; z-index:4;
+    display:flex; flex-direction:column; gap:9px;
+  }
+  .search-row{ position:relative; }
+  .search-row svg.search-ic{ position:absolute; left:13px; top:50%; transform:translateY(-50%); width:16px; height:16px; color:var(--muted); }
+  .search-row input[type=text]{
+    width:100%; border:1px solid var(--border); background:var(--fill1);
+    backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);
+    border-radius:999px; padding:11px 42px 11px 37px; font-size:14px; color:var(--text);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,0.6);
+  }
+  .save-search-btn{ position:absolute; right:6px; top:50%; transform:translateY(-50%); width:28px; height:28px; border-radius:50%; background:none; border:none; color:var(--muted); display:flex; align-items:center; justify-content:center; cursor:pointer; }
+  .save-search-btn svg{ width:16px; height:16px; }
+  .search-row input::placeholder{ color:var(--muted); }
+  .chip-row{ display:flex; gap:6px; overflow-x:auto; padding-bottom:2px; scrollbar-width:none; }
+  .chip-row::-webkit-scrollbar{ display:none; }
+  .chip{
+    flex:0 0 auto; border:1px solid var(--border); border-radius:999px; padding:7px 14px;
+    font-size:12px; font-weight:600; background:var(--fill1);
+    backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px);
+    color:var(--text); cursor:pointer; white-space:nowrap;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,0.5);
+  }
+  .chip.active{
+    background:linear-gradient(160deg, rgba(10,132,255,0.95), rgba(0,100,214,0.9));
+    color:#fff; border-color:transparent;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,0.35), 0 4px 14px rgba(10,132,255,0.35);
+  }
+
+  .dropdown-row{ display:flex; gap:8px; }
+  .dropdown{ position:relative; flex:1; min-width:0; }
+  .dropdown-trigger{
+    width:100%; display:flex; align-items:center; justify-content:space-between; gap:6px;
+    padding:9px 12px; border-radius:14px; border:1px solid var(--border); background:var(--fill1);
+    backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);
+    color:var(--text); font-size:12.5px; font-weight:600; cursor:pointer;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,0.3);
+  }
+  .dropdown-trigger span{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .dropdown-trigger svg{ width:13px; height:13px; color:var(--muted); flex-shrink:0; transition:transform 0.2s; }
+  .dropdown-trigger.open{ border-color:var(--blue); }
+  .dropdown-trigger.open svg{ transform:rotate(180deg); }
+  .dropdown-panel{
+    position:absolute; top:calc(100% + 6px); left:0; right:0; z-index:50;
+    background:var(--card-strong); backdrop-filter:blur(26px) saturate(190%); -webkit-backdrop-filter:blur(26px) saturate(190%);
+    border:1px solid var(--border); border-radius:16px; box-shadow:0 14px 34px rgba(20,50,90,0.22), inset 0 1px 0 rgba(255,255,255,0.4);
+    max-height:280px; overflow-y:auto; padding:6px;
+  }
+  .dropdown-option{
+    display:block; width:100%; text-align:left; padding:9px 12px; margin-bottom:1px; border-radius:10px;
+    border:none; background:none; color:var(--text); font-size:13px; font-weight:600; cursor:pointer;
+  }
+  .dropdown-option.active{ background:var(--fill1); color:var(--blue-dark); font-weight:800; }
+  .price-filter-btn{
+    flex-shrink:0; width:38px; display:flex; align-items:center; justify-content:center;
+    border-radius:14px; border:1px solid var(--border); background:var(--fill1);
+    backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); color:var(--text); cursor:pointer;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,0.3);
+  }
+  .price-filter-btn svg{ width:16px; height:16px; }
+  .price-filter-btn.active{ background:linear-gradient(160deg, rgba(10,132,255,0.95), rgba(0,100,214,0.9)); color:#fff; border-color:transparent; width:auto; padding:0 12px; gap:5px; font-size:12px; font-weight:700; }
+
+  main{ flex:1; padding:16px 16px 118px; }
+
+  .empty{ margin-top:40px; text-align:center; color:var(--muted); }
+  .empty .big{ font-weight:700; font-size:17px; color:var(--navy); margin-bottom:6px; }
+  .empty .small{ font-size:13px; }
+
+  .card{
+    position:relative; background:var(--card);
+    backdrop-filter:blur(24px) saturate(190%); -webkit-backdrop-filter:blur(24px) saturate(190%);
+    border:1px solid var(--border); border-radius:18px; margin-bottom:12px; padding:12px; cursor:pointer;
+    box-shadow:var(--glow);
+  }
+  .card.boost-pin{ border-color:rgba(255,179,0,0.65); box-shadow:0 0 0 1.5px rgba(255,179,0,0.55), var(--glow); }
+  .card-row{ display:flex; gap:12px; }
+  .thumb-wrap{ position:relative; flex:0 0 92px; width:92px; height:92px; }
+  .thumb{ width:92px; height:92px; border-radius:14px; overflow:hidden; background:var(--fill1); display:flex; align-items:center; justify-content:center; position:relative; }
+  .thumb img{ position:absolute; inset:0; width:100%; height:100%; object-fit:contain; display:block; }
+  .thumb svg{ width:30px; height:30px; color:#B9C6D6; position:relative; z-index:0; }
+  .top-ribbon{ position:absolute; top:6px; left:6px; background:var(--yellow); color:#3A2A00; font-size:9px; font-weight:800; padding:2px 7px; border-radius:6px; letter-spacing:0.4px; box-shadow:0 1px 3px rgba(0,0,0,0.15); }
+  .gallery-count{ position:absolute; bottom:5px; left:5px; background:rgba(0,0,0,0.55); color:#fff; font-size:9px; font-weight:700; padding:2px 6px; border-radius:6px; }
+  .fav-btn{
+    position:absolute; top:5px; right:5px; width:26px; height:26px; border-radius:50%;
+    background:rgba(255,255,255,0.75); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px);
+    border:1px solid rgba(255,255,255,0.7); display:flex; align-items:center; justify-content:center;
+    color:var(--muted); cursor:pointer; box-shadow:0 2px 6px rgba(0,0,0,0.15); padding:0;
+  }
+  .fav-btn.active{ color:var(--heart); }
+  .fav-btn svg{ width:14px; height:14px; }
+  .content{ flex:1; min-width:0; display:flex; flex-direction:column; }
+  .content-top{ display:flex; justify-content:space-between; align-items:flex-start; gap:6px; }
+  .icon-group{ display:flex; gap:2px; flex-shrink:0; }
+  .card-title{ font-size:14px; font-weight:600; color:var(--text); margin:0; line-height:1.3; }
+  .flag-btn{ background:none; border:none; color:var(--muted); cursor:pointer; padding:2px; flex-shrink:0; }
+  .flag-btn svg{ width:15px; height:15px; }
+  .price{ font-size:16px; font-weight:800; color:var(--navy); margin:3px 0 5px; }
+  .tag-row{ display:flex; gap:5px; flex-wrap:wrap; margin-bottom:5px; }
+  .tag{ font-size:10px; font-weight:700; padding:3px 9px; border-radius:999px; background:var(--fill1); color:var(--muted); white-space:nowrap; }
+  .tag.offer{ background:rgba(10,132,255,0.14); color:var(--blue-dark); }
+  .tag.request{ background:rgba(92,107,126,0.12); color:#52525B; }
+  .tag.boost-pin{ background:rgba(255,179,0,0.18); color:#8A6200; }
+  .tag.boost-bump{ background:rgba(10,132,255,0.14); color:var(--blue-dark); }
+  .tag.boost-dv{ background:rgba(110,79,140,0.16); color:#6E4F8C; }
+  .card-desc{ font-size:12.5px; color:var(--muted); line-height:1.4; margin:0; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; }
+  .preview-img{ width:100%; max-height:220px; object-fit:contain; background:var(--fill1); border-radius:14px; margin-bottom:8px; border:1px solid var(--border); }
+
+  .seller-line{ display:flex; align-items:center; gap:6px; margin:9px 0 6px; font-size:12px; color:var(--muted); cursor:pointer; }
+  .seller-line.branded{ padding:10px 12px; border-radius:14px; }
+  .seller-line.branded, .seller-line.branded *{ color:#fff !important; }
+  .seller-line.branded .stars{ color:var(--yellow) !important; }
+  .seller-line.branded .avatar{ border:2px solid rgba(255,255,255,0.7); }
+  .shop-tagline-inline{ font-size:11px; font-style:italic; opacity:0.9; margin:1px 0; }
+  .avatar{ width:22px; height:22px; border-radius:50%; background:var(--blue); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:11px; overflow:hidden; flex-shrink:0; }
+  .avatar.lg{ width:56px; height:56px; font-size:22px; }
+  .avatar img{ width:100%; height:100%; object-fit:cover; }
+  .stars{ color:var(--yellow); font-size:13px; letter-spacing:1px; }
+
+  .meta-row{ margin-top:9px; font-size:11px; color:var(--muted); display:flex; justify-content:space-between; align-items:center; gap:8px; }
+  .meta-row > span:first-child{ flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .meta-right{ display:flex; gap:10px; align-items:center; flex-shrink:0; }
+  .owner-actions{ display:flex; gap:10px; }
+  .owner-actions button{ background:none; border:none; padding:0; font-size:11px; font-weight:700; color:var(--blue-dark); text-decoration:underline; cursor:pointer; }
+
+  .deal-box{ margin-top:10px; padding:10px 11px; background:var(--fill1); backdrop-filter:blur(10px); border-radius:14px; border:1px solid var(--border); }
+  .deal-box .row{ display:flex; justify-content:space-between; align-items:center; gap:8px; font-size:12px; margin-bottom:4px; }
+  .deal-box .row:last-child{ margin-bottom:0; }
+  .status-pill{ font-size:10px; font-weight:700; text-transform:uppercase; padding:2px 8px; border-radius:999px; display:inline-block; }
+  .status-pill.pending{ background:#FFE8B0; color:#6b5a14; }
+  .status-pill.confirmed{ background:#D6F0DC; color:#1E7A3C; }
+  .status-pill.rejected{ background:#E5E5E5; color:#666; }
+  .mini-btn{ border:1px solid var(--border); background:var(--fill1); backdrop-filter:blur(6px); border-radius:999px; padding:5px 11px; font-size:11px; font-weight:700; cursor:pointer; color:var(--navy); white-space:nowrap; }
+  .mini-btn.primary{ background:linear-gradient(160deg, rgba(10,132,255,0.95), rgba(0,100,214,0.9)); color:#fff; border-color:transparent; }
+  .mini-btn[disabled]{ opacity:0.55; cursor:default; }
+
+  .form-wrap h2{ font-size:18px; font-weight:700; margin:4px 0 16px; color:var(--navy); }
+  .field{ margin-bottom:14px; }
+  .field label{ display:block; font-size:12px; font-weight:600; margin-bottom:5px; }
+  .field input[type=text], .field input[type=number], .field textarea, .field select{
+    width:100%; border:1px solid var(--border); background:var(--fill1);
+    backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);
+    border-radius:14px; padding:11px 13px; font-size:14px; color:var(--text); font-family:inherit;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,0.25);
+  }
+  .field input::placeholder, .field textarea::placeholder{ color:var(--muted); opacity:1; }
+  .field textarea{ resize:vertical; min-height:80px; }
+  .type-toggle{ display:flex; gap:8px; }
+  .type-toggle button{ flex:1; padding:11px; border:1px solid var(--border); border-radius:14px; background:var(--fill1); backdrop-filter:blur(8px); font-weight:700; font-size:13px; cursor:pointer; color:var(--text); }
+  .type-toggle button.active{ background:linear-gradient(160deg, rgba(10,132,255,0.95), rgba(0,100,214,0.9)); color:#fff; border-color:transparent; }
+  .price-row{ display:flex; gap:8px; align-items:center; }
+  .price-row input{ flex:1; }
+  .vb-check{ display:flex; align-items:center; gap:5px; font-size:12px; color:var(--muted); white-space:nowrap; }
+  .submit-btn{
+    width:100%; background:linear-gradient(160deg, rgba(10,132,255,0.96), rgba(0,100,214,0.92));
+    backdrop-filter:blur(14px) saturate(180%); -webkit-backdrop-filter:blur(14px) saturate(180%);
+    color:#fff; border:none; border-radius:999px; padding:14px; font-size:15px; font-weight:700; cursor:pointer; margin-top:6px;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,0.4), 0 8px 20px rgba(10,132,255,0.32);
+  }
+  .hint{ font-size:11px; color:var(--muted); margin-top:4px; }
+  .cancel-edit{ text-align:center; font-size:12px; color:var(--muted); text-decoration:underline; margin-top:10px; cursor:pointer; }
+
+  nav.tabbar{
+    position:sticky; bottom:14px; margin:0 14px calc(env(safe-area-inset-bottom));
+    background:var(--fill2);
+    backdrop-filter:blur(24px) saturate(180%); -webkit-backdrop-filter:blur(24px) saturate(180%);
+    border:1px solid var(--border); border-radius:28px;
+    display:flex; padding:7px 6px; gap:2px; align-items:center;
+    box-shadow:0 12px 30px rgba(20,50,90,0.2), inset 0 1px 0 rgba(255,255,255,0.6);
+  }
+  nav.tabbar button{ flex:1; background:none; border:none; display:flex; flex-direction:column; align-items:center; gap:2px; padding:8px 2px; color:var(--muted); font-size:10px; font-weight:600; cursor:pointer; border-radius:18px; position:relative; transition:background 0.2s,color 0.2s; }
+  nav.tabbar button.active{ color:var(--blue); background:rgba(10,132,255,0.12); }
+  nav.tabbar svg{ width:21px; height:21px; }
+  .tab-badge{ position:absolute; top:4px; right:18%; width:8px; height:8px; border-radius:50%; background:var(--heart); display:none; }
+
+  .subtabs{ display:flex; gap:8px; margin-bottom:14px; overflow-x:auto; }
+  .subtabs button{ border:1px solid var(--border); background:var(--fill1); backdrop-filter:blur(8px); border-radius:999px; padding:7px 14px; font-size:12px; font-weight:600; cursor:pointer; color:var(--text); white-space:nowrap; }
+  .subtabs button.active{ background:linear-gradient(160deg, rgba(10,132,255,0.95), rgba(0,100,214,0.9)); color:#fff; border-color:transparent; }
+
+  .toast{ position:fixed; bottom:96px; left:50%; transform:translateX(-50%); background:rgba(20,30,46,0.78); backdrop-filter:blur(14px); color:#fff; padding:10px 17px; border-radius:999px; font-size:12.5px; font-weight:600; z-index:120; opacity:0; transition:opacity 0.25s; pointer-events:none; white-space:nowrap; max-width:90%; text-align:center; box-shadow:0 6px 20px rgba(0,0,0,0.25); }
+  .toast.show{ opacity:1; }
+
+  .profile-header{ display:flex; gap:14px; align-items:center; margin-bottom:6px; }
+  .profile-name-row{ display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+  .profile-name-row .name{ font-weight:700; font-size:18px; color:var(--navy); }
+  .verified-badge{ font-size:9.5px; font-weight:700; background:#D6F0DC; color:#1E7A3C; padding:2px 6px; border-radius:5px; text-transform:uppercase; }
+  .unverified-badge{ font-size:9.5px; font-weight:700; background:var(--soft); color:var(--muted); padding:2px 6px; border-radius:5px; text-transform:uppercase; }
+  .premium-badge{ font-size:9.5px; font-weight:700; background:linear-gradient(135deg,#FFD56B,#FFB300); color:#3A2A00; padding:2px 6px; border-radius:5px; text-transform:uppercase; }
+  .verified-check{ width:15px; height:15px; vertical-align:-2px; margin-left:3px; flex-shrink:0; display:inline-block; }
+  .pro-badge{ font-size:9.5px; font-weight:700; background:linear-gradient(135deg,#7A1E5C,#0A84FF); color:#fff; padding:2px 6px; border-radius:5px; text-transform:uppercase; }
+  .profile-header.branded{ padding:16px; border-radius:18px; margin-bottom:12px; box-shadow:0 6px 18px rgba(20,50,90,0.18); }
+  .profile-header.branded .name, .profile-header.branded .username-line, .profile-header.branded .rating-line{ color:#fff; }
+  .profile-header.branded .avatar{ border:2px solid rgba(255,255,255,0.7); }
+  .profile-header.branded .unverified-badge{ background:rgba(255,255,255,0.25); color:#fff; }
+  .shop-tagline{ font-size:12.5px; font-style:italic; color:var(--blue-dark); margin:-4px 0 12px; }
+  .banner-swatch-row{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom:10px; }
+  .banner-swatch{ width:34px; height:34px; border-radius:50%; border:2px solid transparent; cursor:pointer; }
+  .banner-swatch.active{ border-color:var(--blue); box-shadow:0 0 0 2px var(--card-strong); }
+  .premium-lock{ padding:14px; border-radius:14px; background:var(--fill1); border:1px solid var(--border); text-align:center; }
+  .premium-lock .lock-icon{ font-size:22px; margin-bottom:6px; }
+  .username-line{ font-size:12px; color:var(--muted); }
+  .rating-line{ font-size:12.5px; color:var(--muted); margin-top:4px; }
+  .online-dot{ display:inline-block; width:7px; height:7px; border-radius:50%; background:#34C759; margin-right:3px; }
+  .online-dot.away{ background:var(--muted); }
+  .online-line{ font-size:11.5px; color:var(--muted); margin-top:2px; }
+  .stat-row{ display:flex; gap:16px; margin:14px 0; font-size:12px; color:var(--muted); }
+  .stat-row b{ display:block; font-size:16px; color:var(--navy); font-weight:700; }
+  .bio-text{ font-size:13px; color:var(--text); line-height:1.5; margin:6px 0 16px; }
+  .section-title{ font-size:14px; font-weight:700; margin:0 0 10px; color:var(--navy); }
+  .review-card{ border:1px solid var(--border); border-radius:14px; padding:11px 13px; margin-bottom:10px; background:var(--card); backdrop-filter:blur(18px) saturate(180%); }
+  .review-meta{ font-size:11px; color:var(--muted); margin-top:5px; }
+  .review-reply{ margin-top:8px; padding:8px 10px; background:var(--fill1); border-radius:10px; font-size:12.5px; color:var(--text); border-left:2px solid var(--blue); }
+  .reply-btn{ background:none; border:none; padding:0; margin-top:7px; font-size:11px; font-weight:700; color:var(--blue-dark); text-decoration:underline; cursor:pointer; }
+
+  .profile-overlay{ position:fixed; inset:0; background:var(--mesh); background-attachment:fixed; z-index:90; overflow-y:auto; }
+  .profile-overlay-header{
+    display:flex; justify-content:space-between; align-items:center; padding:16px 18px;
+    background:var(--card-strong); backdrop-filter:blur(var(--blur)) saturate(180%); -webkit-backdrop-filter:blur(var(--blur)) saturate(180%);
+    border-bottom:1px solid var(--border); position:sticky; top:0; z-index:2;
+  }
+  .profile-overlay-header h2{ font-size:16px; font-weight:700; margin:0; color:var(--navy); }
+  .close-btn{ background:none; border:none; font-size:22px; color:var(--text); cursor:pointer; line-height:1; }
+  .overlay-body{ padding:16px 18px 40px; }
+
+  .modal-overlay{ position:fixed; inset:0; background:rgba(10,20,35,0.45); display:flex; align-items:flex-end; justify-content:center; z-index:130; }
+  .modal-sheet{
+    background:var(--card-strong); backdrop-filter:blur(28px) saturate(180%); -webkit-backdrop-filter:blur(28px) saturate(180%);
+    width:100%; max-width:480px; border-radius:26px 26px 0 0; border-top:1px solid var(--border);
+    padding:20px 18px calc(20px + env(safe-area-inset-bottom)); max-height:85vh; overflow-y:auto;
+    box-shadow:0 -10px 40px rgba(20,50,90,0.22);
+  }
+  .modal-sheet h3{ font-size:17px; font-weight:700; margin:0 0 14px; color:var(--navy); }
+  .star-picker{ display:flex; gap:6px; margin-bottom:14px; }
+  .star-picker button{ background:none; border:none; font-size:30px; color:var(--border); cursor:pointer; padding:0; line-height:1; }
+  .star-picker button.active{ color:var(--yellow); }
+  .modal-actions{ display:flex; gap:8px; margin-top:6px; }
+  .modal-actions button{ flex:1; }
+  .btn-secondary{ background:var(--fill1); backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px); border:1px solid var(--border); color:var(--text); border-radius:999px; padding:12px; font-weight:700; cursor:pointer; font-family:inherit; font-size:14px; box-shadow:inset 0 1px 0 rgba(255,255,255,0.25); }
+
+  .gallery-edit-strip{ display:flex; gap:8px; overflow-x:auto; padding-bottom:6px; margin-bottom:8px; }
+  .gallery-edit-thumb{ position:relative; flex:0 0 72px; width:72px; height:72px; border-radius:12px; overflow:hidden; border:1px solid var(--border); }
+  .gallery-edit-thumb img{ width:100%; height:100%; object-fit:contain; background:var(--fill1); display:block; }
+  .gallery-edit-remove{ position:absolute; top:2px; right:2px; width:20px; height:20px; border-radius:50%; background:rgba(0,0,0,0.55); color:#fff; border:none; font-size:11px; cursor:pointer; display:flex; align-items:center; justify-content:center; padding:0; }
+  .imgfile-row{ display:flex; align-items:center; gap:10px; }
+  .imgfile-row .filebtn{ border:1px solid var(--border); border-radius:999px; padding:9px 16px; font-size:13px; font-weight:600; cursor:pointer; background:var(--fill1); backdrop-filter:blur(8px); color:var(--text); }
+  .imgfile-row input[type=file]{ display:none; }
+
+  .boost-row{ border:1px solid var(--border); border-radius:16px; padding:13px; margin-bottom:12px; background:var(--card); backdrop-filter:blur(18px) saturate(180%); }
+  .boost-row h4{ font-size:14px; font-weight:700; margin:0 0 2px; color:var(--navy); }
+  .boost-row .bdesc{ font-size:11.5px; color:var(--muted); margin-bottom:8px; }
+  .boost-row .bstatus{ font-size:11px; font-weight:700; color:#1E7A3C; margin-bottom:8px; display:block; }
+  .boost-row .bstatus.urgent{ color:var(--heart); }
+  .tier-row{ display:flex; gap:6px; flex-wrap:wrap; }
+  .tier-row button{ border:1px solid var(--border); background:var(--fill1); backdrop-filter:blur(6px); border-radius:999px; padding:7px 11px; font-size:11.5px; font-weight:700; cursor:pointer; color:var(--navy); }
+  .tier-row button[disabled]{ opacity:0.4; cursor:default; }
+  .promo-disclaimer{ font-size:11px; color:var(--muted); margin-bottom:14px; padding:9px 11px; background:var(--fill1); backdrop-filter:blur(8px); border-radius:12px; }
+
+  .range-values{ display:flex; justify-content:space-between; font-size:13px; font-weight:700; color:var(--navy); margin-bottom:8px; }
+  .dual-range{ position:relative; height:28px; margin-bottom:6px; }
+  .dual-range input[type=range]{
+    position:absolute; top:9px; left:0; width:100%; margin:0; -webkit-appearance:none; appearance:none;
+    background:transparent; pointer-events:none;
+  }
+  .dual-range input[type=range]::-webkit-slider-runnable-track{ height:4px; background:var(--border); border-radius:2px; }
+  .dual-range input[type=range]::-moz-range-track{ height:4px; background:var(--border); border-radius:2px; }
+  .dual-range input[type=range]::-webkit-slider-thumb{
+    -webkit-appearance:none; pointer-events:auto; width:20px; height:20px; border-radius:50%;
+    background:var(--blue); border:2px solid #fff; box-shadow:0 1px 4px rgba(0,0,0,0.3); cursor:pointer; margin-top:-8px;
+  }
+  .dual-range input[type=range]::-moz-range-thumb{
+    pointer-events:auto; width:20px; height:20px; border-radius:50%;
+    background:var(--blue); border:2px solid #fff; box-shadow:0 1px 4px rgba(0,0,0,0.3); cursor:pointer;
+  }
+
+  .detail-thumb{ position:relative; width:100%; aspect-ratio:1/1; max-height:360px; background:var(--fill1); overflow:hidden; border-radius:20px; margin-bottom:4px; border:1px solid var(--border); }
+  .gallery-dots{ position:absolute; bottom:10px; left:0; right:0; display:flex; justify-content:center; gap:5px; z-index:2; }
+  .gallery-dots .dot{ width:6px; height:6px; padding:0; border:none; border-radius:50%; background:rgba(255,255,255,0.55); cursor:pointer; }
+  .gallery-dots .dot.active{ background:#fff; width:16px; border-radius:3px; }
+  .gallery-arrow{ position:absolute; top:50%; transform:translateY(-50%); width:32px; height:32px; border-radius:50%; background:rgba(0,0,0,0.42); color:#fff; border:none; font-size:19px; display:flex; align-items:center; justify-content:center; cursor:pointer; z-index:2; line-height:1; padding:0; }
+  .gallery-arrow.left{ left:8px; }
+  .gallery-arrow.right{ right:8px; }
+  .fullscreen-overlay{ position:fixed; inset:0; background:rgba(0,0,0,0.94); z-index:150; display:flex; align-items:center; justify-content:center; }
+  .fullscreen-overlay img{ max-width:100%; max-height:100%; object-fit:contain; }
+  .fullscreen-close{ position:absolute; top:16px; right:16px; width:38px; height:38px; border-radius:50%; background:rgba(255,255,255,0.18); color:#fff; border:none; font-size:20px; display:flex; align-items:center; justify-content:center; cursor:pointer; }
+
+  .admin-badge{ font-size:9.5px; font-weight:700; background:linear-gradient(135deg,#FF375F,#7A1E5C); color:#fff; padding:2px 6px; border-radius:5px; text-transform:uppercase; }
+  .admin-row{ display:flex; gap:10px; align-items:center; padding:12px; background:var(--card); backdrop-filter:blur(18px) saturate(180%); border:1px solid var(--border); border-radius:14px; margin-bottom:8px; }
+  .admin-row.banned{ border-color:var(--heart); }
+  .admin-row-mid{ flex:1; min-width:0; }
+  .admin-row-top{ display:flex; justify-content:space-between; gap:8px; font-size:13px; font-weight:700; color:var(--navy); }
+  .admin-row-sub{ font-size:11.5px; color:var(--muted); margin-top:2px; }
+  .admin-actions{ display:flex; gap:6px; flex-wrap:wrap; margin-top:8px; }
+  .ban-banner{ padding:10px 12px; background:rgba(255,55,95,0.15); border:1px solid var(--heart); border-radius:12px; font-size:12px; color:var(--heart); margin-bottom:10px; font-weight:700; }
+  .detail-thumb img{ position:absolute; inset:0; width:100%; height:100%; object-fit:contain; }
+  .detail-thumb svg{ width:60px; height:60px; color:#B9C6D6; position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); }
+  .detail-thumb .top-ribbon{ top:12px; left:12px; font-size:11px; padding:5px 11px; }
+  .detail-thumb .fav-btn{ top:12px; right:12px; width:40px; height:40px; }
+  .detail-thumb .fav-btn svg{ width:18px; height:18px; }
+  .detail-title{ font-size:19px; font-weight:700; margin:14px 0 2px; line-height:1.3; color:var(--navy); }
+  .detail-price{ font-size:22px; font-weight:800; margin-bottom:10px; color:var(--navy); }
+  .detail-desc{ font-size:14px; line-height:1.55; color:var(--text); margin:12px 0; white-space:pre-wrap; }
+  .telegram-link{ display:block; text-align:center; font-size:12px; color:var(--blue); margin-top:6px; text-decoration:none; }
+
+  .chat-overlay{ position:fixed; inset:0; background:var(--mesh); background-attachment:fixed; z-index:95; display:flex; flex-direction:column; }
+  .chat-messages{ flex:1; overflow-y:auto; padding:14px 16px; display:flex; flex-direction:column; gap:8px; }
+  .bubble{ max-width:78%; padding:9px 13px; border-radius:16px; font-size:13.5px; line-height:1.4; backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); }
+  .bubble.theirs{ background:var(--fill1); border:1px solid var(--border); align-self:flex-start; border-bottom-left-radius:5px; color:var(--text); }
+  .bubble.mine{ background:linear-gradient(160deg, rgba(10,132,255,0.94), rgba(0,100,214,0.9)); color:#fff; align-self:flex-end; border-bottom-right-radius:5px; }
+  .bubble-time{ display:block; font-size:9.5px; opacity:0.65; margin-top:3px; text-align:right; }
+  .chat-input-row{ display:flex; gap:8px; padding:10px 14px calc(10px + env(safe-area-inset-bottom)); background:var(--card-strong); backdrop-filter:blur(var(--blur)) saturate(180%); border-top:1px solid var(--border); }
+  .chat-input-row input{ flex:1; border:1px solid var(--border); background:var(--fill1); backdrop-filter:blur(8px); border-radius:999px; padding:10px 16px; font-size:14px; color:var(--text); }
+  .chat-send{ width:40px; height:40px; border-radius:50%; background:linear-gradient(160deg, rgba(10,132,255,0.96), rgba(0,100,214,0.92)); color:#fff; border:none; font-size:16px; cursor:pointer; flex-shrink:0; box-shadow:inset 0 1px 0 rgba(255,255,255,0.4), 0 4px 12px rgba(10,132,255,0.35); }
+
+  .convo-row{ display:flex; gap:10px; align-items:flex-start; padding:12px; background:var(--card); backdrop-filter:blur(18px) saturate(180%); border:1px solid var(--border); border-radius:16px; margin-bottom:8px; cursor:pointer; }
+  .convo-mid{ flex:1; min-width:0; }
+  .convo-top{ display:flex; justify-content:space-between; gap:8px; font-size:13px; }
+  .convo-name{ font-weight:700; color:var(--navy); }
+  .convo-time{ color:var(--muted); font-size:11px; white-space:nowrap; }
+  .convo-listing{ font-size:11px; color:var(--blue-dark); margin:2px 0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .convo-preview{ font-size:12.5px; color:var(--muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .unread-dot{ width:9px; height:9px; border-radius:50%; background:var(--heart); flex-shrink:0; margin-top:6px; }
+
+  .legal-content h2{ font-size:17px; font-weight:800; margin:20px 0 8px; color:var(--navy); }
+  .legal-content h2:first-child{ margin-top:0; }
+  .legal-content h3{ font-size:13.5px; font-weight:700; margin:14px 0 4px; color:var(--navy); }
+  .legal-content p, .legal-content li{ font-size:13px; line-height:1.55; color:var(--text); margin:0 0 8px; }
+  .legal-content ul{ padding-left:18px; margin:0 0 10px; }
+
+  .header-row{ display:flex; justify-content:space-between; align-items:flex-start; gap:10px; }
+  .theme-toggle{
+    flex-shrink:0; width:36px; height:36px; border-radius:50%;
+    background:var(--fill1); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);
+    border:1px solid var(--border); display:flex; align-items:center; justify-content:center;
+    color:var(--navy); cursor:pointer; box-shadow:inset 0 1px 0 rgba(255,255,255,0.4);
+  }
+  .theme-toggle svg{ width:17px; height:17px; }
+  .header-actions{ display:flex; gap:8px; flex-shrink:0; }
+  #langToggle{ font-size:11px; font-weight:800; }
+</style>
+</head>
+<body>
+<div class="frame">
+  <header class="top">
+    <div class="header-row">
+      <div>
+        <h1>Basar</h1>
+        <p>Kleinanzeigen für deinen Telegram-Shop</p>
+      </div>
+      <div class="header-actions">
+        <button class="theme-toggle" id="langToggle" title="Language / Sprache">DE</button>
+        <button class="theme-toggle" id="themeToggle" title="Darstellung wechseln"></button>
+      </div>
+    </div>
+  </header>
+
+  <div class="filters" id="filters">
+    <div class="search-row">
+      <svg class="search-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+      <input type="text" id="searchInput" placeholder="Suchen … z. B. „Sneaker“, „Nachhilfe“">
+      <button class="save-search-btn" data-action="savesearch" title="Suche speichern">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 3h14v18l-7-5-7 5V3z"/></svg>
+      </button>
+    </div>
+    <div class="dropdown-row">
+      <div class="dropdown" id="catDropdown"></div>
+      <div class="dropdown" id="sortDropdown"></div>
+      <button class="price-filter-btn" data-action="openpricefilter" id="priceFilterChip">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M6 12h12M9 18h6"/></svg>
+      </button>
+    </div>
+    <div class="chip-row" id="typeChips">
+      <button class="chip active" data-type="all">Alle</button>
+      <button class="chip" data-type="offer">Angebote</button>
+      <button class="chip" data-type="request">Gesuche</button>
+    </div>
+  </div>
+
+  <main id="main"></main>
+  <div class="toast" id="toast"></div>
+
+  <nav class="tabbar">
+    <button data-tab="browse" class="active">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+      <span class="nav-label" id="navLabelBrowse">Durchsuchen</span>
+    </button>
+    <button data-tab="messages">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.4 8.4 0 0 1-1.1 4.2L21 20l-4.3-1.1A8.4 8.4 0 0 1 3 11.5 8.5 8.5 0 0 1 11.5 3 8.5 8.5 0 0 1 21 11.5z"/></svg>
+      <span class="nav-label" id="navLabelMessages">Nachrichten</span>
+      <span class="tab-badge" id="msgBadge"></span>
+    </button>
+    <button data-tab="create">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+      <span class="nav-label" id="navLabelCreate">Anzeige erstellen</span>
+    </button>
+    <button data-tab="profile">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 4-6 8-6s8 2 8 6"/></svg>
+      <span class="nav-label" id="navLabelProfile">Profil</span>
+      <span class="tab-badge" id="profileBadge"></span>
+    </button>
+    <button data-tab="admin" id="adminTabBtn" style="display:none">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l8 4v6c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10V6z"/></svg>
+      <span class="nav-label">Admin</span>
+    </button>
+  </nav>
+</div>
+
+<script>
+window.addEventListener('error', function(e){
+  console.error('Globaler Fehler:', e.error || e.message);
+  var m = document.getElementById('main');
+  if(m && m.innerHTML.indexOf('Lädt') !== -1){
+    m.innerHTML = '<div class="empty"><div class="big">⚠️ Fehler beim Start</div>'
+      + '<div class="small" style="word-break:break-word;padding:0 10px">' + String((e.error && e.error.message) || e.message || e) + '</div></div>';
+  }
+});
+const CATEGORIES = ["Alle Kategorien","Streaming","Accounts","Social","Clothes & Accessoires","Dienstleistungen","Earn Money","Trading","Smoke","Others"];
+const REPORT_REASONS = { de:["Betrug / Abzocke","Spam oder Werbung","Unangemessener Inhalt","Falsche Angaben","Sonstiges"],
+  en:["Fraud / scam","Spam or advertising","Inappropriate content","False information","Other"] };
+const PIN_SLOTS_PER_CATEGORY = 5;
+const PREMIUM_PIN_BONUS_SLOTS = 2; // zusätzliche, nur für Premium reservierte Pin-Plätze pro Kategorie
+const FREE_LISTING_LIMIT = 5;
+const PREMIUM_PLANS = [ {months:1,stars:1200}, {months:3,stars:3000}, {months:12,stars:9600} ];
+const ADMIN_IDS = ['tg_8205036533'];
+const REFERRAL_REWARD_DAYS = 3;
+const BANNER_PRESETS = {
+  navy:'linear-gradient(135deg,#0E2A4A,#1463E0)',
+  sunset:'linear-gradient(135deg,#FF7A59,#FFB300)',
+  forest:'linear-gradient(135deg,#1E7A3C,#52C77A)',
+  berry:'linear-gradient(135deg,#7A1E5C,#E0245E)',
+  ocean:'linear-gradient(135deg,#0A4D6E,#27C3D8)',
+  gold:'linear-gradient(135deg,#8A6200,#FFD56B)',
+};
+const MAX_IMAGES_PER_LISTING_FREE = 5;
+const MAX_IMAGES_PER_LISTING_PREMIUM = 10;
+const MAX_IMAGE_BASE64_LEN = 550000; // ~400 KB pro Bild, damit mehrere Bilder die 5MB-Grenze der gemeinsamen Listings-Datei nicht sprengen
+const IMAGE_MAX_DIM = 640;
+const MAX_RAW_FILE_MB = 8; // Originaldatei vor der Komprimierung – verhindert, dass riesige Fotos die Verarbeitung blockieren
+const CHAT_POLL_MS = 3500;
+const BOT_USERNAME = 'Basarapp_bot';
+
+const BOOSTS = {
+  highlight: { field:'highlight', labelKey:'boost_highlight_label', descKey:'boost_highlight_desc', badgeKey:'boost_highlight_badge', cls:'boost-hl',
+    tiers:[{days:3,stars:60},{days:7,stars:120},{days:14,stars:200}] },
+  bump: { field:'dailyBump', labelKey:'boost_bump_label', descKey:'boost_bump_desc', badgeKey:'boost_bump_badge', cls:'boost-bump',
+    tiers:[{days:3,stars:150},{days:7,stars:300},{days:14,stars:500}] },
+  doublevis: { field:'doubleVis', labelKey:'boost_dv_label', descKey:'boost_dv_desc', badgeKey:'boost_dv_badge', cls:'boost-dv',
+    tiers:[{days:3,stars:100},{days:7,stars:200},{days:14,stars:350}] },
+  pin: { field:'pin', labelKey:'boost_pin_label', descKey:'boost_pin_desc', badgeKey:'boost_pin_badge', cls:'boost-pin',
+    tiers:[{days:1,stars:150},{days:3,stars:350},{days:7,stars:600}] },
+};
+function eur(stars){ return (stars*0.013).toFixed(2).replace('.',','); }
+function isBoostActive(b){ return !!(b && b.active && b.until > Date.now()); }
+
+// ---------- Übersetzungen ----------
+const I18N = {
+  de: {
+    tagline:'Kleinanzeigen für deinen Telegram-Shop',
+    search_ph:'Suchen … z. B. „Sneaker“, „Nachhilfe“',
+    all_categories:'Alle Kategorien',
+    nav_browse:'Durchsuchen', nav_messages:'Nachrichten', nav_create:'Anzeige erstellen', nav_profile:'Profil',
+    type_all:'Alle', type_offer:'Angebote', type_request:'Gesuche',
+    sort_newest:'Neueste', sort_popular:'Beliebteste', sort_price_asc:'Preis ↑', sort_price_desc:'Preis ↓', sort_pricefilter:'Preisspanne',
+    empty_browse_title:'Noch nichts gefunden', empty_browse_sub:'Ändere die Filter oder gib selbst die erste Anzeige auf.',
+    recommended_title:'Für dich empfohlen', recommended_sub:'Weil du oft nach „{term}“ suchst', all_listings:'Alle Anzeigen',
+    badge_offer:'Angebot', badge_request:'Gesuch',
+    btn_promote:'Bewerben', btn_edit:'Bearbeiten', btn_delete:'Löschen',
+    status_pending:'Anfrage gesendet', status_confirmed:'Bestätigt', status_rejected:'Abgelehnt',
+    req_count:'{n} Anfrage{plural}',
+    deal_interest:'Interesse?', deal_request_btn:'Kauf anfragen', deal_reapply:'Erneut anfragen',
+    deal_confirmed:'Handel bestätigt', deal_rejected_label:'Anfrage abgelehnt',
+    deal_rate_seller:'Verkäufer bewerten', deal_rate_buyer:'Käufer bewerten', deal_rated:'Bewertet ✓',
+    deal_wants_buy:'{name} möchte kaufen', deal_confirm_btn:'Bestätigen', deal_reject_btn:'Ablehnen',
+    form_title_new:'Neue Anzeige aufgeben', form_title_edit:'Anzeige bearbeiten',
+    form_type_label:'Art der Anzeige', form_type_offer:'Ich biete an', form_type_request:'Ich suche',
+    form_title_field:'Titel', form_title_ph:'z. B. Vintage Lederjacke, Gr. M',
+    form_desc_field:'Beschreibung', form_desc_ph:'Zustand, Details, Abholung …',
+    form_cat_field:'Kategorie', form_price_field:'Preis', form_vb:'VB', form_free:'Gratis',
+    form_images_field:'Bilder', form_images_optional:'(optional, bis zu {max})',
+    form_add_image:'Weiteres Bild hinzufügen', form_pick_image:'Bild auswählen',
+    form_images_hint:'Wird automatisch verkleinert & komprimiert. Max. {maxmb} MB pro Originalbild. Erstes Bild = Titelbild.',
+    form_contact_hint:'Käufer schreiben dich über den App-Chat an – kein Telegram-Username nötig.',
+    form_submit_new:'Anzeige veröffentlichen', form_submit_edit:'Änderungen speichern', form_cancel_edit:'Bearbeitung abbrechen',
+    profile_sub_overview:'Übersicht', profile_sub_listings:'Meine Anzeigen', profile_sub_favorites:'Merkliste',
+    profile_sub_reviews:'Bewertungen', profile_sub_saved:'Suchen',
+    profile_anzeigen:'Anzeigen', profile_deals:'Abgeschl. Handel', profile_member_since:'Mitglied seit',
+    profile_verified:'✓ Telegram', profile_unverified:'Nicht verifiziert', profile_premium:'⭐ Premium',
+    tooltip_theme:'Darstellung wechseln', tooltip_save_search:'Suche speichern',
+    profile_hint_unverified:'Öffne die App über Telegram, damit deine ID automatisch und vertrauenswürdig erkannt wird.',
+    profile_name_field:'Anzeigename', profile_username_field:'Telegram-Username (optional, für externen Kontakt)',
+    profile_channel_field:'Telegram-Kanal / Feed (optional)', profile_channel_hint:'Wird bei all deinen Anzeigen angezeigt, damit Käufer deinen Kanal finden.',
+    profile_bio_field:'Über mich', profile_bio_ph:'Was verkaufst/bietest du an?',
+    profile_save:'Profil speichern', profile_legal_link:'AGB · Datenschutz · Impressum',
+    no_reviews_yet:'Noch keine Bewertungen', reviews_after_deal:'Bewertungen erscheinen nach bestätigten Handeln.',
+    no_listings_yet:'Noch keine Anzeige', no_listings_sub:'Tippe unten auf „Anzeige erstellen“.',
+    fav_empty:'Merkliste ist leer', fav_empty_sub:'Tippe auf das Herz einer Anzeige.',
+    no_saved:'Keine gespeicherten Suchen', no_saved_sub:'Tippe beim Durchsuchen auf das Lesezeichen-Symbol neben der Suche.',
+    matches_now:'{n} Treffer aktuell', new_matches:'+{n} neu',
+    no_rating_yet:'Noch keine Bewertungen',
+    reply_btn:'Antworten', reply_edit_btn:'Antwort bearbeiten', reply_by:'Antwort von {name}:',
+    messages_empty:'Noch keine Nachrichten', messages_empty_sub:'Öffne eine Anzeige und schreib dem Verkäufer, um den Chat zu starten.',
+    you_prefix:'Du: ', listing_gone:'Anzeige nicht mehr verfügbar',
+    chat_empty:'Schreib die erste Nachricht.', chat_ph:'Nachricht schreiben …',
+    profile_overlay_title:'Profil', report_user_btn:'Nutzer melden', message_btn:'Nachricht schreiben',
+    section_listings:'Anzeigen', section_reviews:'Bewertungen', no_active_listings:'Keine aktiven Anzeigen.',
+    report_title:'Melden: {label}', report_reason:'Grund', report_details:'Details (optional)', report_details_ph:'Was ist passiert?',
+    cancel:'Abbrechen', send_report:'Melden',
+    review_title:'{name} bewerten', review_ph:'Wie war der Handel?', submit_review:'Bewertung abgeben',
+    reply_title:'Auf Bewertung antworten', reply_ph:'Deine öffentliche Antwort …', publish_reply:'Antwort veröffentlichen',
+    promote_title:'„{title}“ bewerben', promote_disclaimer:'Zahlung erfolgt über echte Telegram Stars.',
+    promote_active_until:'Aktiv bis {date}', promote_slots_free:'{free} von {max} Plätzen frei in „{cat}“', promote_slots_full:'Alle {max} Plätze in „{cat}“ sind belegt',
+    promote_done:'Fertig',
+    price_filter_title:'Preisspanne', price_filter_hint:'Anzeigen ohne klaren Preis (z. B. reines „VB“) werden bei aktivem Filter ausgeblendet.',
+    reset:'Zurücksetzen', apply:'Anwenden',
+    detail_title:'Anzeige', verkaeufer_anschreiben:'💬 Verkäufer anschreiben', via_telegram:'oder über Telegram: {handle}',
+    report_listing_btn:'Anzeige melden', listed_ago:'Eingestellt {time}',
+    legal_title:'Rechtliches', legal_german_only:'Diese Rechtstexte liegen derzeit nur auf Deutsch vor.',
+    boost_highlight_label:'Anzeige hervorheben', boost_highlight_desc:'Gelbes TOP-Band auf dem Bild + Hervorhebung in der Liste',
+    boost_bump_label:'Täglich oben listen', boost_bump_desc:'Wird einmal pro Tag automatisch wieder nach oben gesetzt',
+    boost_dv_label:'2x Sichtbarkeit', boost_dv_desc:'Erscheint deutlich weiter oben in Suche & Feed',
+    boost_pin_label:'In Kategorie anpinnen', boost_pin_desc:'Ganz oben in deiner Kategorie · nur {max} Plätze gleichzeitig',
+    boost_highlight_badge:'TOP', boost_bump_badge:'⬆ Täglich oben', boost_dv_badge:'👁 2x Sichtbarkeit', boost_pin_badge:'📌 Angepinnt',
+    boost_days:'{n} Tage',
+    confirm_delete:'Diese Anzeige wirklich löschen?',
+    confirm_boost:'{label} – {days} Tage für {stars} ★ (~{eur} €) aktivieren?\n(Demo-Zahlung, keine echte Belastung)',
+    locale:'de-DE',
+    just_now:'gerade eben', min_ago:'vor {n} Min.', hr_ago:'vor {n} Std.', day_ago:'vor {n} Tag', days_ago:'vor {n} Tagen',
+    price_free:'Zu verschenken', price_vb:'{n} € VB', price_vb_noprice:'VB', price_unknown:'–',
+    toast_save_failed:'Speichern fehlgeschlagen', toast_set_filter_first:'Stelle erst eine Suche oder einen Filter ein',
+    toast_already_saved:'Diese Suche ist schon gespeichert', toast_search_saved:'Suche gespeichert',
+    toast_no_contact:'Kein Kontakt verfügbar', toast_listing_deleted:'Anzeige gelöscht', toast_title_missing:'Titel fehlt',
+    toast_changes_saved:'Änderungen gespeichert', toast_listing_published:'Anzeige veröffentlicht', toast_profile_saved:'Profil gespeichert',
+    toast_slots_full:'Alle Plätze in dieser Kategorie sind belegt', toast_activated_demo:'Aktiviert (Demo)',
+    toast_already_requested:'Bereits angefragt', toast_request_sent:'Anfrage gesendet', toast_deal_confirmed:'Handel bestätigt – ihr könnt euch nun bewerten',
+    toast_request_rejected:'Anfrage abgelehnt', toast_report_sent:'Danke, deine Meldung wurde übermittelt',
+    toast_pick_stars:'Bitte Sterne auswählen', toast_deal_not_confirmed:'Handel nicht bestätigt', toast_already_rated:'Bereits bewertet',
+    toast_thanks_review:'Danke für deine Bewertung', toast_link_copied:'Link kopiert', toast_share_unavailable:'Teilen nicht möglich',
+    toast_reply_empty:'Antwort darf nicht leer sein', toast_reply_published:'Antwort veröffentlicht',
+    toast_image_skipped:'{n} Bild(er) übersprungen (Limit {max} bzw. Dateigröße)', toast_image_load_failed:'Bild konnte nicht geladen werden',
+    toast_image_too_large:'Bild zu groß (max. {max} MB) – nicht hinzugefügt',
+    views_count:'{n} Aufrufe', saved_count:'{n}x gemerkt',
+    cross_sell_title:'🎉 Veröffentlicht! Jetzt mehr Sichtbarkeit?', cross_sell_intro:'Anzeigen mit Hervorhebung oder Anpinnen bekommen im Schnitt deutlich mehr Anfragen. Direkt nach dem Erstellen lohnt sich das am meisten.',
+    remaining_min:'noch {n} Min.', remaining_hr:'noch {n} Std.', remaining_day:'noch {n} Tage',
+    boost_expiring_soon:'Boost läuft bald ab',
+    verified_section_label:'Verifizierung', verified_badge_buy:'Blauen Haken kaufen – einmalig {price} €',
+    verified_badge_buy_stars:'Blauen Haken kaufen – {stars} ★ (~{eur} €)',
+    toast_payments_not_configured:'Zahlungen sind noch nicht eingerichtet (Edge Function fehlt)',
+    toast_payments_telegram_only:'Käufe funktionieren nur innerhalb von Telegram',
+    toast_payment_failed:'Zahlung fehlgeschlagen', toast_payment_success:'Zahlung erfolgreich!',
+    verified_badge_active:'✓ Du hast den blauen Haken', verified_badge_desc:'Zeigt einen blauen Haken neben deinem Namen, überall in der App.',
+    confirm_verified_purchase:'Blauen Haken einmalig für {price} € freischalten?\n(Demo-Zahlung, keine echte Belastung)',
+    toast_verified_activated:'Verifizierung freigeschaltet (Demo)',
+    premium_section_label:'Premium-Abo', premium_active_until:'Aktiv bis {date}',
+    premium_desc:'Unbegrenzte Anzeigen (statt {max} kostenlos), automatisch TOP-Hervorhebung + 2x Sichtbarkeit für alle Anzeigen, {imgmax} statt {imgfree} Bilder pro Anzeige, {pinbonus} reservierte Pin-Plätze pro Kategorie, PRO-Badge, Statistiken, Shop-Branding und Datenexport.',
+    premium_months:'{n} Monat(e)', premium_covers_this:'Durch dein Premium-Abo bereits aktiv',
+    premium_pin_bonus_note:'+{n} reserviert für Premium', export_data_btn:'📦 Eigene Daten exportieren (JSON)', toast_export_done:'Export heruntergeladen',
+    status_online:'Online', status_lastseen:'Zuletzt {time}', show_online_status:'Online-Status anzeigen', show_online_status_hint:'Andere sehen, wann du zuletzt aktiv warst.',
+    referral_section_label:'Freunde einladen', referral_desc:'Lade Freunde ein: Ihr bekommt beide {n} Tage kostenlose Hervorhebung für eine Anzeige.',
+    referral_balance:'Du hast {n} Tage kostenlose Hervorhebung übrig', referral_invite_btn:'Einladungslink teilen',
+    referral_share_text:'Schau dir Basar an – wir bekommen beide {n} Tage kostenlose Anzeigen-Hervorhebung!',
+    toast_referral_welcome:'Willkommen! Ihr habt beide {n} Tage kostenlose Hervorhebung erhalten 🎁',
+    redeem_free_boost:'Kostenlos einlösen ({n} Tage)', toast_free_boost_redeemed:'Kostenloser Boost eingelöst ({n} Tage)',
+    confirm_premium:'Premium für {months} Monat(e) aktivieren – {stars} ★ (~{eur} €)?\n(Demo-Zahlung, keine echte Belastung)',
+    toast_premium_activated:'Premium aktiviert (Demo)', toast_listing_limit:'Limit von {max} aktiven Anzeigen erreicht – mit Premium unbegrenzt.',
+    reset_all_demo_data:'Alle Demo-Daten zurücksetzen', toast_reset_done:'Zurückgesetzt – die App lädt neu …',
+    confirm_reset_all:'ACHTUNG: Das löscht unwiderruflich ALLE Anzeigen, Profile, Chats, Bewertungen und Käufe – für ALLE Nutzer dieser App, nicht nur für dich. Nur für die Test-/Vorbereitungsphase gedacht. Wirklich zurücksetzen?',
+    stats_section_label:'Statistik', stat_views:'Aufrufe gesamt', stat_favs:'Merkungen gesamt', stat_rating:'⌀ Bewertung',
+    branding_section_label:'Shop-Branding', branding_tagline_ph:'Dein Shop-Slogan …', branding_locked:'Teil von Premium – Farbverlauf & Slogan für dein Profil.',
+  },
+  en: {
+    tagline:'Classifieds for your Telegram shop',
+    search_ph:'Search … e.g. "sneakers", "tutoring"',
+    all_categories:'All categories',
+    nav_browse:'Browse', nav_messages:'Messages', nav_create:'Create listing', nav_profile:'Profile',
+    type_all:'All', type_offer:'Offers', type_request:'Wanted',
+    sort_newest:'Newest', sort_popular:'Most popular', sort_price_asc:'Price ↑', sort_price_desc:'Price ↓', sort_pricefilter:'Price range',
+    empty_browse_title:'Nothing here yet', empty_browse_sub:'Change the filters or post the first listing yourself.',
+    recommended_title:'Recommended for you', recommended_sub:'Because you often search for "{term}"', all_listings:'All listings',
+    badge_offer:'Offer', badge_request:'Wanted',
+    btn_promote:'Promote', btn_edit:'Edit', btn_delete:'Delete',
+    status_pending:'Request sent', status_confirmed:'Confirmed', status_rejected:'Rejected',
+    req_count:'{n} request{plural}',
+    deal_interest:'Interested?', deal_request_btn:'Request purchase', deal_reapply:'Request again',
+    deal_confirmed:'Deal confirmed', deal_rejected_label:'Request rejected',
+    deal_rate_seller:'Rate seller', deal_rate_buyer:'Rate buyer', deal_rated:'Rated ✓',
+    deal_wants_buy:'{name} wants to buy', deal_confirm_btn:'Confirm', deal_reject_btn:'Decline',
+    form_title_new:'Post a new listing', form_title_edit:'Edit listing',
+    form_type_label:'Listing type', form_type_offer:'I\'m offering', form_type_request:'I\'m looking for',
+    form_title_field:'Title', form_title_ph:'e.g. Vintage leather jacket, size M',
+    form_desc_field:'Description', form_desc_ph:'Condition, details, pickup …',
+    form_cat_field:'Category', form_price_field:'Price', form_vb:'Negotiable', form_free:'Free',
+    form_images_field:'Photos', form_images_optional:'(optional, up to {max})',
+    form_add_image:'Add another photo', form_pick_image:'Choose photo',
+    form_images_hint:'Automatically resized & compressed. Max. {maxmb} MB per original photo. First photo = cover photo.',
+    form_contact_hint:'Buyers message you via the in-app chat – no Telegram username needed.',
+    form_submit_new:'Publish listing', form_submit_edit:'Save changes', form_cancel_edit:'Cancel editing',
+    profile_sub_overview:'Overview', profile_sub_listings:'My listings', profile_sub_favorites:'Saved',
+    profile_sub_reviews:'Reviews', profile_sub_saved:'Searches',
+    profile_anzeigen:'Listings', profile_deals:'Completed deals', profile_member_since:'Member since',
+    profile_verified:'✓ Telegram', profile_unverified:'Not verified', profile_premium:'⭐ Premium',
+    tooltip_theme:'Toggle appearance', tooltip_save_search:'Save search',
+    profile_hint_unverified:'Open the app via Telegram so your ID is detected automatically and reliably.',
+    profile_name_field:'Display name', profile_username_field:'Telegram username (optional, for external contact)',
+    profile_channel_field:'Telegram channel / feed (optional)', profile_channel_hint:'Shown on all your listings so buyers can find your channel.',
+    profile_bio_field:'About me', profile_bio_ph:'What are you selling/offering?',
+    profile_save:'Save profile', profile_legal_link:'Terms · Privacy · Imprint',
+    no_reviews_yet:'No reviews yet', reviews_after_deal:'Reviews appear after a confirmed deal.',
+    no_listings_yet:'No listings yet', no_listings_sub:'Tap "Create listing" below.',
+    fav_empty:'Nothing saved yet', fav_empty_sub:'Tap the heart on a listing to save it.',
+    no_saved:'No saved searches', no_saved_sub:'Tap the bookmark icon next to the search bar while browsing.',
+    matches_now:'{n} matches now', new_matches:'+{n} new',
+    no_rating_yet:'No reviews yet',
+    reply_btn:'Reply', reply_edit_btn:'Edit reply', reply_by:'Reply from {name}:',
+    messages_empty:'No messages yet', messages_empty_sub:'Open a listing and message the seller to start a chat.',
+    you_prefix:'You: ', listing_gone:'Listing no longer available',
+    chat_empty:'Send the first message.', chat_ph:'Type a message …',
+    profile_overlay_title:'Profile', report_user_btn:'Report user', message_btn:'Send message',
+    section_listings:'Listings', section_reviews:'Reviews', no_active_listings:'No active listings.',
+    report_title:'Report: {label}', report_reason:'Reason', report_details:'Details (optional)', report_details_ph:'What happened?',
+    cancel:'Cancel', send_report:'Report',
+    review_title:'Rate {name}', review_ph:'How was the deal?', submit_review:'Submit review',
+    reply_title:'Reply to review', reply_ph:'Your public reply …', publish_reply:'Publish reply',
+    promote_title:'Promote "{title}"', promote_disclaimer:'Payment is processed via real Telegram Stars.',
+    promote_active_until:'Active until {date}', promote_slots_free:'{free} of {max} slots free in "{cat}"', promote_slots_full:'All {max} slots in "{cat}" are taken',
+    promote_done:'Done',
+    price_filter_title:'Price range', price_filter_hint:'Listings without a clear price (e.g. pure "negotiable") are hidden while this filter is active.',
+    reset:'Reset', apply:'Apply',
+    detail_title:'Listing', verkaeufer_anschreiben:'💬 Message seller', via_telegram:'or via Telegram: {handle}',
+    report_listing_btn:'Report listing', listed_ago:'Posted {time}',
+    legal_title:'Legal', legal_german_only:'These legal texts are currently only available in German.',
+    boost_highlight_label:'Highlight listing', boost_highlight_desc:'Yellow TOP ribbon on the photo + highlighted in the list',
+    boost_bump_label:'Bump daily', boost_bump_desc:'Automatically moved back to the top once a day',
+    boost_dv_label:'2x visibility', boost_dv_desc:'Appears significantly higher in search & feed',
+    boost_pin_label:'Pin in category', boost_pin_desc:'Top of your category · only {max} slots at a time',
+    boost_highlight_badge:'TOP', boost_bump_badge:'⬆ Daily bump', boost_dv_badge:'👁 2x visibility', boost_pin_badge:'📌 Pinned',
+    boost_days:'{n} days',
+    confirm_delete:'Really delete this listing?',
+    confirm_boost:'Activate {label} – {days} days for {stars} ★ (~€{eur})?\n(Demo payment, no real charge)',
+    locale:'en-US',
+    just_now:'just now', min_ago:'{n} min ago', hr_ago:'{n} h ago', day_ago:'{n} day ago', days_ago:'{n} days ago',
+    price_free:'Free', price_vb:'€{n} OBO', price_vb_noprice:'OBO', price_unknown:'–',
+    toast_save_failed:'Save failed', toast_set_filter_first:'Set a search term or filter first',
+    toast_already_saved:'This search is already saved', toast_search_saved:'Search saved',
+    toast_no_contact:'No contact available', toast_listing_deleted:'Listing deleted', toast_title_missing:'Title is missing',
+    toast_changes_saved:'Changes saved', toast_listing_published:'Listing published', toast_profile_saved:'Profile saved',
+    toast_slots_full:'All slots in this category are taken', toast_activated_demo:'Activated (demo)',
+    toast_already_requested:'Already requested', toast_request_sent:'Request sent', toast_deal_confirmed:'Deal confirmed – you can now rate each other',
+    toast_request_rejected:'Request declined', toast_report_sent:'Thanks, your report has been submitted',
+    toast_pick_stars:'Please select a star rating', toast_deal_not_confirmed:'Deal not confirmed', toast_already_rated:'Already rated',
+    toast_thanks_review:'Thanks for your review', toast_link_copied:'Link copied', toast_share_unavailable:'Sharing not available',
+    toast_reply_empty:'Reply cannot be empty', toast_reply_published:'Reply published',
+    toast_image_skipped:'{n} photo(s) skipped (limit {max} or file size)', toast_image_load_failed:'Photo could not be loaded',
+    toast_image_too_large:'Photo too large (max. {max} MB) – not added',
+    views_count:'{n} views', saved_count:'saved {n}x',
+    cross_sell_title:'🎉 Published! Want more visibility now?', cross_sell_intro:'Listings with a highlight or pin get noticeably more requests on average. It pays off most right after creating the listing.',
+    remaining_min:'{n} min left', remaining_hr:'{n}h left', remaining_day:'{n} days left',
+    boost_expiring_soon:'Boost ending soon',
+    verified_section_label:'Verification', verified_badge_buy:'Buy blue checkmark – one-time {price} €',
+    verified_badge_buy_stars:'Buy blue checkmark – {stars} ★ (~€{eur})',
+    toast_payments_not_configured:'Payments are not set up yet (Edge Function missing)',
+    toast_payments_telegram_only:'Purchases only work inside Telegram',
+    toast_payment_failed:'Payment failed', toast_payment_success:'Payment successful!',
+    verified_badge_active:'✓ You have the blue checkmark', verified_badge_desc:'Shows a blue checkmark next to your name everywhere in the app.',
+    confirm_verified_purchase:'Unlock the blue checkmark for a one-time {price} €?\n(Demo payment, no real charge)',
+    toast_verified_activated:'Verification unlocked (demo)',
+    premium_section_label:'Premium subscription', premium_active_until:'Active until {date}',
+    premium_desc:'Unlimited listings (instead of {max} free), automatic TOP highlight + 2x visibility for all listings, {imgmax} instead of {imgfree} photos per listing, {pinbonus} reserved pin slots per category, PRO badge, stats, shop branding and data export.',
+    premium_months:'{n} month(s)', premium_covers_this:'Already included via your Premium subscription',
+    premium_pin_bonus_note:'+{n} reserved for Premium', export_data_btn:'📦 Export your data (JSON)', toast_export_done:'Export downloaded',
+    status_online:'Online', status_lastseen:'Last seen {time}', show_online_status:'Show online status', show_online_status_hint:'Others can see when you were last active.',
+    referral_section_label:'Invite friends', referral_desc:'Invite friends: you both get {n} days of free listing highlight.',
+    referral_balance:'You have {n} days of free highlight left', referral_invite_btn:'Share invite link',
+    referral_share_text:'Check out Basar – we both get {n} days of free listing highlight!',
+    toast_referral_welcome:'Welcome! You both received {n} days of free highlight 🎁',
+    redeem_free_boost:'Redeem for free ({n} days)', toast_free_boost_redeemed:'Free boost redeemed ({n} days)',
+    confirm_premium:'Activate Premium for {months} month(s) – {stars} ★ (~€{eur})?\n(Demo payment, no real charge)',
+    toast_premium_activated:'Premium activated (demo)', toast_listing_limit:'Limit of {max} active listings reached – unlimited with Premium.',
+    reset_all_demo_data:'Reset all demo data', toast_reset_done:'Reset done – reloading the app …',
+    confirm_reset_all:'WARNING: This permanently deletes ALL listings, profiles, chats, reviews and purchases – for ALL users of this app, not just you. Intended only for the testing/setup phase. Really reset?',
+    stats_section_label:'Statistics', stat_views:'Total views', stat_favs:'Total saves', stat_rating:'Avg. rating',
+    branding_section_label:'Shop branding', branding_tagline_ph:'Your shop tagline …', branding_locked:'Part of Premium – gradient banner & tagline for your profile.',
+  },
+};
+function t(key, vars){
+  let s = (I18N[State.lang] && I18N[State.lang][key]) || I18N.de[key] || key;
+  if(vars) for(const k in vars) s = s.split('{'+k+'}').join(vars[k]);
+  return s;
+}
+
+const State = {
+  tab:'browse', profileSub:'overview',
+  listings:[], users:{}, deals:[], reviews:[], reports:[], favorites:[], purchases:[], messages:[], lastRead:{},
+  myId:null, search:'', typeFilter:'all', catFilter:'Alle Kategorien', sortBy:'newest',
+  priceMin:null, priceMax:null, priceFilterOpen:false, openDropdown:null,
+  savedSearches:[],
+  editingId:null, viewProfileId:null, viewListingId:null, galleryIndex:0, fullscreenImage:null, activeChat:null, chatPollTimer:null, viewLegal:false,
+  adminSub:'listings', adminBanTarget:null,
+  reportTarget:null, reviewTarget:null, reviewStar:0, replyTarget:null,
+  formType:null, pendingImages:null, formDraft:null, promoteTarget:null, justPublished:false, searchStats:{categories:{}}, lastTrackedSearchTerm:'', theme:'light', lang:'de', tgInitData:'',
+};
+
+function uid(p){ return (p||'id_') + Date.now().toString(36) + Math.random().toString(36).slice(2,8); }
+function escapeHtml(s){ return (s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function toast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(t._h); t._h = setTimeout(()=>t.classList.remove('show'), 2000);
+}
+
+// ---------- Theme (Light/Dark) ----------
+function applyTheme(){
+  document.documentElement.setAttribute('data-theme', State.theme);
+  const btn = document.getElementById('themeToggle');
+  if(btn){
+    btn.innerHTML = State.theme==='dark'
+      ? `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v3M12 20v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M1 12h3M20 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></svg>`
+      : `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8z"/></svg>`;
+  }
+}
+async function toggleTheme(){
+  State.theme = State.theme==='dark' ? 'light' : 'dark';
+  applyTheme();
+  await storageSet('basar:theme', State.theme, false);
+}
+async function toggleLang(){
+  State.lang = State.lang==='de' ? 'en' : 'de';
+  await storageSet('basar:lang', State.lang, false);
+  render();
+}
+
+// ---------- Storage ----------
+// ---------- Supabase-Konfiguration ----------
+// TODO: Hier deine eigenen Supabase-Projektdaten eintragen (Project Settings → API)
+const SUPABASE_URL = 'https://dkhkfodyarzlnovjszec.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRraGtmb2R5YXJ6bG5vdmpzemVjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI3Mjg5NDYsImV4cCI6MjA5ODMwNDk0Nn0.lSeHdA1cU9q0l6UHBK_3TK-_9fq0BhIKID3HtgDtA2w';
+const EDGE_BASE = SUPABASE_URL.includes('DEIN-PROJEKT') ? null : SUPABASE_URL + '/functions/v1';
+const supabaseClient = (window.supabase && SUPABASE_URL.startsWith('https://') && !SUPABASE_URL.includes('DEIN-PROJEKT'))
+  ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+  : null;
+
+// Rein geräte-lokale Werte (kein Sync nötig) laufen über localStorage statt Supabase
+function localGet(key){ try{ return localStorage.getItem(key); }catch(e){ return null; } }
+function localSet(key, value){ try{ localStorage.setItem(key, value); }catch(e){} }
+const LOCAL_ONLY_KEYS = ['basar:anonId', 'basar:theme', 'basar:lang'];
+
+async function storageGet(key, shared){
+  if(LOCAL_ONLY_KEYS.includes(key)) return localGet(key);
+  if(!supabaseClient){ console.error('Supabase ist nicht konfiguriert (SUPABASE_URL/SUPABASE_ANON_KEY).'); return null; }
+  try{
+    const fullKey = shared ? key : (State.myId + '::' + key);
+    const { data, error } = await supabaseClient.from('app_kv').select('value').eq('key', fullKey).maybeSingle();
+    if(error) throw error;
+    return data ? data.value : null;
+  }catch(e){ console.error(e); return null; }
+}
+async function storageSet(key, value, shared){
+  if(LOCAL_ONLY_KEYS.includes(key)){ localSet(key, value); return true; }
+  if(!EDGE_BASE){ console.error('Supabase ist nicht konfiguriert (SUPABASE_URL/SUPABASE_ANON_KEY).'); toast(t('toast_save_failed')); return false; }
+  try{
+    const resp = await fetch(EDGE_BASE + '/write-data', {
+      method:'POST',
+      headers:{ 'Content-Type':'application/json', 'Authorization':'Bearer '+SUPABASE_ANON_KEY },
+      body: JSON.stringify({ callerId: State.myId, initData: State.myId.startsWith('tg_') ? State.tgInitData : '', key, shared, value }),
+    });
+    const data = await resp.json();
+    if(!resp.ok || data.error){ console.error(data.error); toast(t('toast_save_failed')); return false; }
+    return true;
+  }catch(e){ console.error(e); toast(t('toast_save_failed')); return false; }
+}
+
+async function loadAll(){
+  const rth = await storageGet('basar:theme', false);
+  if(rth){ State.theme = rth; }
+  else if(window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches){ State.theme = 'dark'; }
+
+  let tgUser = null;
+  try{
+    if(window.Telegram && window.Telegram.WebApp){
+      window.Telegram.WebApp.ready(); window.Telegram.WebApp.expand();
+      tgUser = window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user;
+      State.tgInitData = window.Telegram.WebApp.initData || '';
+    }
+  }catch(e){}
+
+  if(tgUser && tgUser.id){
+    State.myId = 'tg_' + tgUser.id;
+  } else {
+    let anon = await storageGet('basar:anonId', false);
+    if(!anon){ anon = 'anon_' + (crypto.randomUUID ? crypto.randomUUID() : uid()); await storageSet('basar:anonId', anon, false); }
+    State.myId = anon;
+  }
+
+  const rlang = await storageGet('basar:lang', false);
+  if(rlang){ State.lang = rlang; }
+  else {
+    const sysLang = (tgUser && tgUser.language_code) || navigator.language || 'de';
+    State.lang = sysLang.toLowerCase().startsWith('de') ? 'de' : 'en';
+  }
+
+  // Ab hier ist State.myId gesetzt - personenbezogene (nicht geteilte) Keys können sicher geladen werden
+  const rl = await storageGet('basar:listings', true); State.listings = rl ? JSON.parse(rl) : [];
+  const ru = await storageGet('basar:users', true); State.users = ru ? JSON.parse(ru) : {};
+  const rd = await storageGet('basar:deals', true); State.deals = rd ? JSON.parse(rd) : [];
+  const rr = await storageGet('basar:reviews', true); State.reviews = rr ? JSON.parse(rr) : [];
+  const rp = await storageGet('basar:reports', true); State.reports = rp ? JSON.parse(rp) : [];
+  const rf = await storageGet('basar:favorites', false); State.favorites = rf ? JSON.parse(rf) : [];
+  const rpu = await storageGet('basar:purchases', true); State.purchases = rpu ? JSON.parse(rpu) : [];
+  const rm = await storageGet('basar:messages', true); State.messages = rm ? JSON.parse(rm) : [];
+  const rlr = await storageGet('basar:lastread', false); State.lastRead = rlr ? JSON.parse(rlr) : {};
+  const rss = await storageGet('basar:searchstats', false); State.searchStats = rss ? JSON.parse(rss) : {categories:{}};
+  const rsv = await storageGet('basar:savedsearches', false); State.savedSearches = rsv ? JSON.parse(rsv) : [];
+
+  const existing = State.users[State.myId] || {};
+  const isNewAccount = !existing.createdAt;
+  let referredBy = existing.referredBy || '';
+  let justReferred = false;
+  if(isNewAccount && !referredBy && State.myId.startsWith('tg_')){
+    try{
+      const sp = window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.start_param;
+      if(sp && sp.startsWith('ref_')){
+        const refId = sp.slice(4);
+        if(refId && refId !== State.myId && State.users[refId]){ referredBy = refId; justReferred = true; }
+      }
+    }catch(e){}
+  }
+  const tgName = tgUser ? (tgUser.first_name||'') + (tgUser.last_name ? ' '+tgUser.last_name : '') : '';
+  const isDevAccount = State.myId.startsWith('anon_'); // außerhalb Telegram geöffnet → eigenes Test-/Entwicklerkonto, immer mit allen Premium-Features
+  State.users[State.myId] = {
+    name: tgName || existing.name || 'Nutzer',
+    username: existing.username !== undefined && existing.username !== '' ? existing.username : (tgUser && tgUser.username ? '@'+tgUser.username : ''),
+    photoUrl: (tgUser && tgUser.photo_url) || existing.photoUrl || '',
+    bio: existing.bio || '',
+    customName: existing.customName || '',
+    channel: existing.channel || '',
+    verifiedBadge: isDevAccount ? true : (existing.verifiedBadge || false),
+    premiumSub: isDevAccount ? { active:true, until: Date.now() + 50*365*86400000, plan:'dev' } : (existing.premiumSub || { active:false, until:null, plan:null }),
+    shopBanner: existing.shopBanner || null,
+    shopTagline: existing.shopTagline || '',
+    banned: existing.banned || false, bannedReason: existing.bannedReason || '',
+    premium: tgUser ? !!tgUser.is_premium : (existing.premium || false),
+    lastSeen: Date.now(), showOnlineStatus: existing.showOnlineStatus !== false,
+    referredBy: referredBy, freeHighlightDays: existing.freeHighlightDays || 0,
+    createdAt: existing.createdAt || Date.now(),
+  };
+  if(justReferred){ await persistUsersWithReferralCredit(referredBy); State.justReferred = true; }
+  else{ await persistUsers(); }
+}
+
+function refreshDailyBumps(){
+  const now = Date.now(); let changed = false;
+  State.listings.forEach(l=>{
+    if(isBoostActive(l.dailyBump)){
+      const last = l.dailyBump.lastBumpAt || l.createdAt;
+      if(now - last >= 86400000){ l.dailyBump.lastBumpAt = now; changed = true; }
+    }
+  });
+  return changed;
+}
+
+async function persistListings(){ await storageSet('basar:listings', JSON.stringify(State.listings), true); }
+async function persistUsers(){
+  const fresh = await storageGet('basar:users', true);
+  const merged = fresh ? JSON.parse(fresh) : {};
+  merged[State.myId] = State.users[State.myId];
+  State.users = merged;
+  await storageSet('basar:users', JSON.stringify(State.users), true);
+}
+async function persistUsersWithReferralCredit(referrerId){
+  const fresh = await storageGet('basar:users', true);
+  const merged = fresh ? JSON.parse(fresh) : {};
+  merged[State.myId] = State.users[State.myId];
+  if(referrerId && merged[referrerId]){
+    merged[referrerId] = { ...merged[referrerId], freeHighlightDays: (merged[referrerId].freeHighlightDays||0) + REFERRAL_REWARD_DAYS };
+  }
+  State.users = merged;
+  await storageSet('basar:users', JSON.stringify(State.users), true);
+}
+async function persistDeals(){ await storageSet('basar:deals', JSON.stringify(State.deals), true); }
+async function persistReviews(){ await storageSet('basar:reviews', JSON.stringify(State.reviews), true); }
+async function persistReports(){ await storageSet('basar:reports', JSON.stringify(State.reports), true); }
+async function persistFavorites(){ await storageSet('basar:favorites', JSON.stringify(State.favorites), false); }
+async function persistPurchases(){ await storageSet('basar:purchases', JSON.stringify(State.purchases), true); }
+async function persistMessages(){ await storageSet('basar:messages', JSON.stringify(State.messages), true); }
+async function persistLastRead(){ await storageSet('basar:lastread', JSON.stringify(State.lastRead), false); }
+async function persistSearchStats(){ await storageSet('basar:searchstats', JSON.stringify(State.searchStats), false); }
+async function persistSavedSearches(){ await storageSet('basar:savedsearches', JSON.stringify(State.savedSearches), false); }
+
+// ---------- Helpers ----------
+function getUser(id){ return State.users[id] || { name:'Unbekannt', username:'', photoUrl:'', bio:'', createdAt:null, customName:'', channel:'', premium:false, verifiedBadge:false, premiumSub:{active:false,until:null,plan:null}, shopBanner:null, shopTagline:'', banned:false, bannedReason:'', lastSeen:null, showOnlineStatus:true, referredBy:'', freeHighlightDays:0 }; }
+function isAdmin(id){ return ADMIN_IDS.includes(id); }
+function displayName(u){ return (u.customName && u.customName.trim()) || u.name || 'Nutzer'; }
+function verifiedCheckHTML(u){
+  if(!u || !u.verifiedBadge) return '';
+  return `<svg class="verified-check" viewBox="0 0 24 24" title="${escapeHtml(t('verified_badge_active'))}"><path fill="#0A84FF" d="M12 2l2.2 1.4 2.6-.6 1.1 2.4 2.4 1.1-.6 2.6L21 11l-1.3 2.1.6 2.6-2.4 1.1-1.1 2.4-2.6-.6L12 20l-2.2-1.4-2.6.6-1.1-2.4-2.4-1.1.6-2.6L3 11l1.3-2.1-.6-2.6 2.4-1.1 1.1-2.4 2.6.6z"/><path stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" d="M8.5 11l2.3 2.3L15.5 9"/></svg>`;
+}
+function isVerified(id){ return (id||'').startsWith('tg_'); }
+function hasPremiumSub(userId){ const sub = getUser(userId).premiumSub; return !!(sub && sub.active && sub.until && sub.until > Date.now()); }
+function effectiveDoubleVis(l){ return isBoostActive(l.doubleVis) || hasPremiumSub(l.ownerId); }
+function effectiveHighlight(l){ return isBoostActive(l.highlight) || hasPremiumSub(l.ownerId); }
+function maxImagesFor(userId){ return hasPremiumSub(userId) ? MAX_IMAGES_PER_LISTING_PREMIUM : MAX_IMAGES_PER_LISTING_FREE; }
+function pinSlotLimitFor(userId){ return PIN_SLOTS_PER_CATEGORY + (hasPremiumSub(userId) ? PREMIUM_PIN_BONUS_SLOTS : 0); }
+function proBadgeHTML(userId){ return hasPremiumSub(userId) ? `<span class="pro-badge">💎 PRO</span>` : ''; }
+function bannerStyleAttr(u){ return (u.shopBanner && BANNER_PRESETS[u.shopBanner]) ? `style="background:${BANNER_PRESETS[u.shopBanner]}"` : ''; }
+function avatarHTML(user, lg){
+  const initial = (displayName(user)||'?').trim().charAt(0).toUpperCase() || '?';
+  if(user.photoUrl) return `<span class="avatar ${lg?'lg':''}"><img src="${escapeHtml(user.photoUrl)}" onerror="this.parentElement.innerHTML='${initial}'"></span>`;
+  return `<span class="avatar ${lg?'lg':''}">${initial}</span>`;
+}
+function ratingOf(userId){
+  const rs = State.reviews.filter(r=>r.rateeId===userId);
+  const count = rs.length;
+  const avg = count ? rs.reduce((s,r)=>s+r.stars,0)/count : 0;
+  return { avg, count };
+}
+function starsHTML(avg){
+  const full = Math.round(avg);
+  let s = '';
+  for(let i=1;i<=5;i++) s += (i<=full ? '★' : '☆');
+  return `<span class="stars">${s}</span>`;
+}
+function reviewCardHTML(rv){
+  const rater = getUser(rv.raterId);
+  const ratee = getUser(rv.rateeId);
+  const canReply = rv.rateeId === State.myId;
+  return `<div class="review-card">
+    ${starsHTML(rv.stars)}
+    <div>${escapeHtml(rv.text||'')}</div>
+    <div class="review-meta">${State.lang==='de'?'von':'by'} ${escapeHtml(displayName(rater))} · ${timeAgo(rv.createdAt)}</div>
+    ${rv.reply ? `<div class="review-reply"><b>${t('reply_by',{name:escapeHtml(displayName(ratee))})}</b> ${escapeHtml(rv.reply.text)}</div>` : ''}
+    ${canReply ? `<button class="reply-btn" data-action="openreply" data-id="${rv.id}">${rv.reply ? t('reply_edit_btn') : t('reply_btn')}</button>` : ''}
+  </div>`;
+}
+function timeAgo(ts){
+  if(!ts) return '';
+  const diff = Date.now()-ts, min = Math.floor(diff/60000);
+  if(min<1) return t('just_now');
+  if(min<60) return t('min_ago',{n:min});
+  const h = Math.floor(min/60); if(h<24) return t('hr_ago',{n:h});
+  const d = Math.floor(h/24); if(d<30) return t(d>1?'days_ago':'day_ago',{n:d});
+  return new Date(ts).toLocaleDateString(t('locale'));
+}
+function dateStr(ts){ return ts ? new Date(ts).toLocaleDateString(t('locale'),{month:'short',year:'numeric'}) : ''; }
+function onlineStatusHTML(u){
+  if(!u || u.showOnlineStatus===false || !u.lastSeen) return '';
+  const diff = Date.now() - u.lastSeen;
+  if(diff < 3*60000) return `<span class="online-dot"></span> ${t('status_online')}`;
+  return `<span class="online-dot away"></span> ${t('status_lastseen',{time:timeAgo(u.lastSeen)})}`;
+}
+async function touchLastSeen(){
+  const u = getUser(State.myId);
+  if((Date.now() - (u.lastSeen||0)) < 60000) return; // höchstens 1x pro Minute schreiben
+  State.users[State.myId] = { ...u, lastSeen: Date.now() };
+  await persistUsers();
+}
+function priceLabel(l){
+  if(l.priceType==='free') return t('price_free');
+  if(l.priceType==='vb') return (l.price ? t('price_vb',{n:l.price}) : t('price_vb_noprice'));
+  return l.price ? l.price+' €' : t('price_unknown');
+}
+function userLineHTML(userId){
+  const u = getUser(userId); const r = ratingOf(userId);
+  const branded = u.shopBanner && BANNER_PRESETS[u.shopBanner];
+  return `<div class="seller-line ${branded?'branded':''}" ${branded?`style="background:${BANNER_PRESETS[u.shopBanner]}"`:''} data-action="viewprofile" data-id="${userId}">
+    ${avatarHTML(u)}
+    <div style="flex:1;min-width:0">
+      <div><span>${escapeHtml(displayName(u))}${verifiedCheckHTML(u)}${proBadgeHTML(userId)}${u.premium ? ' ⭐' : ''}</span></div>
+      ${branded && u.shopTagline ? `<div class="shop-tagline-inline">${escapeHtml(u.shopTagline)}</div>` : ''}
+      <div>${r.count ? `${starsHTML(r.avg)} <span>(${r.count})</span>` : '<span>Noch keine Bewertungen</span>'}</div>
+      ${onlineStatusHTML(u) ? `<div class="online-line">${onlineStatusHTML(u)}</div>` : ''}
+    </div>
+  </div>`;
+}
+function conversationIdFor(listingId, a, b){ return listingId + '::' + [a,b].sort().join('~'); }
+
+function bumpCategoryStat(cat){
+  if(!cat || cat==='Alle Kategorien') return;
+  if(!State.searchStats) State.searchStats = { categories:{} };
+  State.searchStats.categories[cat] = (State.searchStats.categories[cat]||0) + 1;
+  persistSearchStats();
+}
+function trackSearchTermCategory(term){
+  const matches = State.listings.filter(l=>textMatchesQuery(l.title + ' ' + l.description, term));
+  if(!matches.length) return;
+  const tally = {};
+  matches.forEach(l=>{ tally[l.category] = (tally[l.category]||0) + 1; });
+  let topCat=null, topCount=0;
+  for(const c in tally){ if(tally[c]>topCount){ topCat=c; topCount=tally[c]; } }
+  if(topCat) bumpCategoryStat(topCat);
+}
+let searchTrackDebounce;
+function scheduleSearchTrack(term){
+  clearTimeout(searchTrackDebounce);
+  searchTrackDebounce = setTimeout(()=>{
+    if(term.length>=3 && term!==State.lastTrackedSearchTerm){
+      State.lastTrackedSearchTerm = term;
+      trackSearchTermCategory(term);
+    }
+  }, 700);
+}
+function topSearchedCategory(){
+  const cats = (State.searchStats && State.searchStats.categories) || {};
+  let best=null, bestCount=0;
+  for(const c in cats){ if(cats[c]>bestCount){ best=c; bestCount=cats[c]; } }
+  return bestCount>0 ? best : null;
+}
+function recommendationsFor(category){
+  return State.listings.filter(l=>l.category===category && l.ownerId!==State.myId)
+    .sort((a,b)=>{ const pa=isBoostActive(a.pin)?1:0, pb=isBoostActive(b.pin)?1:0; if(pa!==pb) return pb-pa; return sortScore(b)-sortScore(a); })
+    .slice(0,4);
+}
+
+// ---------- Gespeicherte Suchen ----------
+function matchCountFor(saved){
+  return State.listings.filter(l=>{
+    if(saved.type!=='all' && l.type!==saved.type) return false;
+    if(saved.category!=='Alle Kategorien' && l.category!==saved.category) return false;
+    if(saved.term){
+      const s = saved.term.toLowerCase();
+      if(!l.title.toLowerCase().includes(s) && !l.description.toLowerCase().includes(s)) return false;
+    }
+    return true;
+  }).length;
+}
+function newCountFor(saved){ return Math.max(0, matchCountFor(saved) - (saved.lastSeenCount||0)); }
+function hasSavedSearchUpdates(){ return State.savedSearches.some(s=>newCountFor(s)>0); }
+function savedSearchLabel(saved){
+  const parts = [];
+  if(saved.term) parts.push(`„${saved.term}“`);
+  if(saved.category!=='Alle Kategorien') parts.push(saved.category);
+  if(saved.type!=='all') parts.push(saved.type==='offer'?t('type_offer'):t('type_request'));
+  return parts.length ? parts.join(' · ') : t('all_listings');
+}
+async function saveCurrentSearch(){
+  if(!State.search && State.catFilter==='Alle Kategorien' && State.typeFilter==='all'){ toast(t('toast_set_filter_first')); return; }
+  const dup = State.savedSearches.find(s=>s.term===State.search && s.category===State.catFilter && s.type===State.typeFilter);
+  if(dup){ toast(t('toast_already_saved')); return; }
+  const saved = { id:uid('ss_'), term:State.search, category:State.catFilter, type:State.typeFilter, createdAt:Date.now() };
+  saved.lastSeenCount = matchCountFor(saved);
+  State.savedSearches.push(saved);
+  await persistSavedSearches();
+  toast(t('toast_search_saved')); render();
+}
+async function deleteSavedSearch(id){
+  State.savedSearches = State.savedSearches.filter(s=>s.id!==id);
+  await persistSavedSearches(); render();
+}
+async function applySavedSearch(id){
+  const saved = State.savedSearches.find(s=>s.id===id);
+  if(!saved) return;
+  State.search = saved.term; State.catFilter = saved.category; State.typeFilter = saved.type;
+  saved.lastSeenCount = matchCountFor(saved);
+  await persistSavedSearches();
+  State.tab = 'browse'; render();
+}
+
+function sortScore(l){
+  let t = l.createdAt;
+  if(isBoostActive(l.dailyBump)) t = Math.max(t, l.dailyBump.lastBumpAt || l.createdAt);
+  if(effectiveDoubleVis(l)) t += 12*3600*1000;
+  return t;
+}
+function activePinCountInCategory(category, excludeListingId){
+  return State.listings.filter(l=>l.id!==excludeListingId && l.category===category && isBoostActive(l.pin)).length;
+}
+// ---------- Tippfehler-tolerante Suche ----------
+function levenshteinWithin(a, b, maxDist){
+  if(Math.abs(a.length-b.length) > maxDist) return maxDist+1;
+  const dp = [];
+  for(let i=0;i<=a.length;i++) dp.push(new Array(b.length+1).fill(0));
+  for(let i=0;i<=a.length;i++) dp[i][0]=i;
+  for(let j=0;j<=b.length;j++) dp[0][j]=j;
+  for(let i=1;i<=a.length;i++){
+    let rowMin = Infinity;
+    for(let j=1;j<=b.length;j++){
+      const cost = a[i-1]===b[j-1] ? 0 : 1;
+      dp[i][j] = Math.min(dp[i-1][j]+1, dp[i][j-1]+1, dp[i-1][j-1]+cost);
+      if(dp[i][j] < rowMin) rowMin = dp[i][j];
+    }
+    if(rowMin > maxDist) return maxDist+1;
+  }
+  return dp[a.length][b.length];
+}
+function fuzzyTolerance(len){ if(len<=3) return 0; if(len<=6) return 1; return 2; }
+function textMatchesQuery(text, query){
+  if(!query) return true;
+  const hayWords = text.toLowerCase().split(/\s+/).filter(Boolean);
+  const qWords = query.toLowerCase().split(/\s+/).filter(Boolean);
+  return qWords.every(qw=>{
+    if(hayWords.some(hw=>hw.includes(qw))) return true;
+    const tol = fuzzyTolerance(qw.length);
+    if(tol===0) return false;
+    return hayWords.some(hw=>Math.abs(hw.length-qw.length)<=tol && levenshteinWithin(qw, hw, tol)<=tol);
+  });
+}
+
+function priceValue(l){
+  if(l.priceType==='free') return 0;
+  return (l.price!=null && l.price!=='') ? l.price : Infinity;
+}
+function filteredListings(list){
+  const filtered = list.filter(l=>{
+    if(State.typeFilter!=='all' && l.type!==State.typeFilter) return false;
+    if(State.catFilter!=='Alle Kategorien' && l.category!==State.catFilter) return false;
+    if(State.search){
+      if(!textMatchesQuery(l.title + ' ' + l.description, State.search)) return false;
+    }
+    if(State.priceMin!=null || State.priceMax!=null){
+      const pv = priceValue(l);
+      if(pv===Infinity) return false;
+      if(State.priceMin!=null && pv < State.priceMin) return false;
+      if(State.priceMax!=null && pv > State.priceMax) return false;
+    }
+    return true;
+  });
+  return filtered.sort((a,b)=>{
+    const pa = isBoostActive(a.pin)?1:0, pb = isBoostActive(b.pin)?1:0;
+    if(pa!==pb) return pb-pa;
+    if(State.sortBy==='price_asc'){
+      const va=priceValue(a), vb=priceValue(b);
+      if(va!==vb) return va-vb;
+      return sortScore(b)-sortScore(a);
+    }
+    if(State.sortBy==='price_desc'){
+      const va = priceValue(a)===Infinity ? -1 : priceValue(a);
+      const vb = priceValue(b)===Infinity ? -1 : priceValue(b);
+      if(va!==vb) return vb-va;
+      return sortScore(b)-sortScore(a);
+    }
+    if(State.sortBy==='popular'){
+      const fa=a.favCount||0, fb=b.favCount||0;
+      if(fa!==fb) return fb-fa;
+      return sortScore(b)-sortScore(a);
+    }
+    return sortScore(b)-sortScore(a);
+  });
+}
+
+// ---------- Deal box (full version, used on the detail page) ----------
+function dealBoxHTML(l){
+  const isOwn = l.ownerId === State.myId;
+  if(isOwn){
+    const related = State.deals.filter(d=>d.listingId===l.id);
+    if(related.length===0) return '';
+    let rows = related.map(d=>{
+      const buyer = getUser(d.buyerId);
+      if(d.status==='pending'){
+        return `<div class="row"><span>${t('deal_wants_buy',{name:escapeHtml(displayName(buyer))})}</span>
+          <span><button class="mini-btn primary" data-action="confirmdeal" data-id="${d.id}">${t('deal_confirm_btn')}</button>
+          <button class="mini-btn" data-action="rejectdeal" data-id="${d.id}">${t('deal_reject_btn')}</button></span></div>`;
+      }
+      if(d.status==='confirmed'){
+        const already = State.reviews.some(r=>r.dealId===d.id && r.raterId===State.myId);
+        return `<div class="row"><span><span class="status-pill confirmed">${t('status_confirmed')}</span> ${escapeHtml(displayName(buyer))}</span>
+          ${already ? `<span>${t('deal_rated')}</span>` : `<button class="mini-btn" data-action="openreview" data-dealid="${d.id}" data-rateeid="${d.buyerId}" data-rateename="${escapeHtml(displayName(buyer))}">${t('deal_rate_buyer')}</button>`}</div>`;
+      }
+      return `<div class="row"><span><span class="status-pill rejected">${t('status_rejected')}</span> ${escapeHtml(displayName(buyer))}</span></div>`;
+    }).join('');
+    return `<div class="deal-box">${rows}</div>`;
+  } else {
+    const myDeal = State.deals.filter(d=>d.listingId===l.id && d.buyerId===State.myId).sort((a,b)=>b.createdAt-a.createdAt)[0];
+    if(!myDeal){
+      return `<div class="deal-box"><div class="row"><span>${t('deal_interest')}</span>
+        <button class="mini-btn primary" data-action="requestdeal" data-listingid="${l.id}">${t('deal_request_btn')}</button></div></div>`;
+    }
+    if(myDeal.status==='pending') return `<div class="deal-box"><div class="row"><span class="status-pill pending">${t('status_pending')}</span><span></span></div></div>`;
+    if(myDeal.status==='rejected') return `<div class="deal-box"><div class="row"><span class="status-pill rejected">${t('deal_rejected_label')}</span>
+        <button class="mini-btn" data-action="requestdeal" data-listingid="${l.id}">${t('deal_reapply')}</button></div></div>`;
+    const already = State.reviews.some(r=>r.dealId===myDeal.id && r.raterId===State.myId);
+    const seller = getUser(l.ownerId);
+    return `<div class="deal-box"><div class="row"><span class="status-pill confirmed">${t('deal_confirmed')}</span>
+      ${already ? `<span>${t('deal_rated')}</span>` : `<button class="mini-btn" data-action="openreview" data-dealid="${myDeal.id}" data-rateeid="${l.ownerId}" data-rateename="${escapeHtml(displayName(seller))}">${t('deal_rate_seller')}</button>`}</div></div>`;
+  }
+}
+
+// ---------- Compact card (Liste): Tippen öffnet die Angebotsseite ----------
+function cardHTML(l, ownerView){
+  const isFav = State.favorites.includes(l.id);
+  const isOwn = l.ownerId === State.myId;
+  const activeBoosts = Object.entries(BOOSTS).filter(([k,cfg])=> k==='doublevis' ? effectiveDoubleVis(l) : k==='highlight' ? effectiveHighlight(l) : isBoostActive(l[cfg.field]));
+  const isPinned = isBoostActive(l.pin);
+  const isHighlighted = effectiveHighlight(l);
+  const secondaryBoosts = activeBoosts.filter(([k])=>k!=='highlight' && k!=='pin');
+
+  let statusPill = '';
+  if(isOwn){
+    const pendingCount = State.deals.filter(d=>d.listingId===l.id && d.status==='pending').length;
+    if(pendingCount>0) statusPill = `<span class="status-pill pending">${t('req_count',{n:pendingCount, plural:pendingCount>1?(State.lang==='de'?'n':'s'):''})}</span>`;
+    const expiringBoost = Object.values(BOOSTS).some(cfg=>isBoostActive(l[cfg.field]) && (l[cfg.field].until - Date.now()) < 24*3600000);
+    if(expiringBoost) statusPill += `<span class="status-pill pending">⏳ ${t('boost_expiring_soon')}</span>`;
+  } else {
+    const myDeal = State.deals.filter(d=>d.listingId===l.id && d.buyerId===State.myId).sort((a,b)=>b.createdAt-a.createdAt)[0];
+    if(myDeal) statusPill = `<span class="status-pill ${myDeal.status}">${myDeal.status==='pending'?t('status_pending'):myDeal.status==='confirmed'?t('status_confirmed'):t('status_rejected')}</span>`;
+  }
+
+  const imgs = listingImages(l);
+  return `
+  <div class="card ${isPinned?'boost-pin':''}" data-id="${l.id}">
+    <div class="card-row">
+      <div class="thumb-wrap">
+        <div class="thumb">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="1.5"/><path d="M21 16l-5-5-4 4-3-3-5 5"/></svg>
+          ${imgs[0] ? `<img src="${escapeHtml(imgs[0])}" onerror="this.remove()">` : ''}
+        </div>
+        ${imgs.length>1 ? `<span class="gallery-count">🖼 ${imgs.length}</span>` : ''}
+        ${isHighlighted ? '<span class="top-ribbon">TOP</span>' : ''}
+        <button class="fav-btn ${isFav?'active':''}" data-action="fav" data-id="${l.id}" title="Merken">
+          <svg viewBox="0 0 24 24" fill="${isFav?'currentColor':'none'}" stroke="currentColor" stroke-width="2"><path d="M12 21s-7-4.4-9.5-9C1 8.5 2.8 5 6 5c2 0 3.3 1.1 4 2 0.7-0.9 2-2 4-2 3.2 0 5 3.5 3.5 7-2.5 4.6-9.5 9-9.5 9z"/></svg>
+        </button>
+      </div>
+      <div class="content">
+        <div class="content-top">
+          <h3 class="card-title">${escapeHtml(l.title)}</h3>
+          <span class="icon-group">
+            <button class="flag-btn" data-action="share" data-id="${l.id}" title="${State.lang==='de'?'Teilen':'Share'}">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 3.9M15.4 6.6L8.6 10.5"/></svg>
+            </button>
+            <button class="flag-btn" data-action="report" data-type="listing" data-id="${l.id}" data-label="${escapeHtml(l.title)}" title="${State.lang==='de'?'Melden':'Report'}">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 21V4a1 1 0 0 1 1-1h11l-1.5 4L16 11H5"/></svg>
+            </button>
+          </span>
+        </div>
+        <div class="price">${priceLabel(l)}</div>
+        <div class="tag-row">
+          <span class="tag ${l.type}">${l.type==='offer'?t('badge_offer'):t('badge_request')}</span>
+          <span class="tag">${escapeHtml(l.category)}</span>
+          ${secondaryBoosts.map(([k,cfg])=>`<span class="tag ${cfg.cls}">${t(cfg.badgeKey)}</span>`).join('')}
+        </div>
+        <div class="meta-row">
+          <span>${timeAgo(l.createdAt)}${socialProofHTML(l) ? ` · ${socialProofHTML(l)}` : ''}</span>
+          <span class="meta-right">
+            ${statusPill}
+            ${ownerView && isOwn ? `<span class="owner-actions">
+                <button data-action="promote" data-id="${l.id}">${t('btn_promote')}</button>
+                <button data-action="edit" data-id="${l.id}">${t('btn_edit')}</button>
+                <button data-action="delete" data-id="${l.id}">${t('btn_delete')}</button>
+              </span>` : ''}
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+// ---------- Angebotsseite (Detailansicht einer Anzeige) ----------
+function renderListingDetailInner(l){
+  const isFav = State.favorites.includes(l.id);
+  const isOwn = l.ownerId === State.myId;
+  const seller = getUser(l.ownerId);
+  const handle = (seller.username||'').replace(/^@/,'');
+  const activeBoosts = Object.entries(BOOSTS).filter(([k,cfg])=> k==='doublevis' ? effectiveDoubleVis(l) : k==='highlight' ? effectiveHighlight(l) : isBoostActive(l[cfg.field]));
+  const isHighlighted = effectiveHighlight(l);
+  return `
+  <div class="profile-overlay-header">
+    <button class="close-btn" data-action="closedetail">←</button>
+    <h2>${t('detail_title')}</h2>
+    <button class="close-btn" data-action="share" data-id="${l.id}" title="${State.lang==='de'?'Teilen':'Share'}" style="font-size:18px">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:19px;height:19px"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 3.9M15.4 6.6L8.6 10.5"/></svg>
+    </button>
+  </div>
+  <div class="overlay-body">
+    <div class="detail-thumb" id="galleryWrap">
+      ${(()=>{ const imgs = listingImages(l); const idx = Math.min(State.galleryIndex||0, Math.max(0, imgs.length-1));
+        return imgs.length
+          ? `<img src="${escapeHtml(imgs[idx])}" data-action="viewfullscreen" data-url="${escapeHtml(imgs[idx])}" style="cursor:pointer" onerror="this.remove()">`
+          : `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="1.5"/><path d="M21 16l-5-5-4 4-3-3-5 5"/></svg>`;
+      })()}
+      ${listingImages(l).length>1 ? `
+        <button class="gallery-arrow left" data-action="galleryprev">‹</button>
+        <button class="gallery-arrow right" data-action="gallerynext">›</button>
+        <div class="gallery-dots">${listingImages(l).map((_,i)=>`<button class="dot ${i===(State.galleryIndex||0)?'active':''}" data-action="gallerydot" data-idx="${i}"></button>`).join('')}</div>
+      ` : ''}
+      ${isHighlighted ? '<span class="top-ribbon">TOP</span>' : ''}
+      <button class="fav-btn ${isFav?'active':''}" data-action="fav" data-id="${l.id}" title="${State.lang==='de'?'Merken':'Save'}">
+        <svg viewBox="0 0 24 24" fill="${isFav?'currentColor':'none'}" stroke="currentColor" stroke-width="2"><path d="M12 21s-7-4.4-9.5-9C1 8.5 2.8 5 6 5c2 0 3.3 1.1 4 2 0.7-0.9 2-2 4-2 3.2 0 5 3.5 3.5 7-2.5 4.6-9.5 9-9.5 9z"/></svg>
+      </button>
+    </div>
+    <h1 class="detail-title">${escapeHtml(l.title)}</h1>
+    <div class="detail-price">${priceLabel(l)}</div>
+    ${socialProofHTML(l) ? `<div class="hint" style="margin:-4px 0 8px">${socialProofHTML(l)}</div>` : ''}
+    <div class="tag-row">
+      <span class="tag ${l.type}">${l.type==='offer'?t('badge_offer'):t('badge_request')}</span>
+      <span class="tag">${escapeHtml(l.category)}</span>
+      ${activeBoosts.map(([k,cfg])=>`<span class="tag ${cfg.cls}">${t(cfg.badgeKey)}</span>`).join('')}
+    </div>
+    <p class="detail-desc">${escapeHtml(l.description)}</p>
+    ${userLineHTML(l.ownerId)}
+    ${seller.channel ? `<a href="#" class="telegram-link" data-action="openchannel" data-url="${escapeHtml(channelUrl(seller.channel))}">📢 ${State.lang==='de'?'Kanal von':'Channel by'} ${escapeHtml(displayName(seller))} ${State.lang==='de'?'ansehen':''}</a>` : ''}
+    ${!isOwn ? `<button class="submit-btn" data-action="openchat" data-listingid="${l.id}" data-otherid="${l.ownerId}">${t('verkaeufer_anschreiben')}</button>` : ''}
+    ${(!isOwn && handle) ? `<a href="#" class="telegram-link" data-action="contact" data-handle="${escapeHtml(handle)}">${t('via_telegram',{handle:escapeHtml(seller.username)})}</a>` : ''}
+    ${dealBoxHTML(l)}
+    ${isOwn
+      ? `<div class="owner-actions" style="margin-top:16px;justify-content:center;gap:18px">
+          <button data-action="promote" data-id="${l.id}">${t('btn_promote')}</button>
+          <button data-action="edit" data-id="${l.id}">${t('btn_edit')}</button>
+          <button data-action="delete" data-id="${l.id}">${t('btn_delete')}</button>
+        </div>`
+      : `<button class="btn-secondary" style="margin-top:16px;width:100%" data-action="report" data-type="listing" data-id="${l.id}" data-label="${escapeHtml(l.title)}">${t('report_listing_btn')}</button>`}
+    <div class="hint" style="text-align:center;margin-top:12px">${t('listed_ago',{time:timeAgo(l.createdAt)})}</div>
+  </div>`;
+}
+
+// ---------- Tab renders ----------
+function renderBrowse(){
+  document.getElementById('filters').style.display = 'flex';
+  let recommendedBlock = '';
+  let excludeIds = [];
+  if(!State.search && State.catFilter==='Alle Kategorien' && State.typeFilter==='all'){
+    const topCat = topSearchedCategory();
+    if(topCat){
+      const recs = recommendationsFor(topCat);
+      if(recs.length){
+        excludeIds = recs.map(r=>r.id);
+        recommendedBlock = `<div class="section-title">${t('recommended_title')}</div>
+          <div class="hint" style="margin-bottom:10px">${t('recommended_sub',{term:escapeHtml(topCat)})}</div>
+          ${recs.map(l=>cardHTML(l,false)).join('')}
+          <div class="section-title" style="margin-top:18px">${t('all_listings')}</div>`;
+      }
+    }
+  }
+  const list = filteredListings(State.listings).filter(l=>!excludeIds.includes(l.id));
+  if(list.length===0) return recommendedBlock || `<div class="empty"><div class="big">${t('empty_browse_title')}</div><div class="small">${t('empty_browse_sub')}</div></div>`;
+  return recommendedBlock + list.map(l=>cardHTML(l,false)).join('');
+}
+
+function renderCreate(){
+  document.getElementById('filters').style.display = 'none';
+  const editing = State.editingId ? State.listings.find(l=>l.id===State.editingId) : null;
+  let d = editing ? { ...editing } : { type:'offer', title:'', description:'', price:'', priceType:'fixed', category:CATEGORIES[1] };
+  if(editing) State.formType = editing.type;
+  if(State.formDraft){
+    d = { ...d,
+      title: State.formDraft.title,
+      description: State.formDraft.description,
+      category: State.formDraft.category,
+      price: State.formDraft.price,
+      priceType: State.formDraft.free ? 'free' : (State.formDraft.vb ? 'vb' : 'fixed'),
+    };
+  }
+  const ft = State.formType || d.type;
+  const images = currentFormImages(editing);
+  return `
+  <div class="form-wrap">
+    <h2>${editing ? t('form_title_edit') : t('form_title_new')}</h2>
+    <div class="field">
+      <label>${t('form_type_label')}</label>
+      <div class="type-toggle">
+        <button type="button" class="${ft==='offer'?'active':''}" data-action="settype" data-type="offer">${t('form_type_offer')}</button>
+        <button type="button" class="${ft==='request'?'active':''}" data-action="settype" data-type="request">${t('form_type_request')}</button>
+      </div>
+    </div>
+    <div class="field"><label>${t('form_title_field')}</label>
+      <input type="text" id="f_title" maxlength="70" value="${escapeHtml(d.title)}" placeholder="${t('form_title_ph')}"></div>
+    <div class="field"><label>${t('form_desc_field')}</label>
+      <textarea id="f_desc" maxlength="600" placeholder="${t('form_desc_ph')}">${escapeHtml(d.description)}</textarea></div>
+    <div class="field"><label>${t('form_cat_field')}</label>
+      <select id="f_cat">${CATEGORIES.slice(1).map(c=>`<option ${c===d.category?'selected':''}>${c}</option>`).join('')}</select></div>
+    <div class="field"><label>${t('form_price_field')}</label>
+      <div class="price-row">
+        <input type="number" id="f_price" min="0" step="0.01" value="${d.price||''}" placeholder="0,00" ${d.priceType==='free'?'disabled':''}>
+        <label class="vb-check"><input type="checkbox" id="f_vb" ${d.priceType==='vb'?'checked':''}> ${t('form_vb')}</label>
+        <label class="vb-check"><input type="checkbox" id="f_free" ${d.priceType==='free'?'checked':''}> ${t('form_free')}</label>
+      </div></div>
+    <div class="field"><label>${t('form_images_field')} <span style="color:var(--muted);font-weight:400">${t('form_images_optional',{max:maxImagesFor(State.myId)})}</span></label>
+      ${images.length ? `<div class="gallery-edit-strip">${images.map((img,i)=>`
+        <div class="gallery-edit-thumb">
+          <img src="${escapeHtml(img)}">
+          <button class="gallery-edit-remove" data-action="removeimg" data-idx="${i}">✕</button>
+        </div>`).join('')}</div>` : ''}
+      ${images.length < maxImagesFor(State.myId) ? `
+      <div class="imgfile-row">
+        <button type="button" class="filebtn" data-action="pickimage">${images.length ? t('form_add_image') : t('form_pick_image')}</button>
+        <input type="file" id="f_imgfile" accept="image/*" multiple>
+      </div>` : ''}
+      <div class="hint">${t('form_images_hint',{maxmb:MAX_RAW_FILE_MB})}</div>
+    </div>
+    <div class="hint" style="margin-bottom:10px">${t('form_contact_hint')}</div>
+    <button class="submit-btn" data-action="submit">${editing ? t('form_submit_edit') : t('form_submit_new')}</button>
+    ${editing ? `<div class="cancel-edit" data-action="canceledit">${t('form_cancel_edit')}</div>` : ''}
+  </div>`;
+}
+
+function renderProfile(){
+  document.getElementById('filters').style.display = 'none';
+  const u = getUser(State.myId);
+  const r = ratingOf(State.myId);
+  const own = State.listings.filter(l=>l.ownerId===State.myId).sort((a,b)=>b.createdAt-a.createdAt);
+  const favs = State.listings.filter(l=>State.favorites.includes(l.id)).sort((a,b)=>b.createdAt-a.createdAt);
+  const myReviews = State.reviews.filter(rv=>rv.rateeId===State.myId).sort((a,b)=>b.createdAt-a.createdAt);
+  const completedDeals = State.deals.filter(d=>d.status==='confirmed' && (d.buyerId===State.myId||d.sellerId===State.myId)).length;
+  const totalViews = own.reduce((s,l)=>s+(l.views||0),0);
+  const totalFavs = own.reduce((s,l)=>s+(l.favCount||0),0);
+
+  const head = `
+    ${u.banned ? `<div class="ban-banner">🚫 Dein Konto wurde gesperrt.${u.bannedReason?` Grund: ${escapeHtml(u.bannedReason)}`:''} Du kannst keine neuen Anzeigen oder Nachrichten erstellen.</div>` : ''}
+    <div class="profile-header ${u.shopBanner?'branded':''}" ${bannerStyleAttr(u)}>
+      ${avatarHTML(u, true)}
+      <div>
+        <div class="profile-name-row">
+          <span class="name">${escapeHtml(displayName(u))}</span>${verifiedCheckHTML(u)}
+          ${isVerified(State.myId) ? `<span class="verified-badge">${t('profile_verified')}</span>` : `<span class="unverified-badge">${t('profile_unverified')}</span>`}
+          ${u.premium ? `<span class="premium-badge">${t('profile_premium')}</span>` : ''}
+          ${proBadgeHTML(State.myId)}${isAdmin(State.myId)?'<span class="admin-badge">Admin</span>':''}
+        </div>
+        ${u.username ? `<div class="username-line">${escapeHtml(u.username)}</div>` : ''}
+        <div class="rating-line">${r.count ? `${starsHTML(r.avg)} ${r.avg.toFixed(1)} (${r.count} ${t('profile_sub_reviews').toLowerCase()})` : t('no_rating_yet')}</div>
+      </div>
+    </div>
+    ${u.shopTagline ? `<div class="shop-tagline">${escapeHtml(u.shopTagline)}</div>` : ''}
+    <div class="stat-row">
+      <div><b>${own.length}</b>${t('profile_anzeigen')}</div>
+      <div><b>${completedDeals}</b>${t('profile_deals')}</div>
+      <div><b>${dateStr(u.createdAt)}</b>${t('profile_member_since')}</div>
+    </div>
+    ${!isVerified(State.myId) ? `<div class="hint" style="margin-bottom:10px">${t('profile_hint_unverified')}</div>` : ''}
+    <div class="subtabs">
+      <button class="${State.profileSub==='overview'?'active':''}" data-action="profsub" data-sub="overview">${t('profile_sub_overview')}</button>
+      <button class="${State.profileSub==='listings'?'active':''}" data-action="profsub" data-sub="listings">${t('profile_sub_listings')} (${own.length})</button>
+      <button class="${State.profileSub==='favorites'?'active':''}" data-action="profsub" data-sub="favorites">${t('profile_sub_favorites')} (${favs.length})</button>
+      <button class="${State.profileSub==='reviews'?'active':''}" data-action="profsub" data-sub="reviews">${t('profile_sub_reviews')} (${myReviews.length})</button>
+      <button class="${State.profileSub==='saved'?'active':''}" data-action="profsub" data-sub="saved">${t('profile_sub_saved')} (${State.savedSearches.length})</button>
+    </div>`;
+
+  let body = '';
+  if(State.profileSub==='overview'){
+    body = `
+      <div class="field"><label>${t('profile_name_field')}</label>
+        <input type="text" id="p_name" value="${escapeHtml(u.customName)}" placeholder="${escapeHtml(u.name)}"></div>
+      <div class="field"><label>${t('profile_username_field')}</label>
+        <input type="text" id="p_username" value="${escapeHtml(u.username)}" placeholder="@dein_name"></div>
+      <div class="field"><label>${t('profile_channel_field')}</label>
+        <input type="text" id="p_channel" value="${escapeHtml(u.channel)}" placeholder="@dein_kanal oder https://t.me/...">
+        <div class="hint">${t('profile_channel_hint')}</div></div>
+      <div class="field"><label>${t('profile_bio_field')}</label>
+        <textarea id="p_bio" maxlength="300" placeholder="${t('profile_bio_ph')}">${escapeHtml(u.bio)}</textarea></div>
+      <div class="field">
+        <label class="vb-check" style="font-size:13px;color:var(--text);gap:8px">
+          <input type="checkbox" id="p_show_online" ${u.showOnlineStatus!==false?'checked':''}> ${t('show_online_status')}
+        </label>
+        <div class="hint">${t('show_online_status_hint')}</div>
+      </div>
+      <div class="field"><label>🎁 ${t('referral_section_label')}</label>
+        <div class="hint" style="margin-bottom:8px">${t('referral_desc',{n:REFERRAL_REWARD_DAYS})}</div>
+        ${u.freeHighlightDays>0 ? `<div class="hint" style="color:#1E7A3C;font-weight:700;margin-bottom:8px">${t('referral_balance',{n:u.freeHighlightDays})}</div>` : ''}
+        <button class="btn-secondary" data-action="invitefriend" style="width:100%">${t('referral_invite_btn')}</button>
+      </div>
+      <div class="field"><label>${t('verified_section_label')}</label>
+        <div class="hint" style="margin-bottom:8px">${t('verified_badge_desc')}</div>
+        ${u.verifiedBadge
+          ? `<div class="hint" style="color:#1E7A3C;font-weight:700">${t('verified_badge_active')}</div>`
+          : `<button class="btn-secondary" data-action="buyverified" style="width:100%">${verifiedCheckHTML({verifiedBadge:true})} ${t('verified_badge_buy_stars',{stars:VERIFIED_BADGE_STARS, eur:eur(VERIFIED_BADGE_STARS)})}</button>`}
+      </div>
+      <div class="field"><label>💎 ${t('premium_section_label')}</label>
+        ${hasPremiumSub(State.myId)
+          ? `<div class="hint" style="color:#1E7A3C;font-weight:700;margin-bottom:10px">${t('premium_active_until',{date:dateStr(u.premiumSub.until)})}</div>`
+          : `<div class="hint" style="margin-bottom:10px">${t('premium_desc',{max:FREE_LISTING_LIMIT, imgmax:MAX_IMAGES_PER_LISTING_PREMIUM, imgfree:MAX_IMAGES_PER_LISTING_FREE, pinbonus:PREMIUM_PIN_BONUS_SLOTS})}</div>`}
+        <div class="tier-row">
+          ${PREMIUM_PLANS.map((p,i)=>`<button data-action="buypremium" data-plan="${i}">${t('premium_months',{n:p.months})} · ${p.stars} ★ (~${eur(p.stars)} €)</button>`).join('')}
+        </div>
+      </div>
+      ${hasPremiumSub(State.myId) ? `
+      <div class="field"><label>📊 ${t('stats_section_label')}</label>
+        <div class="stat-row">
+          <div><b>${totalViews}</b>${t('stat_views')}</div>
+          <div><b>${totalFavs}</b>${t('stat_favs')}</div>
+          <div><b>${r.count ? r.avg.toFixed(1) : '–'}</b>${t('stat_rating')}</div>
+        </div>
+        <button class="btn-secondary" data-action="exportdata" style="width:100%;margin-top:10px">${t('export_data_btn')}</button>
+      </div>` : ''}
+      <div class="field"><label>🎨 ${t('branding_section_label')}</label>
+        ${hasPremiumSub(State.myId) ? `
+          <div class="banner-swatch-row">
+            ${Object.keys(BANNER_PRESETS).map(key=>`<button type="button" class="banner-swatch ${u.shopBanner===key?'active':''}" style="background:${BANNER_PRESETS[key]}" data-action="setbanner" data-banner="${key}"></button>`).join('')}
+          </div>
+          <input type="text" id="p_tagline" maxlength="60" value="${escapeHtml(u.shopTagline)}" placeholder="${t('branding_tagline_ph')}">
+        ` : `<div class="premium-lock"><div class="lock-icon">🔒</div><div class="hint">${t('branding_locked')}</div></div>`}
+      </div>
+      <button class="submit-btn" data-action="saveprofile">${t('profile_save')}</button>
+      <div class="cancel-edit" data-action="openlegal" style="margin-top:18px">${t('profile_legal_link')}</div>`;
+  } else if(State.profileSub==='listings'){
+    body = own.length ? own.map(l=>cardHTML(l,true)).join('') : `<div class="empty"><div class="big">${t('no_listings_yet')}</div><div class="small">${t('no_listings_sub')}</div></div>`;
+  } else if(State.profileSub==='favorites'){
+    body = favs.length ? favs.map(l=>cardHTML(l,false)).join('') : `<div class="empty"><div class="big">${t('fav_empty')}</div><div class="small">${t('fav_empty_sub')}</div></div>`;
+  } else if(State.profileSub==='saved'){
+    body = State.savedSearches.length ? State.savedSearches.map(s=>{
+      const nc = newCountFor(s);
+      return `<div class="convo-row" data-action="applysavedsearch" data-id="${s.id}">
+        <div class="convo-mid">
+          <div class="convo-top"><span class="convo-name">${escapeHtml(savedSearchLabel(s))}</span><span class="convo-time">${timeAgo(s.createdAt)}</span></div>
+          <div class="convo-preview">${t('matches_now',{n:matchCountFor(s)})}${nc>0 ? ` · <b style="color:var(--heart)">${t('new_matches',{n:nc})}</b>` : ''}</div>
+        </div>
+        <button class="flag-btn" data-action="deletesavedsearch" data-id="${s.id}" title="${t('btn_delete')}">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6L6 18"/></svg>
+        </button>
+      </div>`;
+    }).join('') : `<div class="empty"><div class="big">${t('no_saved')}</div><div class="small">${t('no_saved_sub')}</div></div>`;
+  } else {
+    body = myReviews.length ? myReviews.map(rv=>reviewCardHTML(rv)).join('') : `<div class="empty"><div class="big">${t('no_reviews_yet')}</div><div class="small">${t('reviews_after_deal')}</div></div>`;
+  }
+  return head + body;
+}
+
+// ---------- Nachrichten (Chat-Inbox) ----------
+function conversationsForMe(){
+  const map = {};
+  State.messages.forEach(m=>{
+    if(m.fromId!==State.myId && m.toId!==State.myId) return;
+    if(!map[m.conversationId] || m.createdAt > map[m.conversationId].createdAt) map[m.conversationId] = m;
+  });
+  return Object.values(map).map(lastMsg=>{
+    const otherId = lastMsg.fromId===State.myId ? lastMsg.toId : lastMsg.fromId;
+    const unread = lastMsg.fromId!==State.myId && lastMsg.createdAt > (State.lastRead[lastMsg.conversationId]||0);
+    return { conversationId:lastMsg.conversationId, listingId:lastMsg.listingId, otherId, lastMsg, unread };
+  }).sort((a,b)=>b.lastMsg.createdAt-a.lastMsg.createdAt);
+}
+function hasUnreadMessages(){ return conversationsForMe().some(c=>c.unread); }
+
+const LEGAL_HTML_DE = `
+<h2>Nutzungsbedingungen</h2>
+<h3>1. Geltungsbereich</h3>
+<p>Diese Nutzungsbedingungen regeln die Nutzung der Telegram-Mini-App „Basar" (nachfolgend „Basar Kleinanzeigen" oder „die Plattform"), betrieben von [Name/Firma des Betreibers], [Adresse], [Kontakt] (nachfolgend „Betreiber"). Mit der Nutzung der Plattform erkennt der Nutzer diese Bedingungen an.</p>
+<h3>2. Leistungsbeschreibung</h3>
+<p>Basar Kleinanzeigen stellt eine technische Plattform bereit, über die Nutzer Kleinanzeigen (Angebote und Gesuche) erstellen, durchsuchen, bewerten und über einen integrierten Chat miteinander Kontakt aufnehmen können. Basar Kleinanzeigen ist nicht Vertragspartei der zwischen Nutzern vereinbarten Käufe, Verkäufe, Tauschgeschäfte oder Dienstleistungen. Verträge kommen ausschließlich zwischen den beteiligten Nutzern zustande.</p>
+<h3>3. Registrierung und Identifikation</h3>
+<p>Die Identifikation erfolgt automatisiert über die Telegram-ID des Nutzers, sofern die App innerhalb von Telegram geöffnet wird. Der Nutzer ist für die Richtigkeit seiner Profilangaben selbst verantwortlich.</p>
+<h3>4. Pflichten der Nutzer / Verbotene Inhalte</h3>
+<p>Nutzer verpflichten sich, keine Anzeigen, Profilangaben, Chat-Nachrichten oder Bewertungen einzustellen, die:</p>
+<ul>
+<li>gegen geltendes Recht verstoßen – insbesondere der Verkauf, Kauf, Tausch, das Anbieten oder die Vermittlung illegaler Gegenstände, Substanzen oder Dienstleistungen (z. B. Betäubungsmittel, Waffen, gestohlene oder gefälschte Waren, illegal erlangte Zugangsdaten/Accounts, Inhalte, die fremde Urheber-, Marken- oder Persönlichkeitsrechte verletzen, sowie jede sonstige nach geltendem Recht strafbare oder unzulässige Handlung);</li>
+<li>betrügerisch, irreführend, beleidigend, diskriminierend, gewaltverherrlichend oder sexuell anstößig sind;</li>
+<li>Spam, Werbung Dritter ohne Bezug zu einer echten Anzeige oder automatisiert erzeugte Inhalte darstellen;</li>
+<li>personenbezogene Daten Dritter ohne deren Einwilligung offenlegen.</li>
+</ul>
+<p>Der Betreiber behält sich vor, Anzeigen, Profile oder Nutzerkonten bei Verstößen ohne Vorankündigung zu entfernen bzw. zu sperren, ist hierzu jedoch nicht verpflichtet.</p>
+<h3>5. Haftungsausschluss für nutzergenerierte Inhalte</h3>
+<p>Alle auf der Plattform sichtbaren Inhalte – Anzeigen, Bilder, Profilangaben, Chat-Nachrichten, Bewertungen und Meldungen – werden ausschließlich von den Nutzern selbst erstellt und eingestellt. Basar Kleinanzeigen macht sich diese Inhalte nicht zu eigen und überprüft sie grundsätzlich nicht vorab auf Richtigkeit, Rechtmäßigkeit oder Vollständigkeit.</p>
+<p>Basar Kleinanzeigen ist für die von Nutzern bereitgestellten Inhalte nicht verantwortlich und übernimmt keine Gewähr für deren Richtigkeit, Legalität, Qualität oder Verfügbarkeit der beworbenen Gegenstände oder Leistungen. Dies gilt insbesondere für etwaige illegale, rechtsverletzende oder irreführende Inhalte einzelner Nutzer. Eine Haftung des Betreibers für Schäden, die aus der Nutzung bereitgestellter Inhalte oder aus zwischen Nutzern geschlossenen Geschäften entstehen, ist – soweit gesetzlich zulässig – ausgeschlossen. Unberührt bleibt die Verantwortlichkeit nach den gesetzlichen Vorschriften für eigene Inhalte des Betreibers sowie ab Kenntnis konkreter Rechtsverstöße.</p>
+<h3>6. Melden von Inhalten</h3>
+<p>Nutzer können Anzeigen und Profile über die „Melden"-Funktion kennzeichnen. Der Betreiber kann gemeldete Inhalte prüfen und nach eigenem Ermessen entfernen, ist hierzu im Einzelfall jedoch nicht verpflichtet.</p>
+<h3>7. Geschäfte zwischen Nutzern, Bewertungen</h3>
+<p>Käufe, Verkäufe und sonstige Geschäfte werden eigenverantwortlich zwischen den Nutzern abgewickelt und bestätigt. Bewertungen können erst nach einem von beiden Seiten bestätigten Handel abgegeben werden und beziehen sich auf die Vertrauenswürdigkeit der bewerteten Person, nicht auf die Anzeige selbst.</p>
+<h3>8. Bezahlte Zusatzfunktionen</h3>
+<p>Funktionen wie Hervorheben, tägliches Nach-oben-Setzen, erhöhte Sichtbarkeit oder das Anpinnen einer Anzeige sind kostenpflichtige Zusatzleistungen. Bei Zahlung über Telegram Stars gelten zusätzlich die Zahlungsbedingungen von Telegram.</p>
+<h3>9. Haftungsbeschränkung allgemein</h3>
+<p>Der Betreiber haftet unbeschränkt nur für Schäden aus der Verletzung des Lebens, des Körpers oder der Gesundheit sowie bei Vorsatz und grober Fahrlässigkeit. Für leicht fahrlässige Pflichtverletzungen haftet der Betreiber nur bei Verletzung wesentlicher Vertragspflichten und begrenzt auf den vorhersehbaren, vertragstypischen Schaden.</p>
+<h3>10. Änderungen, Schlussbestimmungen</h3>
+<p>Der Betreiber kann diese Bedingungen mit Wirkung für die Zukunft ändern. Es gilt das Recht der Bundesrepublik Deutschland unter Ausschluss des UN-Kaufrechts, soweit zwingende verbraucherschützende Vorschriften des Wohnsitzstaates des Nutzers nicht entgegenstehen.</p>
+
+<h2>Datenschutzerklärung</h2>
+<h3>1. Verantwortlicher</h3>
+<p>[Name/Firma], [Adresse], [E-Mail-Adresse] (nachfolgend „wir").</p>
+<h3>2. Welche Daten verarbeitet werden</h3>
+<ul>
+<li>Telegram-Kontodaten: Telegram-ID, Vorname/Nachname, Telegram-Username, Profilbild</li>
+<li>Profilangaben: selbst gewählter Anzeigename, Profilbeschreibung</li>
+<li>Inhalte: Anzeigentexte, hochgeladene Bilder, Kategorie- und Preisangaben</li>
+<li>Kommunikation: Chat-Nachrichten zwischen Nutzern innerhalb der App</li>
+<li>Transaktions-/Vertrauensdaten: Kaufanfragen, Bestätigungen, Bewertungen, Meldungen</li>
+<li>Favoriten und Geräte-Kennung: ausschließlich lokal dem jeweiligen Nutzer zugeordnet</li>
+</ul>
+<h3>3. Sichtbarkeit der Daten</h3>
+<p>Ein Teil der Daten wird als geteilte Daten gespeichert und ist für alle Nutzer der App einsehbar – dazu zählen Anzeigen, Profilangaben, Bewertungen, Kaufanfragen und Chat-Nachrichten (jeweils nur für die am Chat beteiligten Personen). Favoriten und Geräte-IDs werden nicht geteilt.</p>
+<h3>4. Zweck der Verarbeitung</h3>
+<p>Die Verarbeitung dient der Bereitstellung der Marktplatz- und Chat-Funktionen, der Identifikation von Nutzern sowie der Betrugsprävention (Bewertungen, Meldungen).</p>
+<h3>5. Rechtsgrundlage</h3>
+<p>Die Verarbeitung erfolgt auf Grundlage der Erfüllung des Nutzungsvertrags (Art. 6 Abs. 1 lit. b DSGVO) sowie ggf. berechtigter Interessen (Art. 6 Abs. 1 lit. f DSGVO).</p>
+<h3>6. Speicherdauer</h3>
+<p>Inhalte bleiben gespeichert, bis sie vom Nutzer gelöscht werden oder der Betreiber sie im Rahmen der Moderation entfernt.</p>
+<h3>7. Rechte der Nutzer</h3>
+<p>Nutzer haben nach der DSGVO das Recht auf Auskunft, Berichtigung, Löschung, Einschränkung der Verarbeitung, Datenübertragbarkeit und Widerspruch. Anfragen können an [E-Mail-Adresse] gerichtet werden. Eigene Anzeigen, Profilangaben und Favoriten können Nutzer zudem selbst direkt in der App löschen bzw. bearbeiten.</p>
+<h3>8. Drittanbieter</h3>
+<p>Schriftarten werden über Google Fonts eingebunden; beim Laden der App kann hierbei eine Verbindung zu Servern von Google (USA) erfolgen. Die App nutzt zudem die Telegram-WebApp-Schnittstelle zur Identifikation; es gelten ergänzend die Datenschutzbestimmungen von Telegram.</p>
+
+<h2>Impressum</h2>
+<p>Angaben gemäß § 5 TMG</p>
+<p>[Vor- und Nachname / Firmenname]<br>[Straße, Hausnummer]<br>[PLZ, Ort]<br>[Land]</p>
+<p><strong>Kontakt</strong><br>E-Mail: [E-Mail-Adresse]</p>
+<p><strong>Verantwortlich für den Inhalt nach § 18 Abs. 2 MStV:</strong><br>[Name der verantwortlichen Person]</p>
+`;
+
+const LEGAL_HTML_EN = `
+<h2>Terms of Use</h2>
+<h3>1. Scope</h3>
+<p>These terms of use govern the use of the Telegram Mini App "Basar" (hereinafter "Basar Kleinanzeigen" or "the Platform"), operated by [Operator's name/company], [Address], [Contact] (hereinafter "Operator"). By using the Platform, the user accepts these terms.</p>
+<h3>2. Service description</h3>
+<p>Basar Kleinanzeigen provides a technical platform on which users can create and browse classified listings (offers and requests), leave reviews, and contact each other via an integrated chat. Basar Kleinanzeigen is not a party to any purchase, sale, exchange, or service agreed between users. Contracts are formed exclusively between the users involved.</p>
+<h3>3. Registration and identification</h3>
+<p>Identification happens automatically via the user's Telegram ID, provided the app is opened inside Telegram. The user is solely responsible for the accuracy of their profile information.</p>
+<h3>4. User obligations / Prohibited content</h3>
+<p>Users agree not to post listings, profile information, chat messages, or reviews that:</p>
+<ul>
+<li>violate applicable law – in particular the sale, purchase, exchange, offering, or brokering of illegal goods, substances, or services (e.g. controlled substances, weapons, stolen or counterfeit goods, illegally obtained credentials/accounts, content infringing third-party copyright, trademark, or personality rights, or any other act punishable or impermissible under applicable law);</li>
+<li>are fraudulent, misleading, insulting, discriminatory, glorifying violence, or sexually explicit;</li>
+<li>constitute spam, third-party advertising unrelated to a genuine listing, or automatically generated content;</li>
+<li>disclose third parties' personal data without their consent.</li>
+</ul>
+<p>The Operator reserves the right, but is not obliged, to remove or suspend listings, profiles, or user accounts without prior notice in case of violations.</p>
+<h3>5. Disclaimer for user-generated content</h3>
+<p>All content visible on the Platform – listings, photos, profile information, chat messages, reviews, and reports – is created and posted exclusively by the users themselves. Basar Kleinanzeigen does not adopt this content as its own and generally does not review it in advance for accuracy, lawfulness, or completeness.</p>
+<p>Basar Kleinanzeigen is not responsible for content provided by users and makes no warranty as to its accuracy, legality, quality, or the availability of the advertised goods or services. This applies in particular to any illegal, rights-infringing, or misleading content posted by individual users. To the extent permitted by law, the Operator's liability for damages arising from the use of provided content or from transactions concluded between users is excluded. This does not affect liability under statutory provisions for the Operator's own content or liability arising once the Operator becomes aware of specific legal violations.</p>
+<h3>6. Reporting content</h3>
+<p>Users can flag listings and profiles via the "Report" function. The Operator may review reported content and remove it at its own discretion, but is not obliged to do so in any individual case.</p>
+<h3>7. Transactions between users, reviews</h3>
+<p>Purchases, sales, and other transactions are conducted and confirmed independently between users. Reviews can only be submitted after a deal has been confirmed by both parties, and relate to the trustworthiness of the reviewed person, not to the listing itself.</p>
+<h3>8. Paid add-on features</h3>
+<p>Features such as highlighting, daily bumping, increased visibility, or pinning a listing are paid add-on services. Where paid for via Telegram Stars, Telegram's own payment terms additionally apply.</p>
+<h3>9. General limitation of liability</h3>
+<p>The Operator's liability is unlimited only for damages resulting from injury to life, body, or health, and for intent and gross negligence. For slightly negligent breaches of duty, the Operator is liable only in the event of a breach of a material contractual obligation, and limited to the foreseeable damage typical for this type of contract.</p>
+<h3>10. Changes, final provisions</h3>
+<p>The Operator may amend these terms with effect for the future. The laws of the Federal Republic of Germany apply, excluding the UN Convention on Contracts for the International Sale of Goods, unless mandatory consumer-protection provisions of the user's country of residence provide otherwise.</p>
+
+<h2>Privacy Policy</h2>
+<h3>1. Controller</h3>
+<p>[Name/Company], [Address], [Email address] (hereinafter "we").</p>
+<h3>2. What data is processed</h3>
+<ul>
+<li>Telegram account data: Telegram ID, first/last name, Telegram username, profile photo</li>
+<li>Profile information: self-chosen display name, profile bio</li>
+<li>Content: listing texts, uploaded photos, category and price details</li>
+<li>Communication: chat messages between users within the app</li>
+<li>Transaction/trust data: purchase requests, confirmations, reviews, reports</li>
+<li>Favorites and device identifier: stored exclusively locally, associated only with the respective user</li>
+</ul>
+<h3>3. Visibility of data</h3>
+<p>Part of the data is stored as shared data and is visible to all users of the app – this includes listings, profile information, reviews, purchase requests, and chat messages (visible only to the people involved in that chat). Favorites and device IDs are not shared.</p>
+<h3>4. Purpose of processing</h3>
+<p>Processing serves to provide the marketplace and chat features, to identify users, and for fraud prevention (reviews, reports).</p>
+<h3>5. Legal basis</h3>
+<p>Processing is based on the performance of the usage agreement (Art. 6(1)(b) GDPR) and, where applicable, legitimate interests (Art. 6(1)(f) GDPR).</p>
+<h3>6. Retention period</h3>
+<p>Content remains stored until deleted by the user or removed by the Operator as part of moderation.</p>
+<h3>7. User rights</h3>
+<p>Under the GDPR, users have the right to access, rectification, erasure, restriction of processing, data portability, and objection. Requests can be sent to [email address]. Users can also delete or edit their own listings, profile information, and favorites directly within the app.</p>
+<h3>8. Third-party providers</h3>
+<p>Fonts are loaded via Google Fonts; loading the app may therefore establish a connection to Google's servers (USA). The app also uses the Telegram WebApp interface for identification; Telegram's own privacy terms additionally apply.</p>
+
+<h2>Legal Notice (Imprint)</h2>
+<p>Information pursuant to § 5 TMG (German Telemedia Act)</p>
+<p>[First and last name / company name]<br>[Street, number]<br>[Postal code, city]<br>[Country]</p>
+<p><strong>Contact</strong><br>Email: [email address]</p>
+<p><strong>Responsible for content pursuant to § 18(2) MStV:</strong><br>[Name of the responsible person]</p>
+`;
+function legalHtmlFor(){ return State.lang==='de' ? LEGAL_HTML_DE : LEGAL_HTML_EN; }
+
+// ---------- Admin ----------
+function renderAdminTab(){
+  document.getElementById('filters').style.display = 'none';
+  const sub = `<div class="subtabs">
+    <button class="${State.adminSub==='listings'?'active':''}" data-action="adminsub" data-sub="listings">Anzeigen (${State.listings.length})</button>
+    <button class="${State.adminSub==='users'?'active':''}" data-action="adminsub" data-sub="users">Nutzer (${Object.keys(State.users).length})</button>
+    <button class="${State.adminSub==='reports'?'active':''}" data-action="adminsub" data-sub="reports">Meldungen (${State.reports.length})</button>
+  </div>`;
+
+  if(State.adminSub==='listings'){
+    if(!State.listings.length) return sub + `<div class="empty"><div class="small">Keine Anzeigen vorhanden.</div></div>`;
+    const rows = [...State.listings].sort((a,b)=>b.createdAt-a.createdAt).map(l=>{
+      const owner = getUser(l.ownerId);
+      return `<div class="admin-row">
+        <div class="admin-row-mid">
+          <div class="admin-row-top"><span>${escapeHtml(l.title)}</span><span>${priceLabel(l)}</span></div>
+          <div class="admin-row-sub">${escapeHtml(displayName(owner))} · ${escapeHtml(l.category)} · ${timeAgo(l.createdAt)}</div>
+          <div class="admin-actions">
+            <button class="mini-btn" data-action="adminviewlisting" data-id="${l.id}">Ansehen</button>
+            <button class="mini-btn" data-action="admineditlisting" data-id="${l.id}">Bearbeiten</button>
+            <button class="mini-btn" data-action="adminhighlight" data-id="${l.id}">${isBoostActive(l.highlight)?'TOP entfernen':'TOP setzen (7T)'}</button>
+            <button class="mini-btn" data-action="admindeletelisting" data-id="${l.id}" style="color:var(--heart)">Löschen</button>
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+    return sub + rows;
+  }
+
+  if(State.adminSub==='users'){
+    const ids = Object.keys(State.users).sort((a,b)=>(State.users[b].createdAt||0)-(State.users[a].createdAt||0));
+    if(!ids.length) return sub + `<div class="empty"><div class="small">Keine Nutzer vorhanden.</div></div>`;
+    const rows = ids.map(id=>{
+      const u = getUser(id);
+      const listingCount = State.listings.filter(l=>l.ownerId===id).length;
+      return `<div class="admin-row ${u.banned?'banned':''}">
+        ${avatarHTML(u)}
+        <div class="admin-row-mid">
+          <div class="admin-row-top"><span>${escapeHtml(displayName(u))}${u.banned?' 🚫':''}${isAdmin(id)?' <span class="admin-badge">Admin</span>':''}</span></div>
+          <div class="admin-row-sub">${escapeHtml(id)} · ${listingCount} Anzeige(n)${u.banned?` · Gesperrt: ${escapeHtml(u.bannedReason||'-')}`:''}</div>
+          ${!isAdmin(id) ? `<div class="admin-actions">
+            <button class="mini-btn" data-action="adminviewprofile" data-id="${id}">Profil</button>
+            <button class="mini-btn" data-action="adminmessage" data-id="${id}">Anschreiben</button>
+            ${u.banned
+              ? `<button class="mini-btn" data-action="adminunban" data-id="${id}">Entsperren</button>`
+              : `<button class="mini-btn" data-action="adminban" data-id="${id}" style="color:var(--heart)">Sperren</button>`}
+          </div>` : ''}
+        </div>
+      </div>`;
+    }).join('');
+    return sub + rows;
+  }
+
+  // reports
+  if(!State.reports.length) return sub + `<div class="empty"><div class="small">Keine Meldungen vorhanden.</div></div>`;
+  const rows = [...State.reports].sort((a,b)=>b.createdAt-a.createdAt).map(r=>{
+    const reporter = getUser(r.reporterId);
+    return `<div class="admin-row">
+      <div class="admin-row-mid">
+        <div class="admin-row-top"><span>${r.type==='listing'?'📋':'👤'} ${escapeHtml(r.targetLabel)}</span><span>${timeAgo(r.createdAt)}</span></div>
+        <div class="admin-row-sub">Grund: ${escapeHtml(r.reason)}${r.details?` — ${escapeHtml(r.details)}`:''}<br>Gemeldet von ${escapeHtml(displayName(reporter))}</div>
+        <div class="admin-actions">
+          ${r.type==='listing' ? `<button class="mini-btn" data-action="adminviewlisting" data-id="${r.targetId}">Anzeige ansehen</button>` : `<button class="mini-btn" data-action="adminviewprofile" data-id="${r.targetId}">Profil ansehen</button>`}
+          <button class="mini-btn" data-action="admindismissreport" data-id="${r.id}">Meldung verwerfen</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+  return sub + rows;
+}
+
+function renderMessagesTab(){
+  document.getElementById('filters').style.display = 'none';
+  const convos = conversationsForMe();
+  if(convos.length===0) return `<div class="empty"><div class="big">${t('messages_empty')}</div><div class="small">${t('messages_empty_sub')}</div></div>`;
+  return convos.map(c=>{
+    const other = getUser(c.otherId);
+    const listing = State.listings.find(x=>x.id===c.listingId);
+    const preview = (c.lastMsg.fromId===State.myId ? t('you_prefix') : '') + c.lastMsg.text;
+    return `<div class="convo-row" data-action="openconvo" data-listingid="${c.listingId}" data-otherid="${c.otherId}">
+      ${avatarHTML(other)}
+      <div class="convo-mid">
+        <div class="convo-top"><span class="convo-name">${escapeHtml(displayName(other))}</span><span class="convo-time">${timeAgo(c.lastMsg.createdAt)}</span></div>
+        <div class="convo-listing">${escapeHtml(listing ? listing.title : t('listing_gone'))}</div>
+        <div class="convo-preview">${escapeHtml(preview)}</div>
+      </div>
+      ${c.unread ? '<span class="unread-dot"></span>' : ''}
+    </div>`;
+  }).join('');
+}
+
+function render(){
+  if(State.tab==='create'){
+    const titleEl = document.getElementById('f_title');
+    if(titleEl){
+      State.formDraft = {
+        title: titleEl.value,
+        description: document.getElementById('f_desc').value,
+        category: document.getElementById('f_cat').value,
+        price: document.getElementById('f_price').value,
+        vb: document.getElementById('f_vb').checked,
+        free: document.getElementById('f_free').checked,
+      };
+    }
+  }
+  document.documentElement.lang = State.lang;
+  const langBtn = document.getElementById('langToggle');
+  if(langBtn) langBtn.textContent = State.lang.toUpperCase();
+  const themeBtn = document.getElementById('themeToggle');
+  if(themeBtn) themeBtn.title = t('tooltip_theme');
+  const saveSearchBtn = document.querySelector('.save-search-btn');
+  if(saveSearchBtn) saveSearchBtn.title = t('tooltip_save_search');
+  const tagline = document.querySelector('header.top p');
+  if(tagline) tagline.textContent = t('tagline');
+  const searchInput = document.getElementById('searchInput');
+  if(searchInput) searchInput.placeholder = t('search_ph');
+  document.querySelectorAll('#typeChips .chip').forEach(c=>{
+    const map = {all:'type_all', offer:'type_offer', request:'type_request'};
+    if(map[c.dataset.type]) c.textContent = t(map[c.dataset.type]);
+  });
+  document.querySelectorAll('#sortChips .chip[data-sort]').forEach(c=>{
+    const map = {newest:'sort_newest', popular:'sort_popular', price_asc:'sort_price_asc', price_desc:'sort_price_desc'};
+    if(map[c.dataset.sort]) c.textContent = t(map[c.dataset.sort]);
+  });
+  const navMap = { navLabelBrowse:'nav_browse', navLabelMessages:'nav_messages', navLabelCreate:'nav_create', navLabelProfile:'nav_profile' };
+  for(const id in navMap){ const el = document.getElementById(id); if(el) el.textContent = t(navMap[id]); }
+
+  const catLabel = State.catFilter===CATEGORIES[0] ? t('all_categories') : State.catFilter;
+  document.getElementById('catDropdown').innerHTML = `
+    <button class="dropdown-trigger ${State.openDropdown==='cat'?'open':''}" data-action="toggledropdown" data-dropdown="cat">
+      <span>${escapeHtml(catLabel)}</span>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+    </button>
+    ${State.openDropdown==='cat' ? `<div class="dropdown-panel">${CATEGORIES.map(c=>`<button class="dropdown-option ${c===State.catFilter?'active':''}" data-action="selectcat" data-cat="${escapeHtml(c)}">${escapeHtml(c===CATEGORIES[0]?t('all_categories'):c)}</button>`).join('')}</div>` : ''}`;
+
+  const sortLabels = { newest:t('sort_newest'), popular:t('sort_popular'), price_asc:t('sort_price_asc'), price_desc:t('sort_price_desc') };
+  document.getElementById('sortDropdown').innerHTML = `
+    <button class="dropdown-trigger ${State.openDropdown==='sort'?'open':''}" data-action="toggledropdown" data-dropdown="sort">
+      <span>${sortLabels[State.sortBy]}</span>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+    </button>
+    ${State.openDropdown==='sort' ? `<div class="dropdown-panel">${Object.entries(sortLabels).map(([k,label])=>`<button class="dropdown-option ${k===State.sortBy?'active':''}" data-action="selectsort" data-sort="${k}">${label}</button>`).join('')}</div>` : ''}`;
+
+  document.getElementById('searchInput').value = State.search;
+  document.querySelectorAll('#typeChips .chip').forEach(c=>c.classList.toggle('active', c.dataset.type===State.typeFilter));
+  const priceChip = document.getElementById('priceFilterChip');
+  if(priceChip){
+    const hasFilter = State.priceMin!=null || State.priceMax!=null;
+    priceChip.classList.toggle('active', hasFilter);
+    priceChip.innerHTML = hasFilter
+      ? `<span>${State.priceMin||0}–${State.priceMax!=null?State.priceMax:'∞'} €</span>`
+      : `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M6 12h12M9 18h6"/></svg>`;
+    priceChip.title = t('sort_pricefilter');
+  }
+  document.querySelectorAll('nav.tabbar button').forEach(b=>b.classList.toggle('active', b.dataset.tab===State.tab));
+  const badge = document.getElementById('msgBadge');
+  if(badge) badge.style.display = hasUnreadMessages() ? 'block' : 'none';
+  const profBadge = document.getElementById('profileBadge');
+  if(profBadge) profBadge.style.display = hasSavedSearchUpdates() ? 'block' : 'none';
+  const adminBtn = document.getElementById('adminTabBtn');
+  if(adminBtn) adminBtn.style.display = isAdmin(State.myId) ? 'flex' : 'none';
+
+  const main = document.getElementById('main');
+  if(State.tab==='browse') main.innerHTML = renderBrowse();
+  else if(State.tab==='create') main.innerHTML = renderCreate();
+  else if(State.tab==='messages') main.innerHTML = renderMessagesTab();
+  else if(State.tab==='admin' && isAdmin(State.myId)) main.innerHTML = renderAdminTab();
+  else main.innerHTML = renderProfile();
+
+  renderOverlays();
+}
+
+// ---------- Overlays (Profil, Detailseite, Chat, Modals) ----------
+function renderOverlays(){
+  document.querySelectorAll('.profile-overlay, .modal-overlay, .chat-overlay, .fullscreen-overlay').forEach(el=>el.remove());
+
+  if(State.adminBanTarget){
+    const u = getUser(State.adminBanTarget);
+    const div = document.createElement('div');
+    div.className = 'modal-overlay';
+    div.innerHTML = `<div class="modal-sheet">
+      <h3>${escapeHtml(displayName(u))} sperren</h3>
+      <div class="field"><label>Grund (für dich, intern)</label><textarea id="admin_ban_reason" placeholder="z. B. Betrug, Spam …"></textarea></div>
+      <div class="modal-actions">
+        <button class="btn-secondary" data-action="closeadminban">Abbrechen</button>
+        <button class="submit-btn" data-action="confirmadminban" style="background:linear-gradient(160deg,#FF375F,#7A1E5C)">Sperren</button>
+      </div>
+    </div>`;
+    document.body.appendChild(div);
+  }
+
+  if(State.fullscreenImage){
+    const div = document.createElement('div');
+    div.className = 'fullscreen-overlay';
+    div.innerHTML = `<img src="${escapeHtml(State.fullscreenImage)}">
+      <button class="fullscreen-close" data-action="closefullscreen">✕</button>`;
+    document.body.appendChild(div);
+  }
+
+  if(State.viewLegal){
+    const div = document.createElement('div');
+    div.className = 'profile-overlay';
+    div.innerHTML = `
+      <div class="profile-overlay-header">
+        <h2>${t('legal_title')}</h2>
+        <button class="close-btn" data-action="closelegal">✕</button>
+      </div>
+      <div class="overlay-body legal-content">${legalHtmlFor()}
+        <div style="margin-top:28px;text-align:center">
+          ${isAdmin(State.myId) ? `<button class="btn-secondary" data-action="resetdemo" style="color:var(--heart)">⚠️ ${t('reset_all_demo_data')}</button>` : ''}
+        </div>
+      </div>`;
+    document.body.appendChild(div);
+  }
+
+  if(State.viewListingId){
+    const l = State.listings.find(x=>x.id===State.viewListingId);
+    if(l){
+      const div = document.createElement('div');
+      div.className = 'profile-overlay';
+      div.innerHTML = renderListingDetailInner(l);
+      document.body.appendChild(div);
+    } else {
+      State.viewListingId = null;
+    }
+  }
+
+  if(State.viewProfileId){
+    const id = State.viewProfileId;
+    const u = getUser(id);
+    const r = ratingOf(id);
+    const theirListings = State.listings.filter(l=>l.ownerId===id).sort((a,b)=>b.createdAt-a.createdAt);
+    const theirReviews = State.reviews.filter(rv=>rv.rateeId===id).sort((a,b)=>b.createdAt-a.createdAt);
+    const div = document.createElement('div');
+    div.className = 'profile-overlay';
+    div.innerHTML = `
+      <div class="profile-overlay-header">
+        <h2>${t('profile_overlay_title')}</h2>
+        <button class="close-btn" data-action="closeprofile">✕</button>
+      </div>
+      <div class="overlay-body">
+        <div class="profile-header ${u.shopBanner?'branded':''}" ${bannerStyleAttr(u)}>
+          ${avatarHTML(u, true)}
+          <div>
+            <div class="profile-name-row">
+              <span class="name">${escapeHtml(displayName(u))}</span>${verifiedCheckHTML(u)}
+              ${isVerified(id) ? `<span class="verified-badge">${t('profile_verified')}</span>` : `<span class="unverified-badge">${t('profile_unverified')}</span>`}
+              ${u.premium ? `<span class="premium-badge">${t('profile_premium')}</span>` : ''}
+              ${proBadgeHTML(id)}${isAdmin(id)?'<span class="admin-badge">Admin</span>':''}
+            </div>
+            ${u.username ? `<div class="username-line">${escapeHtml(u.username)}</div>` : ''}
+            <div class="rating-line">${r.count ? `${starsHTML(r.avg)} ${r.avg.toFixed(1)} (${r.count} ${t('profile_sub_reviews').toLowerCase()})` : t('no_rating_yet')}</div>
+            ${onlineStatusHTML(u) ? `<div class="online-line">${onlineStatusHTML(u)}</div>` : ''}
+          </div>
+        </div>
+        ${u.shopTagline ? `<div class="shop-tagline">${escapeHtml(u.shopTagline)}</div>` : ''}
+        <div class="stat-row"><div><b>${theirListings.length}</b>${t('profile_anzeigen')}</div><div><b>${dateStr(u.createdAt)}</b>${t('profile_member_since')}</div></div>
+        ${u.bio ? `<p class="bio-text">${escapeHtml(u.bio)}</p>` : ''}
+        ${u.channel ? `<a href="#" class="telegram-link" style="margin-bottom:14px" data-action="openchannel" data-url="${escapeHtml(channelUrl(u.channel))}">📢 ${State.lang==='de'?'Kanal ansehen':'View channel'}</a>` : ''}
+        <button class="submit-btn" style="margin-bottom:10px" data-action="openchat" data-listingid="${theirListings[0]?theirListings[0].id:''}" data-otherid="${id}">💬 ${t('message_btn')}</button>
+        <button class="btn-secondary" data-action="report" data-type="user" data-id="${id}" data-label="${escapeHtml(displayName(u))}" style="margin-bottom:20px">${t('report_user_btn')}</button>
+        <div class="section-title">${t('section_listings')}</div>
+        ${theirListings.length ? theirListings.map(l=>cardHTML(l,false)).join('') : `<div class="empty"><div class="small">${t('no_active_listings')}</div></div>`}
+        <div class="section-title">${t('section_reviews')}</div>
+        ${theirReviews.length ? theirReviews.map(rv=>reviewCardHTML(rv)).join('') : `<div class="empty"><div class="small">${t('no_reviews_yet')}</div></div>`}
+      </div>`;
+    document.body.appendChild(div);
+  }
+
+  if(State.reportTarget){
+    const rt = State.reportTarget;
+    const div = document.createElement('div');
+    div.className = 'modal-overlay';
+    div.innerHTML = `<div class="modal-sheet">
+      <h3>${t('report_title',{label:escapeHtml(rt.label)})}</h3>
+      <div class="field"><label>${t('report_reason')}</label>
+        <select id="rep_reason">${REPORT_REASONS[State.lang].map(r=>`<option>${r}</option>`).join('')}</select></div>
+      <div class="field"><label>${t('report_details')}</label><textarea id="rep_details" placeholder="${t('report_details_ph')}"></textarea></div>
+      <div class="modal-actions">
+        <button class="btn-secondary" data-action="closereport">${t('cancel')}</button>
+        <button class="submit-btn" data-action="submitreport">${t('send_report')}</button>
+      </div>
+    </div>`;
+    document.body.appendChild(div);
+  }
+
+  if(State.reviewTarget){
+    const rv = State.reviewTarget;
+    const div = document.createElement('div');
+    div.className = 'modal-overlay';
+    div.innerHTML = `<div class="modal-sheet">
+      <h3>${t('review_title',{name:escapeHtml(rv.rateename)})}</h3>
+      <div class="star-picker">${[1,2,3,4,5].map(n=>`<button data-action="pickstar" data-n="${n}" class="${n<=State.reviewStar?'active':''}">${n<=State.reviewStar?'★':'☆'}</button>`).join('')}</div>
+      <div class="field"><textarea id="rev_text" placeholder="${t('review_ph')}"></textarea></div>
+      <div class="modal-actions">
+        <button class="btn-secondary" data-action="closereview">${t('cancel')}</button>
+        <button class="submit-btn" data-action="submitreview">${t('submit_review')}</button>
+      </div>
+    </div>`;
+    document.body.appendChild(div);
+  }
+
+  if(State.replyTarget){
+    const rv = State.reviews.find(r=>r.id===State.replyTarget);
+    if(rv){
+      const div = document.createElement('div');
+      div.className = 'modal-overlay';
+      div.innerHTML = `<div class="modal-sheet">
+        <h3>${t('reply_title')}</h3>
+        <div class="review-card" style="margin-bottom:14px">${starsHTML(rv.stars)}<div>${escapeHtml(rv.text||'')}</div></div>
+        <div class="field"><textarea id="reply_text" placeholder="${t('reply_ph')}">${escapeHtml(rv.reply ? rv.reply.text : '')}</textarea></div>
+        <div class="modal-actions">
+          <button class="btn-secondary" data-action="closereply">${t('cancel')}</button>
+          <button class="submit-btn" data-action="submitreply">${t('publish_reply')}</button>
+        </div>
+      </div>`;
+      document.body.appendChild(div);
+    }
+  }
+
+  if(State.priceFilterOpen){
+    const div = document.createElement('div');
+    div.className = 'modal-overlay';
+    const curMin = State.priceMin!=null ? State.priceMin : 0;
+    const curMax = State.priceMax!=null ? State.priceMax : 1000;
+    div.innerHTML = `<div class="modal-sheet">
+      <h3>${t('price_filter_title')}</h3>
+      <div class="range-values"><span id="priceMinLabel">${curMin} €</span><span id="priceMaxLabel">${curMax>=1000?'1000+':curMax} €</span></div>
+      <div class="dual-range">
+        <input type="range" id="priceMinRange" min="0" max="1000" step="10" value="${curMin}">
+        <input type="range" id="priceMaxRange" min="0" max="1000" step="10" value="${curMax}">
+      </div>
+      <div class="hint" style="margin-bottom:14px">${t('price_filter_hint')}</div>
+      <div class="modal-actions">
+        <button class="btn-secondary" data-action="resetpricefilter">${t('reset')}</button>
+        <button class="submit-btn" data-action="applypricefilter">${t('apply')}</button>
+      </div>
+    </div>`;
+    document.body.appendChild(div);
+    const minR = document.getElementById('priceMinRange');
+    const maxR = document.getElementById('priceMaxRange');
+    const minL = document.getElementById('priceMinLabel');
+    const maxL = document.getElementById('priceMaxLabel');
+    function syncRange(){
+      let vMin = parseInt(minR.value,10), vMax = parseInt(maxR.value,10);
+      if(vMin > vMax){ vMin = vMax; minR.value = vMin; }
+      minL.textContent = vMin + ' €';
+      maxL.textContent = (vMax>=1000?'1000+':vMax) + ' €';
+    }
+    minR.addEventListener('input', syncRange);
+    maxR.addEventListener('input', syncRange);
+  }
+
+  if(State.promoteTarget){
+    const l = State.listings.find(x=>x.id===State.promoteTarget);
+    if(l){
+      const div = document.createElement('div');
+      div.className = 'modal-overlay';
+      const rows = Object.entries(BOOSTS).map(([key,cfg])=>{
+        const current = l[cfg.field];
+        const active = isBoostActive(current);
+        let statusLine = '';
+        if(active){
+          const remaining = formatRemaining(current.until);
+          const urgent = (current.until - Date.now()) < 24*3600000;
+          statusLine = `<span class="bstatus ${urgent?'urgent':''}">${t('promote_active_until',{date:new Date(current.until).toLocaleString(t('locale'),{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})})}${urgent?` · ⏳ ${remaining}`:''}</span>`;
+        }
+        let freeSlotsNote = '';
+        let pinFull = false;
+        if(key==='pin'){
+          const myLimit = pinSlotLimitFor(State.myId);
+          const used = activePinCountInCategory(l.category, l.id);
+          const free = myLimit - used;
+          pinFull = free<=0 && !active;
+          freeSlotsNote = `<div class="bdesc">${free>0 ? t('promote_slots_free',{free, max:myLimit, cat:escapeHtml(l.category)}) : t('promote_slots_full',{max:myLimit, cat:escapeHtml(l.category)})}${hasPremiumSub(State.myId) ? ` · ${t('premium_pin_bonus_note',{n:PREMIUM_PIN_BONUS_SLOTS})}` : ''}</div>`;
+        }
+        const tiers = cfg.tiers.map((tier,i)=>`<button data-action="buyboost" data-listingid="${l.id}" data-boost="${key}" data-tier="${i}" ${pinFull?'disabled':''}>${t('boost_days',{n:tier.days})} · ${tier.stars} ★ (~${eur(tier.stars)} €)</button>`).join('');
+        const premiumCovers = (key==='doublevis' || key==='highlight') && hasPremiumSub(State.myId);
+        const freeBalance = getUser(State.myId).freeHighlightDays || 0;
+        const showFreeRedeem = key==='highlight' && !premiumCovers && freeBalance>0;
+        return `<div class="boost-row">
+          <h4>${t(cfg.labelKey)}</h4>
+          <div class="bdesc">${t(cfg.descKey,{max:PIN_SLOTS_PER_CATEGORY})}</div>
+          ${key==='pin' ? freeSlotsNote : ''}
+          ${premiumCovers ? `<span class="bstatus">💎 ${t('premium_covers_this')}</span>` : statusLine}
+          ${premiumCovers ? '' : `<div class="tier-row">${tiers}${showFreeRedeem ? `<button data-action="redeemfreeboost" data-listingid="${l.id}" style="background:linear-gradient(135deg,#FFD56B,#FFB300);border-color:transparent">🎁 ${t('redeem_free_boost',{n:freeBalance})}</button>` : ''}</div>`}
+        </div>`;
+      }).join('');
+      div.innerHTML = `<div class="modal-sheet">
+        <h3>${State.justPublished ? t('cross_sell_title') : t('promote_title',{title:escapeHtml(l.title)})}</h3>
+        ${State.justPublished ? `<div class="bdesc" style="margin-bottom:10px">${t('cross_sell_intro')}</div>` : ''}
+        <div class="promo-disclaimer">${t('promote_disclaimer')}</div>
+        ${rows}
+        <div class="modal-actions"><button class="btn-secondary" data-action="closepromote">${t('promote_done')}</button></div>
+      </div>`;
+      document.body.appendChild(div);
+    }
+  }
+
+  if(State.activeChat){
+    const { otherId, listingId } = State.activeChat;
+    const other = getUser(otherId);
+    const listing = State.listings.find(x=>x.id===listingId);
+    const div = document.createElement('div');
+    div.className = 'chat-overlay';
+    div.innerHTML = `
+      <div class="profile-overlay-header">
+        <button class="close-btn" data-action="closechat">←</button>
+        <div style="text-align:center;flex:1;min-width:0">
+          <div style="font-weight:700;font-size:14px">${escapeHtml(displayName(other))}</div>
+          <div style="font-size:11px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${onlineStatusHTML(other) || escapeHtml(listing?listing.title:'')}</div>
+        </div>
+        <span style="width:22px"></span>
+      </div>
+      <div class="chat-messages" id="chatMessages"></div>
+      <div class="chat-input-row">
+        <input type="text" id="chatInput" maxlength="500" placeholder="${t('chat_ph')}">
+        <button class="chat-send" data-action="sendchat">➤</button>
+      </div>`;
+    document.body.appendChild(div);
+    renderChatMessages();
+    startChatPolling();
+  } else {
+    stopChatPolling();
+  }
+}
+
+function renderChatMessages(){
+  const box = document.getElementById('chatMessages');
+  if(!box || !State.activeChat) return;
+  const msgs = State.messages.filter(m=>m.conversationId===State.activeChat.conversationId).sort((a,b)=>a.createdAt-b.createdAt);
+  box.innerHTML = msgs.length ? msgs.map(m=>`<div class="bubble ${m.fromId===State.myId?'mine':'theirs'}">${escapeHtml(m.text)}<span class="bubble-time">${new Date(m.createdAt).toLocaleTimeString(t('locale'),{hour:'2-digit',minute:'2-digit'})}</span></div>`).join('')
+    : `<div class="empty"><div class="small">${t('chat_empty')}</div></div>`;
+  box.scrollTop = box.scrollHeight;
+}
+
+function startChatPolling(){
+  stopChatPolling();
+  State.chatPollTimer = setInterval(async ()=>{
+    if(!State.activeChat) return;
+    const fresh = await storageGet('basar:messages', true);
+    const parsed = fresh ? JSON.parse(fresh) : [];
+    if(JSON.stringify(parsed) !== JSON.stringify(State.messages)){
+      State.messages = parsed;
+      renderChatMessages();
+    }
+  }, CHAT_POLL_MS);
+}
+function stopChatPolling(){
+  if(State.chatPollTimer){ clearInterval(State.chatPollTimer); State.chatPollTimer = null; }
+}
+
+// ---------- Actions ----------
+async function toggleFavorite(id){
+  const i = State.favorites.indexOf(id);
+  const l = State.listings.find(x=>x.id===id);
+  if(i>=0){
+    State.favorites.splice(i,1);
+    if(l) l.favCount = Math.max(0,(l.favCount||0)-1);
+  } else {
+    State.favorites.push(id);
+    if(l) l.favCount = (l.favCount||0)+1;
+  }
+  await persistFavorites();
+  if(l) await persistListings();
+  render();
+}
+function channelUrl(channel){
+  if(!channel) return '';
+  const c = channel.trim();
+  if(c.startsWith('http')) return c;
+  return 'https://t.me/' + c.replace(/^@/,'');
+}
+function openTelegramUrl(url){
+  if(!url) return;
+  try{
+    if(window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.openTelegramLink){
+      window.Telegram.WebApp.openTelegramLink(url); return;
+    }
+  }catch(e){}
+  window.open(url, '_blank');
+}
+function openContact(handle){
+  if(!handle){ toast(t('toast_no_contact')); return; }
+  openTelegramUrl('https://t.me/' + handle);
+}
+async function deleteListing(id){
+  State.listings = State.listings.filter(l=>l.id!==id);
+  await persistListings();
+  if(State.viewListingId===id) State.viewListingId = null;
+  toast(t('toast_listing_deleted')); render();
+}
+function startEdit(id){ State.editingId = id; State.tab = 'create'; State.viewListingId = null; State.formType = null; State.pendingImages = null; State.formDraft = null; render(); }
+
+async function submitForm(){
+  if(getUser(State.myId).banned){ toast('Dein Konto ist gesperrt.'); return; }
+  const title = document.getElementById('f_title').value.trim();
+  const description = document.getElementById('f_desc').value.trim();
+  const category = document.getElementById('f_cat').value;
+  const isFree = document.getElementById('f_free').checked;
+  const isVb = document.getElementById('f_vb').checked;
+  const priceRaw = document.getElementById('f_price').value;
+  const existingListing = State.editingId ? State.listings.find(l=>l.id===State.editingId) : null;
+  const images = currentFormImages(existingListing);
+  const type = State.formType || (existingListing ? existingListing.type : 'offer');
+  if(!title){ toast(t('toast_title_missing')); return; }
+  if(!State.editingId && !hasPremiumSub(State.myId)){
+    const ownCount = State.listings.filter(x=>x.ownerId===State.myId).length;
+    if(ownCount >= FREE_LISTING_LIMIT){ toast(t('toast_listing_limit',{max:FREE_LISTING_LIMIT})); return; }
+  }
+  const priceType = isFree ? 'free' : (isVb ? 'vb' : 'fixed');
+  const price = isFree ? null : (priceRaw ? parseFloat(priceRaw) : null);
+
+  let newId = null;
+  if(State.editingId){
+    const l = existingListing;
+    Object.assign(l, { title, description, category, images, imageUrl:images[0]||'', priceType, price, type });
+    toast(t('toast_changes_saved')); State.editingId = null;
+  } else {
+    newId = uid('l_');
+    State.listings.push({ id:newId, type, title, description, category, images, imageUrl:images[0]||'', priceType, price, ownerId:State.myId, favCount:0, views:0, createdAt:Date.now() });
+    toast(t('toast_listing_published'));
+  }
+  await persistListings(); State.formType = null; State.pendingImages = null; State.formDraft = null; State.tab = 'browse';
+  if(newId){ State.promoteTarget = newId; State.justPublished = true; }
+  render();
+}
+
+async function saveProfile(){
+  const customName = document.getElementById('p_name').value.trim();
+  const username = document.getElementById('p_username').value.trim();
+  const channel = document.getElementById('p_channel').value.trim();
+  const bio = document.getElementById('p_bio').value.trim();
+  const taglineEl = document.getElementById('p_tagline');
+  const shopTagline = taglineEl ? taglineEl.value.trim() : getUser(State.myId).shopTagline;
+  const showOnlineStatus = document.getElementById('p_show_online').checked;
+  State.users[State.myId] = { ...getUser(State.myId), customName, username, channel, bio, shopTagline, showOnlineStatus };
+  await persistUsers(); toast(t('toast_profile_saved')); render();
+}
+
+async function purchasePremium(planIndex){
+  const plan = PREMIUM_PLANS[planIndex];
+  if(!plan) return;
+  await startStarsPayment('premium', {plan:plan.months}, plan.stars, t('premium_section_label'), t('premium_months',{n:plan.months}), async ()=>{
+    const u = getUser(State.myId);
+    const base = hasPremiumSub(State.myId) ? u.premiumSub.until : Date.now();
+    const until = base + plan.months*30*86400000;
+    State.users[State.myId] = { ...u, premiumSub:{ active:true, until, plan:plan.months } };
+    await persistUsers();
+    State.purchases.push({ id:uid('p_'), type:'premium_sub', months:plan.months, stars:plan.stars, buyerId:State.myId, purchasedAt:Date.now(), until });
+    await persistPurchases();
+  });
+}
+
+async function adminToggleHighlight(listingId){
+  if(!isAdmin(State.myId)) return;
+  const l = State.listings.find(x=>x.id===listingId);
+  if(!l) return;
+  if(isBoostActive(l.highlight)){ l.highlight = { active:false, until:0 }; }
+  else { l.highlight = { active:true, until: Date.now() + 7*86400000 }; }
+  await persistListings();
+  toast('Aktualisiert'); render();
+}
+async function adminBanUser(){
+  if(!isAdmin(State.myId) || !State.adminBanTarget) return;
+  const reasonEl = document.getElementById('admin_ban_reason');
+  const reason = reasonEl ? reasonEl.value.trim() : '';
+  const id = State.adminBanTarget;
+  if(isAdmin(id)) return;
+  State.users[id] = { ...getUser(id), banned:true, bannedReason:reason };
+  await persistUsers();
+  State.adminBanTarget = null;
+  toast('Nutzer gesperrt'); render();
+}
+async function adminUnbanUser(id){
+  if(!isAdmin(State.myId)) return;
+  State.users[id] = { ...getUser(id), banned:false, bannedReason:'' };
+  await persistUsers();
+  toast('Nutzer entsperrt'); render();
+}
+async function adminDismissReport(id){
+  if(!isAdmin(State.myId)) return;
+  State.reports = State.reports.filter(r=>r.id!==id);
+  await persistReports();
+  toast('Meldung verworfen'); render();
+}
+
+function exportMyData(){
+  if(!hasPremiumSub(State.myId)) return;
+  const own = State.listings.filter(l=>l.ownerId===State.myId);
+  const myReviews = State.reviews.filter(r=>r.rateeId===State.myId);
+  const data = { exportedAt:new Date().toISOString(), profile:getUser(State.myId), listings:own, reviews:myReviews };
+  const blob = new Blob([JSON.stringify(data,null,2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'basar-export.json';
+  document.body.appendChild(a); a.click(); a.remove();
+  URL.revokeObjectURL(url);
+  toast(t('toast_export_done'));
+}
+
+async function setShopBanner(key){
+  if(!hasPremiumSub(State.myId)) return;
+  State.users[State.myId] = { ...getUser(State.myId), shopBanner: key || null };
+  await persistUsers(); render();
+}
+
+async function resetAllDemoData(){
+  if(!isAdmin(State.myId)) return;
+  const ok = confirm(t('confirm_reset_all'));
+  if(!ok) return;
+  await storageSet('basar:listings', JSON.stringify([]), true);
+  await storageSet('basar:users', JSON.stringify({}), true);
+  await storageSet('basar:deals', JSON.stringify([]), true);
+  await storageSet('basar:reviews', JSON.stringify([]), true);
+  await storageSet('basar:reports', JSON.stringify([]), true);
+  await storageSet('basar:purchases', JSON.stringify([]), true);
+  await storageSet('basar:messages', JSON.stringify([]), true);
+  await storageSet('basar:searchstats', JSON.stringify({categories:{}}), false);
+  await storageSet('basar:savedsearches', JSON.stringify([]), false);
+  await storageSet('basar:favorites', JSON.stringify([]), false);
+  await storageSet('basar:lastread', JSON.stringify({}), false);
+  toast(t('toast_reset_done'));
+  setTimeout(()=>location.reload(), 800);
+}
+
+const VERIFIED_BADGE_STARS = 770; // ≈ 10 €
+async function purchaseVerifiedBadge(){
+  if(getUser(State.myId).verifiedBadge) return;
+  await startStarsPayment('verified', {}, VERIFIED_BADGE_STARS, t('verified_section_label'), t('verified_badge_desc'), async ()=>{
+    State.users[State.myId] = { ...getUser(State.myId), verifiedBadge:true };
+    await persistUsers();
+    State.purchases.push({ id:uid('p_'), type:'verified_badge', stars:VERIFIED_BADGE_STARS, buyerId:State.myId, purchasedAt:Date.now() });
+    await persistPurchases();
+  });
+}
+
+async function startStarsPayment(kind, payload, stars, title, description, onPaid){
+  if(!EDGE_BASE){ toast(t('toast_payments_not_configured')); return; }
+  if(!(window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.openInvoice)){
+    toast(t('toast_payments_telegram_only')); return;
+  }
+  try{
+    const resp = await fetch(EDGE_BASE + '/create-invoice', {
+      method:'POST',
+      headers:{ 'Content-Type':'application/json', 'Authorization':'Bearer '+SUPABASE_ANON_KEY },
+      body: JSON.stringify({ id:uid('pay_'), initData:State.tgInitData, kind, payload, stars, title, description }),
+    });
+    const data = await resp.json();
+    if(!data.link){ console.error(data.error); toast(t('toast_payment_failed')); return; }
+    window.Telegram.WebApp.openInvoice(data.link, async (status)=>{
+      if(status==='paid'){ await onPaid(); toast(t('toast_payment_success')); render(); }
+      else if(status==='failed'){ toast(t('toast_payment_failed')); }
+    });
+  }catch(e){ console.error(e); toast(t('toast_payment_failed')); }
+}
+
+async function redeemFreeBoost(listingId){
+  const l = State.listings.find(x=>x.id===listingId);
+  const u = getUser(State.myId);
+  if(!l || l.ownerId!==State.myId || !u.freeHighlightDays) return;
+  const days = u.freeHighlightDays;
+  const base = isBoostActive(l.highlight) ? l.highlight.until : Date.now();
+  l.highlight = { active:true, until: base + days*86400000 };
+  await persistListings();
+  State.users[State.myId] = { ...u, freeHighlightDays: 0 };
+  await persistUsers();
+  toast(t('toast_free_boost_redeemed',{n:days})); render();
+}
+
+async function purchaseBoost(listingId, boostKey, tierIndex){
+  const l = State.listings.find(x=>x.id===listingId);
+  const cfg = BOOSTS[boostKey];
+  if(!l || l.ownerId!==State.myId || !cfg) return;
+  const tier = cfg.tiers[tierIndex];
+  if(boostKey==='pin'){
+    const used = activePinCountInCategory(l.category, l.id);
+    if(used >= pinSlotLimitFor(State.myId) && !isBoostActive(l.pin)){ toast(t('toast_slots_full')); return; }
+  }
+  await startStarsPayment('boost', {listingId, boostKey, tierIndex}, tier.stars, t(cfg.labelKey), t(cfg.descKey,{max:PIN_SLOTS_PER_CATEGORY}), async ()=>{
+    const base = isBoostActive(l[cfg.field]) ? l[cfg.field].until : Date.now();
+    const until = base + tier.days*86400000;
+    if(boostKey==='bump') l[cfg.field] = { active:true, until, lastBumpAt: l[cfg.field] && l[cfg.field].lastBumpAt ? l[cfg.field].lastBumpAt : Date.now() };
+    else if(boostKey==='pin') l[cfg.field] = { active:true, until, category:l.category };
+    else l[cfg.field] = { active:true, until };
+    State.purchases.push({ id:uid('p_'), listingId, boost:boostKey, days:tier.days, stars:tier.stars, buyerId:State.myId, purchasedAt:Date.now(), until });
+    await persistListings(); await persistPurchases();
+  });
+}
+
+function compressImage(file){
+  return new Promise((resolve,reject)=>{
+    const reader = new FileReader();
+    reader.onload = (e)=>{
+      const img = new Image();
+      img.onload = ()=>{
+        const maxDim = IMAGE_MAX_DIM;
+        let w = img.width, h = img.height;
+        if(w>h){ if(w>maxDim){ h = Math.round(h*maxDim/w); w = maxDim; } }
+        else { if(h>maxDim){ w = Math.round(w*maxDim/h); h = maxDim; } }
+        const canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        canvas.getContext('2d').drawImage(img,0,0,w,h);
+        resolve(canvas.toDataURL('image/jpeg',0.65));
+      };
+      img.onerror = reject;
+      img.src = e.target.result;
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+function listingImages(l){
+  if(!l) return [];
+  if(l.images && l.images.length) return l.images;
+  if(l.imageUrl) return [l.imageUrl];
+  return [];
+}
+function currentFormImages(existingListing){
+  if(State.pendingImages !== null) return State.pendingImages;
+  return existingListing ? listingImages(existingListing) : [];
+}
+async function handleImgFiles(e){
+  const files = Array.from(e.target.files || []);
+  if(!files.length) return;
+  const existingListing = State.editingId ? State.listings.find(l=>l.id===State.editingId) : null;
+  let imgs = currentFormImages(existingListing).slice();
+  let skipped = 0, tooLarge = 0;
+  for(const file of files){
+    if(imgs.length >= maxImagesFor(State.myId)){ skipped++; continue; }
+    if(file.size > MAX_RAW_FILE_MB*1024*1024){ tooLarge++; continue; }
+    try{
+      const dataUrl = await compressImage(file);
+      if(dataUrl.length > MAX_IMAGE_BASE64_LEN){ skipped++; continue; }
+      imgs.push(dataUrl);
+    }catch(err){ skipped++; }
+  }
+  State.pendingImages = imgs;
+  if(tooLarge) toast(t('toast_image_too_large',{max:MAX_RAW_FILE_MB}));
+  else if(skipped) toast(t('toast_image_skipped',{n:skipped, max:maxImagesFor(State.myId)}));
+  render();
+}
+function removeFormImage(idx){
+  const existingListing = State.editingId ? State.listings.find(l=>l.id===State.editingId) : null;
+  const imgs = currentFormImages(existingListing).slice();
+  imgs.splice(idx,1);
+  State.pendingImages = imgs;
+  render();
+}
+
+async function requestDeal(listingId){
+  const l = State.listings.find(x=>x.id===listingId);
+  if(!l) return;
+  const existing = State.deals.find(d=>d.listingId===listingId && d.buyerId===State.myId && d.status!=='rejected');
+  if(existing){ toast(t('toast_already_requested')); return; }
+  State.deals.push({ id:uid('d_'), listingId, listingTitle:l.title, buyerId:State.myId, sellerId:l.ownerId, status:'pending', createdAt:Date.now(), confirmedAt:null });
+  await persistDeals(); toast(t('toast_request_sent')); render();
+}
+async function confirmDeal(dealId){
+  const d = State.deals.find(x=>x.id===dealId); if(!d || d.sellerId!==State.myId) return;
+  d.status='confirmed'; d.confirmedAt=Date.now();
+  await persistDeals(); toast(t('toast_deal_confirmed')); render();
+}
+async function rejectDeal(dealId){
+  const d = State.deals.find(x=>x.id===dealId); if(!d || d.sellerId!==State.myId) return;
+  d.status='rejected';
+  await persistDeals(); toast(t('toast_request_rejected')); render();
+}
+
+async function submitReport(){
+  const reason = document.getElementById('rep_reason').value;
+  const details = document.getElementById('rep_details').value.trim();
+  const rt = State.reportTarget;
+  State.reports.push({ id:uid('r_'), type:rt.type, targetId:rt.id, targetLabel:rt.label, reporterId:State.myId, reason, details, createdAt:Date.now() });
+  await persistReports();
+  State.reportTarget = null; toast(t('toast_report_sent')); render();
+}
+
+async function submitReview(){
+  if(State.reviewStar < 1){ toast(t('toast_pick_stars')); return; }
+  const text = document.getElementById('rev_text').value.trim();
+  const rv = State.reviewTarget;
+  const deal = State.deals.find(d=>d.id===rv.dealId);
+  if(!deal || deal.status!=='confirmed'){ toast(t('toast_deal_not_confirmed')); State.reviewTarget=null; render(); return; }
+  if(State.reviews.some(r=>r.dealId===rv.dealId && r.raterId===State.myId)){ toast(t('toast_already_rated')); State.reviewTarget=null; render(); return; }
+  State.reviews.push({ id:uid('rv_'), dealId:rv.dealId, raterId:State.myId, rateeId:rv.rateeid, stars:State.reviewStar, text, createdAt:Date.now() });
+  await persistReviews();
+  State.reviewTarget = null; State.reviewStar = 0; toast(t('toast_thanks_review')); render();
+}
+
+async function submitReply(){
+  const rv = State.reviews.find(r=>r.id===State.replyTarget);
+  if(!rv || rv.rateeId!==State.myId) return;
+  const text = document.getElementById('reply_text').value.trim();
+  if(!text){ toast(t('toast_reply_empty')); return; }
+  rv.reply = { text, createdAt:Date.now() };
+  await persistReviews();
+  State.replyTarget = null; toast(t('toast_reply_published')); render();
+}
+
+// ---------- Detailseite & Chat ----------
+function socialProofHTML(l){
+  const views = l.views||0, favs = l.favCount||0;
+  if(!views && !favs) return '';
+  const parts = [];
+  if(views) parts.push(`👁 ${t('views_count',{n:views})}`);
+  if(favs) parts.push(`♥ ${t('saved_count',{n:favs})}`);
+  return parts.join(' · ');
+}
+function formatRemaining(until){
+  const diff = until - Date.now();
+  if(diff<=0) return '';
+  const hrs = Math.floor(diff/3600000);
+  if(hrs<1) return t('remaining_min',{n:Math.max(1,Math.floor(diff/60000))});
+  if(hrs<48) return t('remaining_hr',{n:hrs});
+  return t('remaining_day',{n:Math.floor(hrs/24)});
+}
+async function incrementView(listingId){
+  const l = State.listings.find(x=>x.id===listingId);
+  if(!l || l.ownerId===State.myId) return;
+  l.views = (l.views||0)+1;
+  await persistListings();
+}
+function openListingDetail(id){ State.viewListingId = id; State.galleryIndex = 0; incrementView(id); render(); }
+
+
+function openChat(listingId, otherId){
+  if(!otherId || otherId===State.myId){ return; }
+  const conversationId = conversationIdFor(listingId||'_', State.myId, otherId);
+  State.activeChat = { conversationId, listingId: listingId||'_', otherId };
+  State.lastRead[conversationId] = Date.now();
+  persistLastRead();
+  render();
+}
+function closeChat(){ stopChatPolling(); State.activeChat = null; render(); }
+
+function shareListing(id){
+  const l = State.listings.find(x=>x.id===id);
+  if(!l) return;
+  const deepLink = `https://t.me/${BOT_USERNAME}?startapp=listing_${id}`;
+  const text = `${l.title} – ${priceLabel(l)}`;
+  try{
+    if(window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.openTelegramLink){
+      const shareUrl = 'https://t.me/share/url?url=' + encodeURIComponent(deepLink) + '&text=' + encodeURIComponent(text);
+      window.Telegram.WebApp.openTelegramLink(shareUrl);
+      return;
+    }
+  }catch(e){}
+  if(navigator.share){
+    navigator.share({ title:l.title, text, url:deepLink }).catch(()=>{});
+    return;
+  }
+  if(navigator.clipboard){
+    navigator.clipboard.writeText(deepLink).then(()=>toast(t('toast_link_copied'))).catch(()=>toast(t('toast_share_unavailable')));
+  } else {
+    toast(t('toast_share_unavailable'));
+  }
+}
+
+function inviteFriend(){
+  const deepLink = `https://t.me/${BOT_USERNAME}?startapp=ref_${State.myId}`;
+  const text = t('referral_share_text',{n:REFERRAL_REWARD_DAYS});
+  try{
+    if(window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.openTelegramLink){
+      const shareUrl = 'https://t.me/share/url?url=' + encodeURIComponent(deepLink) + '&text=' + encodeURIComponent(text);
+      window.Telegram.WebApp.openTelegramLink(shareUrl);
+      return;
+    }
+  }catch(e){}
+  if(navigator.share){ navigator.share({ text, url:deepLink }).catch(()=>{}); return; }
+  if(navigator.clipboard){
+    navigator.clipboard.writeText(deepLink).then(()=>toast(t('toast_link_copied'))).catch(()=>toast(t('toast_share_unavailable')));
+  } else { toast(t('toast_share_unavailable')); }
+}
+
+async function sendChatMessage(){
+  if(getUser(State.myId).banned){ toast('Dein Konto ist gesperrt.'); return; }
+  const input = document.getElementById('chatInput');
+  if(!input || !State.activeChat) return;
+  const text = input.value.trim();
+  if(!text) return;
+  const { conversationId, listingId, otherId } = State.activeChat;
+  State.messages.push({ id:uid('m_'), conversationId, listingId, fromId:State.myId, toId:otherId, text, createdAt:Date.now() });
+  input.value = '';
+  await persistMessages();
+  State.lastRead[conversationId] = Date.now();
+  await persistLastRead();
+  renderChatMessages();
+}
+
+// ---------- Events ----------
+document.addEventListener('click', async (e)=>{
+  if(State.openDropdown && !e.target.closest('.dropdown')){ State.openDropdown = null; render(); }
+  const btn = e.target.closest('button, [data-action]');
+  if(!btn){
+    const card = e.target.closest('.card');
+    if(card && card.dataset.id) openListingDetail(card.dataset.id);
+    return;
+  }
+  const action = btn.dataset.action;
+
+  if(btn.classList.contains('chip') && btn.dataset.type){ State.typeFilter = btn.dataset.type; render(); return; }
+  if(action==='toggledropdown'){ State.openDropdown = (State.openDropdown===btn.dataset.dropdown) ? null : btn.dataset.dropdown; render(); return; }
+  if(action==='selectcat'){ State.catFilter = btn.dataset.cat; bumpCategoryStat(btn.dataset.cat); State.openDropdown = null; render(); return; }
+  if(action==='selectsort'){ State.sortBy = btn.dataset.sort; State.openDropdown = null; render(); return; }
+  if(btn.closest('nav.tabbar')){
+    State.tab = btn.dataset.tab;
+    if(State.tab!=='create'){ State.editingId=null; State.formType=null; State.pendingImages=null; State.formDraft=null; }
+    render(); return;
+  }
+  if(!action){
+    if(btn.id==='themeToggle') return toggleTheme();
+    if(btn.id==='langToggle') return toggleLang();
+    return;
+  }
+
+  if(action==='fav') return toggleFavorite(btn.dataset.id);
+  if(action==='share') return shareListing(btn.dataset.id);
+  if(action==='invitefriend') return inviteFriend();
+  if(action==='contact'){ e.preventDefault(); return openContact(btn.dataset.handle); }
+  if(action==='openchannel'){ e.preventDefault(); return openTelegramUrl(btn.dataset.url); }
+  if(action==='delete'){ if(confirm(t('confirm_delete'))) deleteListing(btn.dataset.id); return; }
+  if(action==='edit') return startEdit(btn.dataset.id);
+  if(action==='canceledit'){ State.editingId=null; State.pendingImages=null; State.formDraft=null; render(); return; }
+  if(action==='removeimg'){ removeFormImage(parseInt(btn.dataset.idx,10)); return; }
+  if(action==='settype'){ State.formType = btn.dataset.type; render(); return; }
+  if(action==='pickimage'){ const inp = document.getElementById('f_imgfile'); if(inp) inp.click(); return; }
+  if(action==='submit') return submitForm();
+  if(action==='profsub'){ State.profileSub = btn.dataset.sub; render(); return; }
+  if(action==='saveprofile') return saveProfile();
+  if(action==='buyverified') return purchaseVerifiedBadge();
+  if(action==='buypremium') return purchasePremium(parseInt(btn.dataset.plan,10));
+  if(action==='setbanner') return setShopBanner(btn.dataset.banner);
+  if(action==='exportdata') return exportMyData();
+  if(action==='adminsub'){ State.adminSub = btn.dataset.sub; render(); return; }
+  if(action==='adminviewlisting'){ State.viewListingId = btn.dataset.id; State.galleryIndex = 0; render(); return; }
+  if(action==='admineditlisting') return startEdit(btn.dataset.id);
+  if(action==='admindeletelisting'){ if(confirm('Anzeige als Admin löschen?')) deleteListing(btn.dataset.id); return; }
+  if(action==='adminhighlight') return adminToggleHighlight(btn.dataset.id);
+  if(action==='adminviewprofile'){ State.viewProfileId = btn.dataset.id; render(); return; }
+  if(action==='adminmessage'){ openChat('_', btn.dataset.id); return; }
+  if(action==='adminban'){ State.adminBanTarget = btn.dataset.id; render(); return; }
+  if(action==='closeadminban'){ State.adminBanTarget = null; render(); return; }
+  if(action==='confirmadminban') return adminBanUser();
+  if(action==='adminunban') return adminUnbanUser(btn.dataset.id);
+  if(action==='admindismissreport') return adminDismissReport(btn.dataset.id);
+  if(action==='resetdemo') return resetAllDemoData();
+  if(action==='viewprofile'){ State.viewProfileId = btn.dataset.id; render(); return; }
+  if(action==='closeprofile'){ State.viewProfileId=null; render(); return; }
+  if(action==='closedetail'){ State.viewListingId=null; render(); return; }
+  if(action==='viewfullscreen'){ State.fullscreenImage = btn.dataset.url; render(); return; }
+  if(action==='closefullscreen'){ State.fullscreenImage = null; render(); return; }
+  if(action==='galleryprev'){ State.galleryIndex = Math.max(0, (State.galleryIndex||0)-1); render(); return; }
+  if(action==='gallerynext'){
+    const l = State.listings.find(x=>x.id===State.viewListingId);
+    const max = l ? listingImages(l).length-1 : 0;
+    State.galleryIndex = Math.min(max, (State.galleryIndex||0)+1); render(); return;
+  }
+  if(action==='gallerydot'){ State.galleryIndex = parseInt(btn.dataset.idx,10); render(); return; }
+  if(action==='openpricefilter'){ State.priceFilterOpen=true; render(); return; }
+  if(action==='savesearch') return saveCurrentSearch();
+  if(action==='applysavedsearch') return applySavedSearch(btn.dataset.id);
+  if(action==='deletesavedsearch') return deleteSavedSearch(btn.dataset.id);
+  if(action==='closepricefilter'){ State.priceFilterOpen=false; render(); return; }
+  if(action==='resetpricefilter'){ State.priceMin=null; State.priceMax=null; State.priceFilterOpen=false; render(); return; }
+  if(action==='applypricefilter'){
+    const minR = document.getElementById('priceMinRange'), maxR = document.getElementById('priceMaxRange');
+    let vMin = minR ? parseInt(minR.value,10) : 0;
+    let vMax = maxR ? parseInt(maxR.value,10) : 1000;
+    State.priceMin = vMin>0 ? vMin : null;
+    State.priceMax = vMax<1000 ? vMax : null;
+    State.priceFilterOpen = false;
+    render(); return;
+  }
+  if(action==='openlegal'){ State.viewLegal=true; render(); return; }
+  if(action==='closelegal'){ State.viewLegal=false; render(); return; }
+  if(action==='promote'){ State.promoteTarget = btn.dataset.id; render(); return; }
+  if(action==='closepromote'){ State.promoteTarget=null; State.justPublished=false; render(); return; }
+  if(action==='buyboost') return purchaseBoost(btn.dataset.listingid, btn.dataset.boost, parseInt(btn.dataset.tier,10));
+  if(action==='redeemfreeboost') return redeemFreeBoost(btn.dataset.listingid);
+  if(action==='requestdeal') return requestDeal(btn.dataset.listingid);
+  if(action==='confirmdeal') return confirmDeal(btn.dataset.id);
+  if(action==='rejectdeal') return rejectDeal(btn.dataset.id);
+  if(action==='report'){ State.reportTarget = { type:btn.dataset.type, id:btn.dataset.id, label:btn.dataset.label }; render(); return; }
+  if(action==='closereport'){ State.reportTarget=null; render(); return; }
+  if(action==='submitreport') return submitReport();
+  if(action==='openreview'){ State.reviewTarget = { dealId:btn.dataset.dealid, rateeid:btn.dataset.rateeid, rateename:btn.dataset.rateename }; State.reviewStar=0; render(); return; }
+  if(action==='closereview'){ State.reviewTarget=null; State.reviewStar=0; render(); return; }
+  if(action==='pickstar'){ State.reviewStar = parseInt(btn.dataset.n,10); render(); return; }
+  if(action==='submitreview') return submitReview();
+  if(action==='openreply'){ State.replyTarget = btn.dataset.id; render(); return; }
+  if(action==='closereply'){ State.replyTarget = null; render(); return; }
+  if(action==='submitreply') return submitReply();
+  if(action==='openchat' || action==='openconvo'){ openChat(btn.dataset.listingid, btn.dataset.otherid); return; }
+  if(action==='closechat'){ closeChat(); return; }
+  if(action==='sendchat') return sendChatMessage();
+});
+
+document.addEventListener('keydown', (e)=>{
+  if(e.target && e.target.id==='chatInput' && e.key==='Enter'){ e.preventDefault(); sendChatMessage(); }
+});
+
+document.addEventListener('input', (e)=>{
+  if(e.target.id==='searchInput'){
+    State.search = e.target.value; render();
+    scheduleSearchTrack(e.target.value.trim().toLowerCase());
+  }
+  if(e.target.id==='f_free'){ document.getElementById('f_price').disabled = e.target.checked; if(e.target.checked) document.getElementById('f_vb').checked=false; }
+  if(e.target.id==='f_vb'){ if(e.target.checked) document.getElementById('f_free').checked=false; document.getElementById('f_price').disabled=false; }
+});
+document.addEventListener('change', (e)=>{
+  if(e.target.id==='f_imgfile'){ handleImgFiles(e); }
+});
+
+// ---------- Init ----------
+(async function init(){
+  document.getElementById('main').innerHTML = '<div class="empty"><div class="big">Lädt …</div></div>';
+  try{
+    await loadAll();
+    applyTheme();
+    if(refreshDailyBumps()) await persistListings();
+    try{
+      const startParam = window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.start_param;
+      if(startParam && startParam.startsWith('listing_')){
+        const id = startParam.slice('listing_'.length);
+        if(State.listings.some(l=>l.id===id)) State.viewListingId = id;
+      }
+    }catch(e){}
+    touchLastSeen();
+    setInterval(touchLastSeen, 60000);
+    if(State.justReferred) toast(t('toast_referral_welcome',{n:REFERRAL_REWARD_DAYS}));
+    render();
+  }catch(err){
+    console.error('Init-Fehler:', err);
+    document.getElementById('main').innerHTML =
+      '<div class="empty"><div class="big">⚠️ Start fehlgeschlagen</div>'
+      + '<div class="small" style="word-break:break-word;padding:0 10px">'+escapeHtml(String(err && err.message || err))+'</div>'
+      + '<div class="small" style="margin-top:10px">Bitte Seite neu laden. Falls es bleibt: Supabase-URL/Key prüfen.</div></div>';
+  }
+})();
+</script>
+</body>
+</html>
