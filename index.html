@@ -1640,7 +1640,7 @@ function hasUnreadMessages(){ return conversationsForMe().some(c=>c.unread && !S
 const LEGAL_HTML_DE = `
 <h2>Nutzungsbedingungen</h2>
 <h3>1. Geltungsbereich</h3>
-<p>Diese Nutzungsbedingungen regeln die Nutzung der Telegram-Mini-App „Basar" (nachfolgend „Basar Kleinanzeigen" oder „die Plattform"), betrieben von [Name/Firma des Betreibers], [Adresse], [Kontakt] (nachfolgend „Betreiber"). Mit der Nutzung der Plattform erkennt der Nutzer diese Bedingungen an.</p>
+<p>Diese Nutzungsbedingungen regeln die Nutzung der Telegram-Mini-App „Basar" (nachfolgend „Basar Kleinanzeigen" oder „die Plattform"), betrieben von OCT Ent Ltd., 11 Republic St., Valletta VLT 1165, Malta, [E-Mail-Adresse] (nachfolgend „Betreiber"). Mit der Nutzung der Plattform erkennt der Nutzer diese Bedingungen an.</p>
 <h3>2. Leistungsbeschreibung</h3>
 <p>Basar Kleinanzeigen stellt eine technische Plattform bereit, über die Nutzer Kleinanzeigen (Angebote und Gesuche) erstellen, durchsuchen, bewerten und über einen integrierten Chat miteinander Kontakt aufnehmen können. Basar Kleinanzeigen ist nicht Vertragspartei der zwischen Nutzern vereinbarten Käufe, Verkäufe, Tauschgeschäfte oder Dienstleistungen. Verträge kommen ausschließlich zwischen den beteiligten Nutzern zustande.</p>
 <h3>3. Registrierung und Identifikation</h3>
@@ -1670,7 +1670,7 @@ const LEGAL_HTML_DE = `
 
 <h2>Datenschutzerklärung</h2>
 <h3>1. Verantwortlicher</h3>
-<p>[Name/Firma], [Adresse], [E-Mail-Adresse] (nachfolgend „wir").</p>
+<p>OCT Ent Ltd., 11 Republic St., Valletta VLT 1165, Malta, [E-Mail-Adresse] (nachfolgend „wir").</p>
 <h3>2. Welche Daten verarbeitet werden</h3>
 <ul>
 <li>Telegram-Kontodaten: Telegram-ID, Vorname/Nachname, Telegram-Username, Profilbild</li>
@@ -1695,15 +1695,15 @@ const LEGAL_HTML_DE = `
 
 <h2>Impressum</h2>
 <p>Angaben gemäß § 5 TMG</p>
-<p>[Vor- und Nachname / Firmenname]<br>[Straße, Hausnummer]<br>[PLZ, Ort]<br>[Land]</p>
+<p>OCT Ent Ltd.<br>11 Republic St.<br>Valletta, VLT 1165<br>Malta</p>
 <p><strong>Kontakt</strong><br>E-Mail: [E-Mail-Adresse]</p>
-<p><strong>Verantwortlich für den Inhalt nach § 18 Abs. 2 MStV:</strong><br>[Name der verantwortlichen Person]</p>
+<p><strong>Verantwortlich für den Inhalt nach § 18 Abs. 2 MStV:</strong><br>OCT Ent Ltd.</p>
 `;
 
 const LEGAL_HTML_EN = `
 <h2>Terms of Use</h2>
 <h3>1. Scope</h3>
-<p>These terms of use govern the use of the Telegram Mini App "Basar" (hereinafter "Basar Kleinanzeigen" or "the Platform"), operated by [Operator's name/company], [Address], [Contact] (hereinafter "Operator"). By using the Platform, the user accepts these terms.</p>
+<p>These terms of use govern the use of the Telegram Mini App "Basar" (hereinafter "Basar Kleinanzeigen" or "the Platform"), operated by OCT Ent Ltd., 11 Republic St., Valletta VLT 1165, Malta, [email address] (hereinafter "Operator"). By using the Platform, the user accepts these terms.</p>
 <h3>2. Service description</h3>
 <p>Basar Kleinanzeigen provides a technical platform on which users can create and browse classified listings (offers and requests), leave reviews, and contact each other via an integrated chat. Basar Kleinanzeigen is not a party to any purchase, sale, exchange, or service agreed between users. Contracts are formed exclusively between the users involved.</p>
 <h3>3. Registration and identification</h3>
@@ -1733,7 +1733,7 @@ const LEGAL_HTML_EN = `
 
 <h2>Privacy Policy</h2>
 <h3>1. Controller</h3>
-<p>[Name/Company], [Address], [Email address] (hereinafter "we").</p>
+<p>OCT Ent Ltd., 11 Republic St., Valletta VLT 1165, Malta, [email address] (hereinafter "we").</p>
 <h3>2. What data is processed</h3>
 <ul>
 <li>Telegram account data: Telegram ID, first/last name, Telegram username, profile photo</li>
@@ -1758,9 +1758,9 @@ const LEGAL_HTML_EN = `
 
 <h2>Legal Notice (Imprint)</h2>
 <p>Information pursuant to § 5 TMG (German Telemedia Act)</p>
-<p>[First and last name / company name]<br>[Street, number]<br>[Postal code, city]<br>[Country]</p>
+<p>OCT Ent Ltd.<br>11 Republic St.<br>Valletta, VLT 1165<br>Malta</p>
 <p><strong>Contact</strong><br>Email: [email address]</p>
-<p><strong>Responsible for content pursuant to § 18(2) MStV:</strong><br>[Name of the responsible person]</p>
+<p><strong>Responsible for content pursuant to § 18(2) MStV:</strong><br>OCT Ent Ltd.</p>
 `;
 function legalHtmlFor(){ return State.lang==='de' ? LEGAL_HTML_DE : LEGAL_HTML_EN; }
 
