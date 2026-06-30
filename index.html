@@ -651,7 +651,7 @@ const I18N = {
     toast_referral_welcome:'Willkommen! Ihr habt beide {n} Tage kostenlose Hervorhebung erhalten 🎁',
     redeem_free_boost:'Kostenlos einlösen ({n} Tage)', toast_free_boost_redeemed:'Kostenloser Boost eingelöst ({n} Tage)',
     view_grid:'Kachelansicht', view_list:'Listenansicht',
-    swipe_delete:'Löschen', swipe_archive:'Archivieren', archived_label:'Archiviert', back_to_inbox:'Zurück',
+    swipe_delete:'Löschen', swipe_archive:'Archivieren', swipe_unarchive:'Wiederherstellen', archived_label:'Archiviert', back_to_inbox:'Zurück',
     confirm_premium:'Premium für {months} Monat(e) aktivieren – {stars} ★ (~{eur} €)?\n(Demo-Zahlung, keine echte Belastung)',
     toast_premium_activated:'Premium aktiviert (Demo)', toast_listing_limit:'Limit von {max} aktiven Anzeigen erreicht – mit Premium unbegrenzt.',
     reset_all_demo_data:'Alle Demo-Daten zurücksetzen', toast_reset_done:'Zurückgesetzt – die App lädt neu …',
@@ -766,7 +766,7 @@ const I18N = {
     toast_referral_welcome:'Welcome! You both received {n} days of free highlight 🎁',
     redeem_free_boost:'Redeem for free ({n} days)', toast_free_boost_redeemed:'Free boost redeemed ({n} days)',
     view_grid:'Grid view', view_list:'List view',
-    swipe_delete:'Delete', swipe_archive:'Archive', archived_label:'Archived', back_to_inbox:'Back',
+    swipe_delete:'Delete', swipe_archive:'Archive', swipe_unarchive:'Unarchive', archived_label:'Archived', back_to_inbox:'Back',
     confirm_premium:'Activate Premium for {months} month(s) – {stars} ★ (~€{eur})?\n(Demo payment, no real charge)',
     toast_premium_activated:'Premium activated (demo)', toast_listing_limit:'Limit of {max} active listings reached – unlimited with Premium.',
     reset_all_demo_data:'Reset all demo data', toast_reset_done:'Reset done – reloading the app …',
@@ -1967,9 +1967,10 @@ function setupSwipeHandlers(){
     const cid = wrap.dataset.cid;
     const isArchived = wrap.dataset.archived==='1';
     let startX=0, startY=0, dx=0, dragging=false, locked=null;
-    const THRESH = 80;
+    let THRESH = 80;
     row.addEventListener('touchstart', e=>{
       startX = e.touches[0].clientX; startY = e.touches[0].clientY; dx=0; dragging=true; locked=null;
+      THRESH = row.offsetWidth / 2;
       row.style.transition='none';
     }, {passive:true});
     row.addEventListener('touchmove', e=>{
@@ -1983,9 +1984,10 @@ function setupSwipeHandlers(){
       if(dx < 0){
         bg.style.background = 'var(--heart)'; bg.style.justifyContent='flex-end';
         bg.textContent = Math.abs(dx) > THRESH ? '🗑 '+t('swipe_delete') : '🗑';
-      } else if(dx > 0 && !isArchived){
-        bg.style.background = '#34C759'; bg.style.justifyContent='flex-start';
-        bg.textContent = dx > THRESH ? '📥 '+t('swipe_archive') : '📥';
+      } else if(dx > 0){
+        bg.style.background = isArchived ? 'var(--blue)' : '#34C759'; bg.style.justifyContent='flex-start';
+        const label = isArchived ? t('swipe_unarchive') : t('swipe_archive');
+        bg.textContent = dx > THRESH ? '📥 '+label : '📥';
       } else { bg.textContent=''; }
     }, {passive:true});
     row.addEventListener('touchend', ()=>{
@@ -1995,9 +1997,9 @@ function setupSwipeHandlers(){
       if(dx < -THRESH){
         row.style.transform = 'translateX(-100%)';
         setTimeout(()=>deleteConversation(cid), 180);
-      } else if(dx > THRESH && !isArchived){
+      } else if(dx > THRESH){
         row.style.transform = 'translateX(100%)';
-        setTimeout(()=>archiveConversation(cid), 180);
+        setTimeout(()=>isArchived?unarchiveConversation(cid):archiveConversation(cid), 180);
       } else {
         row.style.transform = 'translateX(0)';
       }
