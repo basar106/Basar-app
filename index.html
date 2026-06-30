@@ -20,6 +20,7 @@
     --blue:#0A84FF; --blue-dark:#0064D6;
     --yellow:#FFB300; --heart:#FF375F;
     --bg:#EFF4FC; --card:rgba(255,255,255,0.30); --card-strong:rgba(255,255,255,0.78);
+    --dropdown-bg:rgba(255,255,255,0.92);
     --border:rgba(255,255,255,0.6); --line:rgba(15,40,70,0.08);
     --text:#101F33; --muted:#5C6B7E; --soft:rgba(255,255,255,0.4);
     --fill1:rgba(255,255,255,0.5); --fill2:rgba(255,255,255,0.68);
@@ -37,6 +38,7 @@
     --blue:#409CFF; --blue-dark:#7FC1FF;
     --yellow:#FFC846; --heart:#FF5C82;
     --bg:#0E1626; --card:rgba(255,255,255,0.06); --card-strong:rgba(22,27,40,0.72);
+    --dropdown-bg:rgba(16,22,38,0.92);
     --border:rgba(255,255,255,0.14); --line:rgba(255,255,255,0.08);
     --text:#E7EAF0; --muted:#9AA5B3; --soft:rgba(255,255,255,0.07);
     --fill1:rgba(255,255,255,0.10); --fill2:rgba(255,255,255,0.14);
@@ -115,7 +117,7 @@
   .dropdown-trigger.open svg{ transform:rotate(180deg); }
   .dropdown-panel{
     position:absolute; top:calc(100% + 6px); left:0; right:0; z-index:50;
-    background:var(--card-strong); backdrop-filter:blur(26px) saturate(190%); -webkit-backdrop-filter:blur(26px) saturate(190%);
+    background:var(--dropdown-bg); backdrop-filter:blur(34px) saturate(200%); -webkit-backdrop-filter:blur(34px) saturate(200%);
     border:1px solid var(--border); border-radius:16px; box-shadow:0 14px 34px rgba(20,50,90,0.22), inset 0 1px 0 rgba(255,255,255,0.4);
     max-height:280px; overflow-y:auto; padding:6px;
   }
