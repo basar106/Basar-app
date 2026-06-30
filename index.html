@@ -883,9 +883,7 @@ async function loadAll(){
   if(tgUser && tgUser.id){
     State.myId = 'tg_' + tgUser.id;
   } else {
-    let anon = await storageGet('basar:anonId', false);
-    if(!anon){ anon = 'anon_' + (crypto.randomUUID ? crypto.randomUUID() : uid()); await storageSet('basar:anonId', anon, false); }
-    State.myId = anon;
+    throw new Error('NEEDS_TELEGRAM');
   }
 
   const rlang = await storageGet('basar:lang', false);
@@ -2872,6 +2870,14 @@ document.addEventListener('change', (e)=>{
     render();
   }catch(err){
     console.error('Init-Fehler:', err);
+    if(err && err.message === 'NEEDS_TELEGRAM'){
+      document.getElementById('main').innerHTML =
+        '<div class="empty"><div class="big">📱 Nur in Telegram verfügbar</div>'
+        + '<div class="small">Bitte öffne Basar über den Telegram-Bot, nicht direkt im Browser.</div></div>';
+      document.getElementById('filters').style.display = 'none';
+      document.querySelector('nav.tabbar').style.display = 'none';
+      return;
+    }
     document.getElementById('main').innerHTML =
       '<div class="empty"><div class="big">⚠️ Start fehlgeschlagen</div>'
       + '<div class="small" style="word-break:break-word;padding:0 10px">'+escapeHtml(String(err && err.message || err))+'</div>'
