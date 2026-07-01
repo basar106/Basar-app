@@ -112,20 +112,19 @@
     box-shadow:inset 0 1px 0 rgba(255,255,255,0.3);
   }
   .dropdown-trigger span{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-  .dropdown-trigger svg{ width:13px; height:13px; color:var(--muted); flex-shrink:0; transition:transform 0.2s; }
+  .dropdown-trigger svg{ width:13px; height:13px; color:var(--muted); flex-shrink:0; }
   .dropdown-trigger.open{ border-color:var(--blue); }
-  .dropdown-trigger.open svg{ transform:rotate(180deg); }
-  .dropdown-panel{
-    position:absolute; top:calc(100% + 6px); left:0; right:0; z-index:50;
-    background:var(--dropdown-bg); backdrop-filter:blur(34px) saturate(200%); -webkit-backdrop-filter:blur(34px) saturate(200%);
-    border:1px solid var(--border); border-radius:16px; box-shadow:0 14px 34px rgba(20,50,90,0.22), inset 0 1px 0 rgba(255,255,255,0.4);
-    max-height:280px; overflow-y:auto; padding:6px;
-  }
-  .dropdown-option{
-    display:block; width:100%; text-align:left; padding:9px 12px; margin-bottom:1px; border-radius:10px;
-    border:none; background:none; color:var(--text); font-size:13px; font-weight:600; cursor:pointer;
-  }
-  .dropdown-option.active{ background:var(--fill1); color:var(--blue-dark); font-weight:800; }
+
+  /* Vollbild-Kategorie-Overlay */
+  .cat-overlay{ position:fixed; inset:0; z-index:120; display:flex; flex-direction:column; background:var(--bg); }
+  .cat-overlay-header{ display:flex; align-items:center; gap:10px; padding:16px 16px 12px; border-bottom:1px solid var(--border); flex-shrink:0; }
+  .cat-overlay-header h2{ flex:1; text-align:center; font-size:17px; font-weight:700; color:var(--text); margin:0; }
+  .cat-overlay-header button{ width:36px; height:36px; border-radius:50%; border:none; background:var(--fill1); color:var(--text); font-size:18px; cursor:pointer; display:flex; align-items:center; justify-content:center; }
+  .cat-overlay-list{ flex:1; overflow-y:auto; padding:6px 0; }
+  .cat-overlay-item{ display:flex; align-items:center; padding:14px 20px; border-bottom:1px solid var(--line); cursor:pointer; color:var(--text); font-size:15px; gap:12px; }
+  .cat-overlay-item:active{ background:var(--fill1); }
+  .cat-overlay-check{ width:22px; height:22px; color:var(--blue); flex-shrink:0; }
+  .cat-overlay-chevron{ width:16px; height:16px; color:var(--muted); margin-left:auto; flex-shrink:0; }
   .price-filter-btn{
     flex-shrink:0; width:38px; display:flex; align-items:center; justify-content:center;
     border-radius:14px; border:1px solid var(--border); background:var(--fill1);
@@ -505,7 +504,7 @@ window.addEventListener('error', function(e){
       + '<div class="small" style="word-break:break-word;padding:0 10px">' + String((e.error && e.error.message) || e.message || e) + '</div></div>';
   }
 });
-const CATEGORIES = ["Alle Kategorien","Streaming","Accounts","Social","Clothes & Accessoires","Dienstleistungen","Earn Money","Trading","Smoke","Glücksspiel","Werbung","Others"];
+const CATEGORIES = ["Alle Kategorien","Streaming","Accounts","Social","Clothes & Accessoires","Elektronik","Sammelkarten","Dienstleistungen","Jobs & Aufträge","Earn Money","Trading","Smoke","Glücksspiel","Verschenken & Tauschen","Werbung","Others"];
 const REPORT_REASONS = { de:["Betrug / Abzocke","Spam oder Werbung","Unangemessener Inhalt","Falsche Angaben","Sonstiges"],
   en:["Fraud / scam","Spam or advertising","Inappropriate content","False information","Other"] };
 const PIN_SLOTS_PER_CATEGORY = 5;
@@ -792,7 +791,7 @@ const State = {
   adminSub:'listings', adminBanTarget:null,
   reportTarget:null, reviewTarget:null, reviewStar:0, replyTarget:null,
   formType:null, pendingImages:null, formDraft:null, promoteTarget:null, justPublished:false, searchStats:{categories:{}}, lastTrackedSearchTerm:'', theme:'light', lang:'de', tgInitData:'', viewMode:'list',
-  hiddenConvos:{}, archivedConvos:[], showArchived:false,
+  hiddenConvos:{}, archivedConvos:[], showArchived:false, catOverlayOpen:false,
 };
 
 function uid(p){ return (p||'id_') + Date.now().toString(36) + Math.random().toString(36).slice(2,8); }
@@ -1907,11 +1906,10 @@ function render(){
 
   const catLabel = State.catFilter===CATEGORIES[0] ? t('all_categories') : State.catFilter;
   document.getElementById('catDropdown').innerHTML = `
-    <button class="dropdown-trigger ${State.openDropdown==='cat'?'open':''}" data-action="toggledropdown" data-dropdown="cat">
+    <button class="dropdown-trigger" data-action="opencatoverlay">
       <span>${escapeHtml(catLabel)}</span>
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
-    </button>
-    ${State.openDropdown==='cat' ? `<div class="dropdown-panel">${CATEGORIES.map(c=>`<button class="dropdown-option ${c===State.catFilter?'active':''}" data-action="selectcat" data-cat="${escapeHtml(c)}">${escapeHtml(c===CATEGORIES[0]?t('all_categories'):c)}</button>`).join('')}</div>` : ''}`;
+    </button>`;
 
   const sortLabels = { newest:t('sort_newest'), popular:t('sort_popular'), price_asc:t('sort_price_asc'), price_desc:t('sort_price_desc') };
   document.getElementById('sortDropdown').innerHTML = `
@@ -2007,7 +2005,32 @@ function setupSwipeHandlers(){
 }
 
 function renderOverlays(){
-  document.querySelectorAll('.profile-overlay, .modal-overlay, .chat-overlay, .fullscreen-overlay').forEach(el=>el.remove());
+  document.querySelectorAll('.profile-overlay, .modal-overlay, .chat-overlay, .fullscreen-overlay, .cat-overlay').forEach(el=>el.remove());
+
+  if(State.catOverlayOpen){
+    const div = document.createElement('div');
+    div.className = 'cat-overlay';
+    div.innerHTML = `
+      <div class="cat-overlay-header">
+        <button data-action="closecatoverlay">←</button>
+        <h2>${t('all_categories')}</h2>
+        <button data-action="closecatoverlay">✕</button>
+      </div>
+      <div class="cat-overlay-list">
+        ${CATEGORIES.map(c=>{
+          const active = c===State.catFilter;
+          const label = c===CATEGORIES[0] ? t('all_categories') : c;
+          return `<div class="cat-overlay-item" data-action="selectcat" data-cat="${escapeHtml(c)}">
+            ${active
+              ? `<svg class="cat-overlay-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>`
+              : `<span style="width:22px;flex-shrink:0"></span>`}
+            <span>${escapeHtml(label)}</span>
+            ${!active ? `<svg class="cat-overlay-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>` : ''}
+          </div>`;
+        }).join('')}
+      </div>`;
+    document.body.appendChild(div);
+  }
 
   if(State.adminBanTarget){
     const u = getUser(State.adminBanTarget);
@@ -2736,7 +2759,9 @@ document.addEventListener('click', async (e)=>{
 
   if(btn.classList.contains('chip') && btn.dataset.type){ State.typeFilter = btn.dataset.type; render(); return; }
   if(action==='toggledropdown'){ State.openDropdown = (State.openDropdown===btn.dataset.dropdown) ? null : btn.dataset.dropdown; render(); return; }
-  if(action==='selectcat'){ State.catFilter = btn.dataset.cat; bumpCategoryStat(btn.dataset.cat); State.openDropdown = null; render(); return; }
+  if(action==='opencatoverlay'){ State.catOverlayOpen=true; render(); return; }
+  if(action==='closecatoverlay'){ State.catOverlayOpen=false; render(); return; }
+  if(action==='selectcat'){ State.catFilter = btn.dataset.cat; bumpCategoryStat(btn.dataset.cat); State.openDropdown=null; State.catOverlayOpen=false; render(); return; }
   if(action==='selectsort'){ State.sortBy = btn.dataset.sort; State.openDropdown = null; render(); return; }
   if(btn.closest('nav.tabbar')){
     State.tab = btn.dataset.tab;
