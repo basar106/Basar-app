@@ -234,6 +234,23 @@
 
   .form-wrap h2{ font-size:18px; font-weight:700; margin:4px 0 16px; color:var(--navy); }
   .field{ margin-bottom:14px; }
+  .settings-section{ margin-bottom:18px; }
+  .settings-section-title{ font-size:11px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:0.6px; margin:0 0 8px 4px; }
+  .settings-card{ background:var(--card); backdrop-filter:blur(18px); border:1px solid var(--border); border-radius:18px; overflow:hidden; }
+  .settings-row{ display:flex; align-items:center; gap:12px; padding:13px 16px; border-bottom:1px solid var(--line); cursor:pointer; }
+  .settings-row:last-child{ border-bottom:none; }
+  .settings-row-icon{ width:34px; height:34px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:17px; flex-shrink:0; }
+  .settings-row-mid{ flex:1; min-width:0; }
+  .settings-row-label{ font-size:14px; font-weight:600; color:var(--text); }
+  .settings-row-sub{ font-size:12px; color:var(--muted); margin-top:1px; }
+  .settings-row-right{ color:var(--muted); font-size:12px; display:flex; align-items:center; gap:4px; flex-shrink:0; }
+  .settings-row-right svg{ width:14px; height:14px; }
+  .toggle-switch{ width:44px; height:26px; border-radius:13px; background:var(--muted); position:relative; transition:background .2s; flex-shrink:0; border:none; cursor:pointer; }
+  .toggle-switch.on{ background:var(--blue); }
+  .toggle-switch::after{ content:''; position:absolute; width:20px; height:20px; border-radius:50%; background:#fff; top:3px; left:3px; transition:transform .2s; }
+  .toggle-switch.on::after{ transform:translateX(18px); }
+  .premium-status-card{ padding:14px 16px; border-radius:18px; background:linear-gradient(135deg,rgba(122,30,92,0.25),rgba(10,132,255,0.25)); border:1px solid rgba(122,30,92,0.3); margin-bottom:14px; }
+  .premium-status-card.active{ background:linear-gradient(135deg,rgba(30,122,60,0.2),rgba(10,132,255,0.15)); border-color:rgba(30,122,60,0.35); }
   .field label{ display:block; font-size:12px; font-weight:600; margin-bottom:5px; }
   .field input[type=text], .field input[type=number], .field textarea, .field select{
     width:100%; border:1px solid var(--border); background:var(--fill1);
@@ -1549,60 +1566,130 @@ function renderProfile(){
 
   let body = '';
   if(State.profileSub==='overview'){
+    const isPro = hasPremiumSub(State.myId);
     body = `
-      <div class="field"><label>${t('profile_name_field')}</label>
-        <input type="text" id="p_name" value="${escapeHtml(u.customName)}" placeholder="${escapeHtml(u.name)}"></div>
-      <div class="field"><label>${t('profile_username_field')}</label>
-        <input type="text" id="p_username" value="${escapeHtml(u.username)}" placeholder="@dein_name"></div>
-      <div class="field"><label>${t('profile_channel_field')}</label>
-        <input type="text" id="p_channel" value="${escapeHtml(u.channel)}" placeholder="@dein_kanal oder https://t.me/...">
-        <div class="hint">${t('profile_channel_hint')}</div></div>
-      <div class="field"><label>${t('profile_bio_field')}</label>
-        <textarea id="p_bio" maxlength="300" placeholder="${t('profile_bio_ph')}">${escapeHtml(u.bio)}</textarea></div>
-      <div class="field">
-        <label class="vb-check" style="font-size:13px;color:var(--text);gap:8px">
-          <input type="checkbox" id="p_show_online" ${u.showOnlineStatus!==false?'checked':''}> ${t('show_online_status')}
-        </label>
-        <div class="hint">${t('show_online_status_hint')}</div>
-      </div>
-      <div class="field"><label>🎁 ${t('referral_section_label')}</label>
-        <div class="hint" style="margin-bottom:8px">${t('referral_desc',{n:REFERRAL_REWARD_DAYS})}</div>
-        ${u.freeHighlightDays>0 ? `<div class="hint" style="color:#1E7A3C;font-weight:700;margin-bottom:8px">${t('referral_balance',{n:u.freeHighlightDays})}</div>` : ''}
-        <button class="btn-secondary" data-action="invitefriend" style="width:100%">${t('referral_invite_btn')}</button>
-      </div>
-      <div class="field"><label>${t('verified_section_label')}</label>
-        <div class="hint" style="margin-bottom:8px">${t('verified_badge_desc')}</div>
-        ${u.verifiedBadge
-          ? `<div class="hint" style="color:#1E7A3C;font-weight:700">${t('verified_badge_active')}</div>`
-          : `<button class="btn-secondary" data-action="buyverified" style="width:100%">${verifiedCheckHTML({verifiedBadge:true})} ${t('verified_badge_buy_stars',{stars:VERIFIED_BADGE_STARS, eur:eur(VERIFIED_BADGE_STARS)})}</button>`}
-      </div>
-      <div class="field"><label>💎 ${t('premium_section_label')}</label>
-        ${hasPremiumSub(State.myId)
-          ? `<div class="hint" style="color:#1E7A3C;font-weight:700;margin-bottom:10px">${t('premium_active_until',{date:dateStr(u.premiumSub.until)})}</div>`
-          : `<div class="hint" style="margin-bottom:10px">${t('premium_desc',{max:FREE_LISTING_LIMIT, imgmax:MAX_IMAGES_PER_LISTING_PREMIUM, imgfree:MAX_IMAGES_PER_LISTING_FREE, pinbonus:PREMIUM_PIN_BONUS_SLOTS})}</div>`}
-        <div class="tier-row">
-          ${PREMIUM_PLANS.map((p,i)=>`<button data-action="buypremium" data-plan="${i}">${t('premium_months',{n:p.months})} · ${p.stars} ★ (~${eur(p.stars)} €)</button>`).join('')}
+      <!-- PROFIL BEARBEITEN -->
+      <div class="settings-section">
+        <div class="settings-section-title">Profil</div>
+        <div class="settings-card">
+          <label class="settings-row" style="cursor:pointer">
+            <div class="settings-row-icon" style="background:rgba(10,132,255,0.15)">✏️</div>
+            <div class="settings-row-mid">
+              <div class="settings-row-label">${t('profile_name_field')}</div>
+              <input type="text" id="p_name" value="${escapeHtml(u.customName)}" placeholder="${escapeHtml(u.name)}" style="border:none;background:none;color:var(--text);font-size:13px;width:100%;padding:0;outline:none;margin-top:2px">
+            </div>
+          </label>
+          <label class="settings-row" style="cursor:pointer">
+            <div class="settings-row-icon" style="background:rgba(10,132,255,0.15)">@</div>
+            <div class="settings-row-mid">
+              <div class="settings-row-label">${t('profile_username_field')}</div>
+              <input type="text" id="p_username" value="${escapeHtml(u.username)}" placeholder="@dein_name" style="border:none;background:none;color:var(--text);font-size:13px;width:100%;padding:0;outline:none;margin-top:2px">
+            </div>
+          </label>
+          <label class="settings-row" style="cursor:pointer">
+            <div class="settings-row-icon" style="background:rgba(10,132,255,0.15)">📢</div>
+            <div class="settings-row-mid">
+              <div class="settings-row-label">${t('profile_channel_field')}</div>
+              <input type="text" id="p_channel" value="${escapeHtml(u.channel)}" placeholder="@kanal" style="border:none;background:none;color:var(--text);font-size:13px;width:100%;padding:0;outline:none;margin-top:2px">
+            </div>
+          </label>
+          <label class="settings-row" style="cursor:pointer;align-items:flex-start">
+            <div class="settings-row-icon" style="background:rgba(10,132,255,0.15);margin-top:2px">📝</div>
+            <div class="settings-row-mid">
+              <div class="settings-row-label">${t('profile_bio_field')}</div>
+              <textarea id="p_bio" maxlength="300" placeholder="${t('profile_bio_ph')}" style="border:none;background:none;color:var(--text);font-size:13px;width:100%;padding:0;outline:none;margin-top:2px;resize:none;min-height:48px">${escapeHtml(u.bio)}</textarea>
+            </div>
+          </label>
         </div>
       </div>
-      ${hasPremiumSub(State.myId) ? `
-      <div class="field"><label>📊 ${t('stats_section_label')}</label>
+
+      <!-- EINSTELLUNGEN -->
+      <div class="settings-section">
+        <div class="settings-section-title">Einstellungen</div>
+        <div class="settings-card">
+          <div class="settings-row">
+            <div class="settings-row-icon" style="background:rgba(52,199,89,0.15)">🟢</div>
+            <div class="settings-row-mid">
+              <div class="settings-row-label">${t('show_online_status')}</div>
+              <div class="settings-row-sub">${t('show_online_status_hint')}</div>
+            </div>
+            <button class="toggle-switch ${u.showOnlineStatus!==false?'on':''}" data-action="toggleonline"></button>
+          </div>
+        </div>
+      </div>
+
+      <!-- PREMIUM -->
+      <div class="settings-section">
+        <div class="settings-section-title">Premium & Features</div>
+        <div class="${isPro?'premium-status-card active':'premium-status-card'}" style="display:flex;align-items:center;gap:12px">
+          <span style="font-size:24px">${isPro?'💎':'🔒'}</span>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:14px;font-weight:700;color:var(--text)">${isPro ? t('premium_active_until',{date:dateStr(u.premiumSub.until)}) : t('premium_section_label')}</div>
+            ${!isPro ? `<div style="font-size:12px;color:var(--muted);margin-top:2px">${t('premium_months',{n:1})} · ${PREMIUM_PLANS[0].stars} ★ – ${t('premium_months',{n:12})} · ${PREMIUM_PLANS[2].stars} ★</div>` : ''}
+          </div>
+          ${!isPro ? `<div style="display:flex;flex-direction:column;gap:5px">
+            ${PREMIUM_PLANS.map((p,i)=>`<button data-action="buypremium" data-plan="${i}" style="font-size:11px;padding:5px 10px;white-space:nowrap">${t('premium_months',{n:p.months})}</button>`).join('')}
+          </div>` : ''}
+        </div>
+
+        <div class="settings-card">
+          <div class="settings-row" ${!u.verifiedBadge?`data-action="buyverified" style="cursor:pointer"`:''}> 
+            <div class="settings-row-icon" style="background:rgba(10,132,255,0.15)">${verifiedCheckHTML({verifiedBadge:true})}</div>
+            <div class="settings-row-mid">
+              <div class="settings-row-label">${t('verified_section_label')}</div>
+              <div class="settings-row-sub">${u.verifiedBadge ? t('verified_badge_active') : `${VERIFIED_BADGE_STARS} ★ (~${eur(VERIFIED_BADGE_STARS)} €)`}</div>
+            </div>
+            ${u.verifiedBadge ? `<span style="color:#1E7A3C;font-size:18px">✓</span>` : `<div class="settings-row-right"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></div>`}
+          </div>
+          ${isPro ? `
+          <div class="settings-row">
+            <div class="settings-row-icon" style="background:rgba(255,179,0,0.15)">🎨</div>
+            <div class="settings-row-mid">
+              <div class="settings-row-label">${t('branding_section_label')}</div>
+              <div style="display:flex;gap:7px;margin-top:8px;flex-wrap:wrap">
+                ${Object.keys(BANNER_PRESETS).map(key=>`<button type="button" class="banner-swatch ${u.shopBanner===key?'active':''}" style="background:${BANNER_PRESETS[key]}" data-action="setbanner" data-banner="${key}"></button>`).join('')}
+              </div>
+              <input type="text" id="p_tagline" maxlength="60" value="${escapeHtml(u.shopTagline)}" placeholder="${t('branding_tagline_ph')}" style="margin-top:8px;width:100%;border:1px solid var(--border);border-radius:10px;padding:7px 10px;background:var(--fill1);color:var(--text);font-size:13px">
+            </div>
+          </div>` : ''}
+          ${isPro ? `
+          <div class="settings-row" data-action="exportdata" style="cursor:pointer">
+            <div class="settings-row-icon" style="background:rgba(10,132,255,0.15)">📦</div>
+            <div class="settings-row-mid"><div class="settings-row-label">${t('export_data_btn')}</div></div>
+            <div class="settings-row-right"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></div>
+          </div>` : ''}
+        </div>
+      </div>
+
+      ${isPro ? `
+      <!-- STATISTIKEN -->
+      <div class="settings-section">
+        <div class="settings-section-title">📊 ${t('stats_section_label')}</div>
         <div class="stat-row">
           <div><b>${totalViews}</b>${t('stat_views')}</div>
           <div><b>${totalFavs}</b>${t('stat_favs')}</div>
           <div><b>${r.count ? r.avg.toFixed(1) : '–'}</b>${t('stat_rating')}</div>
         </div>
-        <button class="btn-secondary" data-action="exportdata" style="width:100%;margin-top:10px">${t('export_data_btn')}</button>
       </div>` : ''}
-      <div class="field"><label>🎨 ${t('branding_section_label')}</label>
-        ${hasPremiumSub(State.myId) ? `
-          <div class="banner-swatch-row">
-            ${Object.keys(BANNER_PRESETS).map(key=>`<button type="button" class="banner-swatch ${u.shopBanner===key?'active':''}" style="background:${BANNER_PRESETS[key]}" data-action="setbanner" data-banner="${key}"></button>`).join('')}
+
+      <!-- FREUNDE -->
+      <div class="settings-section">
+        <div class="settings-section-title">Freunde</div>
+        <div class="settings-card">
+          <div class="settings-row" data-action="invitefriend" style="cursor:pointer">
+            <div class="settings-row-icon" style="background:rgba(255,179,0,0.15)">🎁</div>
+            <div class="settings-row-mid">
+              <div class="settings-row-label">${t('referral_invite_btn')}</div>
+              <div class="settings-row-sub">${t('referral_desc',{n:REFERRAL_REWARD_DAYS})}${u.freeHighlightDays>0?` · ${t('referral_balance',{n:u.freeHighlightDays})}`:''}</div>
+            </div>
+            <div class="settings-row-right"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></div>
           </div>
-          <input type="text" id="p_tagline" maxlength="60" value="${escapeHtml(u.shopTagline)}" placeholder="${t('branding_tagline_ph')}">
-        ` : `<div class="premium-lock"><div class="lock-icon">🔒</div><div class="hint">${t('branding_locked')}</div></div>`}
+        </div>
       </div>
+
       <button class="submit-btn" data-action="saveprofile">${t('profile_save')}</button>
-      <div class="cancel-edit" data-action="openlegal" style="margin-top:18px">${t('profile_legal_link')}</div>`;
+      <div class="cancel-edit" data-action="openlegal" style="margin-top:18px;text-align:center">${t('profile_legal_link')}</div>
+    `;
   } else if(State.profileSub==='listings'){
     body = own.length ? own.map(l=>cardHTML(l,true)).join('') : `<div class="empty"><div class="big">${t('no_listings_yet')}</div><div class="small">${t('no_listings_sub')}</div></div>`;
   } else if(State.profileSub==='favorites'){
@@ -2401,8 +2488,7 @@ async function saveProfile(){
   const bio = document.getElementById('p_bio').value.trim();
   const taglineEl = document.getElementById('p_tagline');
   const shopTagline = taglineEl ? taglineEl.value.trim() : getUser(State.myId).shopTagline;
-  const showOnlineStatus = document.getElementById('p_show_online').checked;
-  State.users[State.myId] = { ...getUser(State.myId), customName, username, channel, bio, shopTagline, showOnlineStatus };
+  State.users[State.myId] = { ...getUser(State.myId), customName, username, channel, bio, shopTagline };
   await persistUsers(); toast(t('toast_profile_saved')); render();
 }
 
@@ -2798,6 +2884,10 @@ document.addEventListener('click', async (e)=>{
   if(action==='submit') return submitForm();
   if(action==='profsub'){ State.profileSub = btn.dataset.sub; render(); return; }
   if(action==='saveprofile') return saveProfile();
+  if(action==='toggleonline'){
+    State.users[State.myId] = { ...getUser(State.myId), showOnlineStatus: getUser(State.myId).showOnlineStatus===false };
+    await persistUsers(); render(); return;
+  }
   if(action==='buyverified') return purchaseVerifiedBadge();
   if(action==='buypremium') return purchasePremium(parseInt(btn.dataset.plan,10));
   if(action==='setbanner') return setShopBanner(btn.dataset.banner);
