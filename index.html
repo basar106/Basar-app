@@ -667,9 +667,9 @@ const I18N = {
     verified_badge_active:'✓ Du hast den blauen Haken', verified_badge_desc:'Zeigt einen blauen Haken neben deinem Namen, überall in der App.',
     confirm_verified_purchase:'Blauen Haken einmalig für {price} € freischalten?\n(Demo-Zahlung, keine echte Belastung)',
     toast_verified_activated:'Verifizierung freigeschaltet (Demo)',
-    premium_section_label:'Premium-Abo', premium_active_until:'Aktiv bis {date}',
+    premium_section_label:'PRO-Abo', premium_active_until:'PRO aktiv bis {date}',
     premium_desc:'Unbegrenzte Anzeigen (statt {max} kostenlos), automatisch TOP-Hervorhebung + 2x Sichtbarkeit für alle Anzeigen, {imgmax} statt {imgfree} Bilder pro Anzeige, {pinbonus} reservierte Pin-Plätze pro Kategorie, PRO-Badge, Statistiken, Shop-Branding und Datenexport.',
-    premium_months:'{n} Monat(e)', premium_covers_this:'Durch dein Premium-Abo bereits aktiv',
+    premium_months:'{n} Monat(e)', premium_covers_this:'Durch dein PRO-Abo bereits aktiv',
     premium_pin_bonus_note:'+{n} reserviert für Premium', export_data_btn:'📦 Eigene Daten exportieren (JSON)', toast_export_done:'Export heruntergeladen',
     status_online:'Online', status_lastseen:'Zuletzt {time}', show_online_status:'Online-Status anzeigen', show_online_status_hint:'Andere sehen, wann du zuletzt aktiv warst.',
     referral_section_label:'Freunde einladen', referral_desc:'Lade Freunde ein: Ihr bekommt beide {n} Tage kostenlose Hervorhebung für eine Anzeige.',
@@ -782,9 +782,9 @@ const I18N = {
     verified_badge_active:'✓ You have the blue checkmark', verified_badge_desc:'Shows a blue checkmark next to your name everywhere in the app.',
     confirm_verified_purchase:'Unlock the blue checkmark for a one-time {price} €?\n(Demo payment, no real charge)',
     toast_verified_activated:'Verification unlocked (demo)',
-    premium_section_label:'Premium subscription', premium_active_until:'Active until {date}',
+    premium_section_label:'PRO subscription', premium_active_until:'PRO active until {date}',
     premium_desc:'Unlimited listings (instead of {max} free), automatic TOP highlight + 2x visibility for all listings, {imgmax} instead of {imgfree} photos per listing, {pinbonus} reserved pin slots per category, PRO badge, stats, shop branding and data export.',
-    premium_months:'{n} month(s)', premium_covers_this:'Already included via your Premium subscription',
+    premium_months:'{n} month(s)', premium_covers_this:'Already included via your PRO subscription',
     premium_pin_bonus_note:'+{n} reserved for Premium', export_data_btn:'📦 Export your data (JSON)', toast_export_done:'Export downloaded',
     status_online:'Online', status_lastseen:'Last seen {time}', show_online_status:'Show online status', show_online_status_hint:'Others can see when you were last active.',
     referral_section_label:'Invite friends', referral_desc:'Invite friends: you both get {n} days of free listing highlight.',
@@ -1620,12 +1620,12 @@ function renderProfile(){
 
       <!-- PREMIUM -->
       <div class="settings-section">
-        <div class="settings-section-title">Premium & Features</div>
+        <div class="settings-section-title">PRO & Features</div>
         <div class="${isPro?'premium-status-card active':'premium-status-card'}" style="display:flex;align-items:center;gap:12px">
           <span style="font-size:24px">${isPro?'💎':'🔒'}</span>
           <div style="flex:1;min-width:0">
             <div style="font-size:14px;font-weight:700;color:var(--text)">${isPro ? t('premium_active_until',{date:dateStr(u.premiumSub.until)}) : t('premium_section_label')}</div>
-            ${!isPro ? `<div style="font-size:12px;color:var(--muted);margin-top:2px">Unbegrenzte Anzeigen, Boosts, Shop-Branding & mehr</div>` : ''}
+            ${!isPro ? `<div style="font-size:12px;color:var(--muted);margin-top:2px">Schalte alle PRO-Features frei</div>` : ''}
           </div>
           ${!isPro ? `<div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0">
             ${PREMIUM_PLANS.map((p,i)=>`<button data-action="buypremium" data-plan="${i}" class="btn-secondary" style="padding:6px 10px;font-size:11px;font-weight:700;white-space:nowrap;text-align:right">
