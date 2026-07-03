@@ -679,6 +679,7 @@ const I18N = {
     redeem_free_boost:'Kostenlos einlösen ({n} Tage)', toast_free_boost_redeemed:'Kostenloser Boost eingelöst ({n} Tage)',
     view_grid:'Kachelansicht', view_list:'Listenansicht',
     swipe_delete:'Löschen', swipe_archive:'Archivieren', swipe_unarchive:'Wiederherstellen', archived_label:'Archiviert', back_to_inbox:'Zurück',
+    giveaway_title:'Gewinnspiel', giveaway_desc:'Lade Freunde ein und gewinne! Jeder geworbene Freund = 1 Los.', giveaway_tickets:'Deine Lose: {n}', giveaway_later:'Später',
     confirm_premium:'Premium für {months} Monat(e) aktivieren – {stars} ★ (~{eur} €)?\n(Demo-Zahlung, keine echte Belastung)',
     toast_premium_activated:'Premium aktiviert (Demo)', toast_listing_limit:'Limit von {max} aktiven Anzeigen erreicht – mit Premium unbegrenzt.',
     reset_all_demo_data:'Alle Demo-Daten zurücksetzen', toast_reset_done:'Zurückgesetzt – die App lädt neu …',
@@ -794,6 +795,7 @@ const I18N = {
     redeem_free_boost:'Redeem for free ({n} days)', toast_free_boost_redeemed:'Free boost redeemed ({n} days)',
     view_grid:'Grid view', view_list:'List view',
     swipe_delete:'Delete', swipe_archive:'Archive', swipe_unarchive:'Unarchive', archived_label:'Archived', back_to_inbox:'Back',
+    giveaway_title:'Giveaway', giveaway_desc:'Invite friends and win! Each referred friend = 1 ticket.', giveaway_tickets:'Your tickets: {n}', giveaway_later:'Later',
     confirm_premium:'Activate Premium for {months} month(s) – {stars} ★ (~€{eur})?\n(Demo payment, no real charge)',
     toast_premium_activated:'Premium activated (demo)', toast_listing_limit:'Limit of {max} active listings reached – unlimited with Premium.',
     reset_all_demo_data:'Reset all demo data', toast_reset_done:'Reset done – reloading the app …',
@@ -818,7 +820,7 @@ const State = {
   adminSub:'listings', adminBanTarget:null,
   reportTarget:null, reviewTarget:null, reviewStar:0, replyTarget:null,
   formType:null, pendingImages:null, formDraft:null, promoteTarget:null, justPublished:false, searchStats:{categories:{}}, lastTrackedSearchTerm:'', theme:'light', lang:'de', tgInitData:'', viewMode:'list',
-  hiddenConvos:{}, archivedConvos:[], showArchived:false, catOverlayOpen:false,
+  hiddenConvos:{}, archivedConvos:[], showArchived:false, catOverlayOpen:false, giveawayPopup:false,
 };
 
 function uid(p){ return (p||'id_') + Date.now().toString(36) + Math.random().toString(36).slice(2,8); }
@@ -2131,6 +2133,24 @@ function renderOverlays(){
     document.body.appendChild(div);
   }
 
+  if(State.giveawayPopup){
+    const myTickets = Object.values(State.users).filter(u2=>u2.referredBy===State.myId).length;
+    const div = document.createElement('div');
+    div.className = 'modal-overlay';
+    div.innerHTML = `<div class="modal-sheet" style="text-align:center">
+      <div style="font-size:44px;margin-bottom:6px">🎉</div>
+      <h3 style="margin:0 0 6px">${t('giveaway_title')}</h3>
+      <div style="font-size:30px;font-weight:800;color:var(--blue-dark);margin-bottom:8px">1.000 €</div>
+      <div class="hint" style="margin-bottom:6px">${t('giveaway_desc')}</div>
+      <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:14px">${t('giveaway_tickets',{n:myTickets})}</div>
+      <div class="modal-actions" style="flex-direction:column">
+        <button class="submit-btn" data-action="giveawayinvite" style="width:100%">${t('referral_invite_btn')}</button>
+        <button class="btn-secondary" data-action="closegiveaway" style="width:100%">${t('giveaway_later')}</button>
+      </div>
+    </div>`;
+    document.body.appendChild(div);
+  }
+
   if(State.adminBanTarget){
     const u = getUser(State.adminBanTarget);
     const div = document.createElement('div');
@@ -2875,6 +2895,8 @@ document.addEventListener('click', async (e)=>{
   if(action==='fav') return toggleFavorite(btn.dataset.id);
   if(action==='share') return shareListing(btn.dataset.id);
   if(action==='invitefriend') return inviteFriend();
+  if(action==='closegiveaway'){ State.giveawayPopup=false; render(); return; }
+  if(action==='giveawayinvite'){ State.giveawayPopup=false; render(); return inviteFriend(); }
   if(action==='contact'){ e.preventDefault(); return openContact(btn.dataset.handle); }
   if(action==='openchannel'){ e.preventDefault(); return openTelegramUrl(btn.dataset.url); }
   if(action==='delete'){ if(confirm(t('confirm_delete'))) deleteListing(btn.dataset.id); return; }
@@ -2994,6 +3016,11 @@ document.addEventListener('change', (e)=>{
     touchLastSeen();
     setInterval(touchLastSeen, 60000);
     if(State.justReferred) toast(t('toast_referral_welcome',{n:REFERRAL_REWARD_DAYS}));
+    const gwLast = localStorage.getItem('basar:giveawayseen');
+    if(!gwLast || Date.now() - parseInt(gwLast,10) > 86400000){
+      State.giveawayPopup = true;
+      localStorage.setItem('basar:giveawayseen', String(Date.now()));
+    }
     render();
   }catch(err){
     console.error('Init-Fehler:', err);
