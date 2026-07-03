@@ -515,6 +515,10 @@
       <span class="nav-label" id="navLabelProfile">Profil</span>
       <span class="tab-badge" id="profileBadge"></span>
     </button>
+    <button data-tab="giveaway">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/><path d="M7.5 8a2.5 2.5 0 0 1 0-5C11 3 12 8 12 8s1-5 4.5-5a2.5 2.5 0 0 1 0 5"/></svg>
+      <span class="nav-label" id="navLabelGiveaway">Gewinnspiel</span>
+    </button>
     <button data-tab="admin" id="adminTabBtn" style="display:none">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l8 4v6c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10V6z"/></svg>
       <span class="nav-label">Admin</span>
@@ -679,7 +683,7 @@ const I18N = {
     redeem_free_boost:'Kostenlos einlösen ({n} Tage)', toast_free_boost_redeemed:'Kostenloser Boost eingelöst ({n} Tage)',
     view_grid:'Kachelansicht', view_list:'Listenansicht',
     swipe_delete:'Löschen', swipe_archive:'Archivieren', swipe_unarchive:'Wiederherstellen', archived_label:'Archiviert', back_to_inbox:'Zurück',
-    giveaway_title:'Gewinnspiel', giveaway_desc:'Lade Freunde ein und gewinne! Jeder geworbene Freund = 1 Los.', giveaway_tickets:'Deine Lose: {n}', giveaway_later:'Später',
+    giveaway_title:'Gewinnspiel', giveaway_desc:'Lade Freunde ein und gewinne! Jeder geworbene Freund = 1 Los.', giveaway_tickets:'Deine Lose: {n}', giveaway_later:'Später', giveaway_invited_count:'{n} Freund(e) eingeladen', giveaway_invited_label:'Deine eingeladenen Freunde', giveaway_empty:'Noch keine Freunde eingeladen. Teile deinen Link und sichere dir Lose!', giveaway_terms:'Teilnahme kostenlos. Der Gewinner wird unter allen Teilnehmern mit mindestens 1 Los ausgelost und per Telegram benachrichtigt. Der Rechtsweg ist ausgeschlossen.', nav_giveaway:'Gewinnspiel',
     confirm_premium:'Premium für {months} Monat(e) aktivieren – {stars} ★ (~{eur} €)?\n(Demo-Zahlung, keine echte Belastung)',
     toast_premium_activated:'Premium aktiviert (Demo)', toast_listing_limit:'Limit von {max} aktiven Anzeigen erreicht – mit Premium unbegrenzt.',
     reset_all_demo_data:'Alle Demo-Daten zurücksetzen', toast_reset_done:'Zurückgesetzt – die App lädt neu …',
@@ -795,7 +799,7 @@ const I18N = {
     redeem_free_boost:'Redeem for free ({n} days)', toast_free_boost_redeemed:'Free boost redeemed ({n} days)',
     view_grid:'Grid view', view_list:'List view',
     swipe_delete:'Delete', swipe_archive:'Archive', swipe_unarchive:'Unarchive', archived_label:'Archived', back_to_inbox:'Back',
-    giveaway_title:'Giveaway', giveaway_desc:'Invite friends and win! Each referred friend = 1 ticket.', giveaway_tickets:'Your tickets: {n}', giveaway_later:'Later',
+    giveaway_title:'Giveaway', giveaway_desc:'Invite friends and win! Each referred friend = 1 ticket.', giveaway_tickets:'Your tickets: {n}', giveaway_later:'Later', giveaway_invited_count:'{n} friend(s) invited', giveaway_invited_label:'Your invited friends', giveaway_empty:'No friends invited yet. Share your link and collect tickets!', giveaway_terms:'Free to enter. The winner is drawn from all participants with at least 1 ticket and notified via Telegram. Legal recourse is excluded.', nav_giveaway:'Giveaway',
     confirm_premium:'Activate Premium for {months} month(s) – {stars} ★ (~€{eur})?\n(Demo payment, no real charge)',
     toast_premium_activated:'Premium activated (demo)', toast_listing_limit:'Limit of {max} active listings reached – unlimited with Premium.',
     reset_all_demo_data:'Reset all demo data', toast_reset_done:'Reset done – reloading the app …',
@@ -1525,6 +1529,50 @@ function renderCreate(){
   </div>`;
 }
 
+function renderGiveaway(){
+  document.getElementById('filters').style.display = 'none';
+  const invited = Object.values(State.users).filter(u2=>u2.referredBy===State.myId);
+  const tickets = invited.length;
+  const invitedRows = invited.map(u2=>`
+    <div class="settings-row" style="cursor:default">
+      ${avatarHTML(u2)}
+      <div class="settings-row-mid"><div class="settings-row-label">${escapeHtml(displayName(u2))}</div></div>
+      <span style="font-size:13px;font-weight:700;color:var(--blue-dark)">+1 🎟</span>
+    </div>`).join('');
+
+  return `
+    <div style="text-align:center;padding:18px 0 6px">
+      <div style="font-size:52px">🎉</div>
+      <h2 style="margin:6px 0 2px;font-size:22px;color:var(--text)">${t('giveaway_title')}</h2>
+      <div style="font-size:38px;font-weight:800;color:var(--blue-dark)">1.000 €</div>
+      <div class="hint" style="margin-top:6px">${t('giveaway_desc')}</div>
+    </div>
+
+    <div class="settings-section" style="margin-top:16px">
+      <div class="premium-status-card" style="display:flex;align-items:center;gap:14px">
+        <span style="font-size:30px">🎟</span>
+        <div style="flex:1">
+          <div style="font-size:15px;font-weight:800;color:var(--text)">${t('giveaway_tickets',{n:tickets})}</div>
+          <div style="font-size:12px;color:var(--muted);margin-top:2px">${t('giveaway_invited_count',{n:tickets})}</div>
+        </div>
+      </div>
+      <button class="submit-btn" data-action="invitefriend" style="width:100%;margin-top:4px">${t('referral_invite_btn')}</button>
+    </div>
+
+    ${tickets > 0 ? `
+    <div class="settings-section">
+      <div class="settings-section-title">${t('giveaway_invited_label')}</div>
+      <div class="settings-card">${invitedRows}</div>
+    </div>` : `
+    <div class="empty" style="padding:26px 20px">
+      <div class="big">🎟</div>
+      <div class="small">${t('giveaway_empty')}</div>
+    </div>`}
+
+    <div class="hint" style="margin-top:14px;text-align:center;font-size:11px">${t('giveaway_terms')}</div>
+  `;
+}
+
 function renderProfile(){
   document.getElementById('filters').style.display = 'none';
   const u = getUser(State.myId);
@@ -2002,7 +2050,7 @@ function render(){
     const map = {newest:'sort_newest', popular:'sort_popular', price_asc:'sort_price_asc', price_desc:'sort_price_desc'};
     if(map[c.dataset.sort]) c.textContent = t(map[c.dataset.sort]);
   });
-  const navMap = { navLabelBrowse:'nav_browse', navLabelMessages:'nav_messages', navLabelCreate:'nav_create', navLabelProfile:'nav_profile' };
+  const navMap = { navLabelBrowse:'nav_browse', navLabelMessages:'nav_messages', navLabelCreate:'nav_create', navLabelProfile:'nav_profile', navLabelGiveaway:'nav_giveaway' };
   for(const id in navMap){ const el = document.getElementById(id); if(el) el.textContent = t(navMap[id]); }
 
   const catLabel = State.catFilter===CATEGORIES[0] ? t('all_categories') : State.catFilter;
@@ -2051,6 +2099,7 @@ function render(){
   else if(State.tab==='create') main.innerHTML = renderCreate();
   else if(State.tab==='messages') main.innerHTML = renderMessagesTab();
   else if(State.tab==='admin' && isAdmin(State.myId)) main.innerHTML = renderAdminTab();
+  else if(State.tab==='giveaway') main.innerHTML = renderGiveaway();
   else main.innerHTML = renderProfile();
 
   renderOverlays();
@@ -2896,7 +2945,7 @@ document.addEventListener('click', async (e)=>{
   if(action==='share') return shareListing(btn.dataset.id);
   if(action==='invitefriend') return inviteFriend();
   if(action==='closegiveaway'){ State.giveawayPopup=false; render(); return; }
-  if(action==='giveawayinvite'){ State.giveawayPopup=false; render(); return inviteFriend(); }
+  if(action==='giveawayinvite'){ State.giveawayPopup=false; State.tab='giveaway'; render(); return; }
   if(action==='contact'){ e.preventDefault(); return openContact(btn.dataset.handle); }
   if(action==='openchannel'){ e.preventDefault(); return openTelegramUrl(btn.dataset.url); }
   if(action==='delete'){ if(confirm(t('confirm_delete'))) deleteListing(btn.dataset.id); return; }
