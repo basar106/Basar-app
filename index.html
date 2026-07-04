@@ -3065,10 +3065,9 @@ document.addEventListener('change', (e)=>{
     touchLastSeen();
     setInterval(touchLastSeen, 60000);
     if(State.justReferred) toast(t('toast_referral_welcome',{n:REFERRAL_REWARD_DAYS}));
-    const gwLast = localStorage.getItem('basar:giveawayseen');
-    if(!gwLast || Date.now() - parseInt(gwLast,10) > 86400000){
+    if(!localStorage.getItem('basar:giveawayseen')){
       State.giveawayPopup = true;
-      localStorage.setItem('basar:giveawayseen', String(Date.now()));
+      localStorage.setItem('basar:giveawayseen', '1');
     }
     render();
   }catch(err){
