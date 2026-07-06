@@ -1477,11 +1477,11 @@ function renderBrowse(){
     const older = list.filter(l=>l.createdAt <= weekAgo);
     if(fresh.length && older.length){
       return recommendedBlock
-        + `<div class="section-title">🆕 ${t('new_this_week')}</div>` + cardsHTML(fresh,false)
+        + `<div class="section-title">${t('new_this_week')}</div>` + cardsHTML(fresh,false)
         + `<div class="section-title" style="margin-top:18px">${t('all_listings')}</div>` + cardsHTML(older,false);
     }
     if(fresh.length && !older.length){
-      return recommendedBlock + `<div class="section-title">🆕 ${t('new_this_week')}</div>` + cardsHTML(fresh,false);
+      return recommendedBlock + `<div class="section-title">${t('new_this_week')}</div>` + cardsHTML(fresh,false);
     }
   }
   return recommendedBlock + cardsHTML(list,false);
