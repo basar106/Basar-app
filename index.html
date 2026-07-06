@@ -684,7 +684,7 @@ const I18N = {
     view_grid:'Kachelansicht', view_list:'Listenansicht',
     swipe_delete:'Löschen', swipe_archive:'Archivieren', swipe_unarchive:'Wiederherstellen', archived_label:'Archiviert', back_to_inbox:'Zurück',
     giveaway_title:'Gewinnspiel', giveaway_desc:'Lade Freunde ein und gewinne! Jeder geworbene Freund = 1 Los.', giveaway_tickets:'Deine Lose: {n}', giveaway_later:'Später', copy_btn:'Kopieren', bot_notify_hint:'Tipp: Starte den Bot (@Basarapp_bot), um Push-Benachrichtigungen zu erhalten',
-    ob1_title:'Anzeige erstellen', ob1_text:'Fotos hochladen, Titel und Preis festlegen – deine Anzeige ist in unter einer Minute online.', ob2_title:'Direkt chatten', ob2_text:'Interessenten schreiben dich privat an. Verhandelt direkt in der App – ohne Nummerntausch.', ob3_title:'Sicher handeln', ob3_text:'Nach jedem bestätigten Kauf könnt ihr euch gegenseitig bewerten. So wissen alle, wem sie vertrauen können.', ob_next:'Weiter', ob_skip:'Überspringen', ob_start:'Los geht\'s!', giveaway_invited_count:'{n} Freund(e) eingeladen', giveaway_invited_label:'Deine eingeladenen Freunde', giveaway_empty:'Noch keine Freunde eingeladen. Teile deinen Link und sichere dir Lose!', giveaway_terms:'Teilnahme kostenlos. Der Gewinner wird unter allen Teilnehmern mit mindestens 1 Los ausgelost und per Telegram benachrichtigt. Der Rechtsweg ist ausgeschlossen.', nav_giveaway:'Gewinnspiel',
+    ob1_title:'Anzeige erstellen', ob1_text:'Fotos hochladen, Titel und Preis festlegen – deine Anzeige ist in unter einer Minute online.', ob2_title:'Direkt chatten', ob2_text:'Interessenten schreiben dich privat an. Verhandelt direkt in der App – ohne Nummerntausch.', ob3_title:'Sicher handeln', ob3_text:'Nach jedem bestätigten Kauf könnt ihr euch gegenseitig bewerten. So wissen alle, wem sie vertrauen können.', ob_next:'Weiter', ob_skip:'Überspringen', ob_start:'Los geht\'s!', new_this_week:'Neu diese Woche', toast_welcome_boost:'Anzeige veröffentlicht! 🎁 Willkommensgeschenk: 3 Tage kostenlos hervorgehoben', toast_share_bump:'Danke fürs Teilen! Deine Anzeige wurde nach oben gesetzt 🚀 (1x pro Woche)', giveaway_invited_count:'{n} Freund(e) eingeladen', giveaway_invited_label:'Deine eingeladenen Freunde', giveaway_empty:'Noch keine Freunde eingeladen. Teile deinen Link und sichere dir Lose!', giveaway_terms:'Teilnahme kostenlos. Der Gewinner wird unter allen Teilnehmern mit mindestens 1 Los ausgelost und per Telegram benachrichtigt. Der Rechtsweg ist ausgeschlossen.', nav_giveaway:'Gewinnspiel',
     confirm_premium:'Premium für {months} Monat(e) aktivieren – {stars} ★ (~{eur} €)?\n(Demo-Zahlung, keine echte Belastung)',
     toast_premium_activated:'Premium aktiviert (Demo)', toast_listing_limit:'Limit von {max} aktiven Anzeigen erreicht – mit Premium unbegrenzt.',
     reset_all_demo_data:'Alle Demo-Daten zurücksetzen', toast_reset_done:'Zurückgesetzt – die App lädt neu …',
@@ -801,7 +801,7 @@ const I18N = {
     view_grid:'Grid view', view_list:'List view',
     swipe_delete:'Delete', swipe_archive:'Archive', swipe_unarchive:'Unarchive', archived_label:'Archived', back_to_inbox:'Back',
     giveaway_title:'Giveaway', giveaway_desc:'Invite friends and win! Each referred friend = 1 ticket.', giveaway_tickets:'Your tickets: {n}', giveaway_later:'Later', copy_btn:'Copy', bot_notify_hint:'Tip: Start the bot (@Basarapp_bot) to receive push notifications',
-    ob1_title:'Create a listing', ob1_text:'Upload photos, set a title and price – your listing is live in under a minute.', ob2_title:'Chat directly', ob2_text:'Buyers message you privately. Negotiate right in the app – no sharing phone numbers.', ob3_title:'Trade safely', ob3_text:'After every confirmed deal you can rate each other. Everyone knows who to trust.', ob_next:'Next', ob_skip:'Skip', ob_start:'Let\'s go!', giveaway_invited_count:'{n} friend(s) invited', giveaway_invited_label:'Your invited friends', giveaway_empty:'No friends invited yet. Share your link and collect tickets!', giveaway_terms:'Free to enter. The winner is drawn from all participants with at least 1 ticket and notified via Telegram. Legal recourse is excluded.', nav_giveaway:'Giveaway',
+    ob1_title:'Create a listing', ob1_text:'Upload photos, set a title and price – your listing is live in under a minute.', ob2_title:'Chat directly', ob2_text:'Buyers message you privately. Negotiate right in the app – no sharing phone numbers.', ob3_title:'Trade safely', ob3_text:'After every confirmed deal you can rate each other. Everyone knows who to trust.', ob_next:'Next', ob_skip:'Skip', ob_start:'Let\'s go!', new_this_week:'New this week', toast_welcome_boost:'Listing published! 🎁 Welcome gift: highlighted free for 3 days', toast_share_bump:'Thanks for sharing! Your listing was bumped to the top 🚀 (once per week)', giveaway_invited_count:'{n} friend(s) invited', giveaway_invited_label:'Your invited friends', giveaway_empty:'No friends invited yet. Share your link and collect tickets!', giveaway_terms:'Free to enter. The winner is drawn from all participants with at least 1 ticket and notified via Telegram. Legal recourse is excluded.', nav_giveaway:'Giveaway',
     confirm_premium:'Activate Premium for {months} month(s) – {stars} ★ (~€{eur})?\n(Demo payment, no real charge)',
     toast_premium_activated:'Premium activated (demo)', toast_listing_limit:'Limit of {max} active listings reached – unlimited with Premium.',
     reset_all_demo_data:'Reset all demo data', toast_reset_done:'Reset done – reloading the app …',
@@ -1471,6 +1471,19 @@ function renderBrowse(){
   }
   const list = filteredListings(State.listings).filter(l=>!excludeIds.includes(l.id));
   if(list.length===0) return recommendedBlock || `<div class="empty"><div class="big">${t('empty_browse_title')}</div><div class="small">${t('empty_browse_sub')}</div></div>`;
+  if(!State.search && State.catFilter==='Alle Kategorien' && State.typeFilter==='all' && State.sortBy==='newest'){
+    const weekAgo = Date.now() - 7*86400000;
+    const fresh = list.filter(l=>l.createdAt > weekAgo);
+    const older = list.filter(l=>l.createdAt <= weekAgo);
+    if(fresh.length && older.length){
+      return recommendedBlock
+        + `<div class="section-title">🆕 ${t('new_this_week')}</div>` + cardsHTML(fresh,false)
+        + `<div class="section-title" style="margin-top:18px">${t('all_listings')}</div>` + cardsHTML(older,false);
+    }
+    if(fresh.length && !older.length){
+      return recommendedBlock + `<div class="section-title">🆕 ${t('new_this_week')}</div>` + cardsHTML(fresh,false);
+    }
+  }
   return recommendedBlock + cardsHTML(list,false);
 }
 
@@ -2589,8 +2602,16 @@ async function submitForm(){
     toast(t('toast_changes_saved')); State.editingId = null;
   } else {
     newId = uid('l_');
-    State.listings.push({ id:newId, type, title, description, category, images, imageUrl:images[0]||'', priceType, price, ownerId:State.myId, favCount:0, views:0, createdAt:Date.now() });
-    toast(t('toast_listing_published'));
+    const newListing = { id:newId, type, title, description, category, images, imageUrl:images[0]||'', priceType, price, ownerId:State.myId, favCount:0, views:0, createdAt:Date.now() };
+    const me = getUser(State.myId);
+    const isFirstListing = !me.welcomeBoostUsed && !State.listings.some(l=>l.ownerId===State.myId);
+    if(isFirstListing){
+      newListing.highlight = { active:true, until: Date.now() + 3*86400000 };
+      State.users[State.myId] = { ...me, welcomeBoostUsed:true };
+      await persistUsers();
+    }
+    State.listings.push(newListing);
+    toast(isFirstListing ? t('toast_welcome_boost') : t('toast_listing_published'));
   }
   await persistListings(); State.formType = null; State.pendingImages = null; State.formDraft = null; State.tab = 'browse';
   if(newId){ State.promoteTarget = newId; State.justPublished = true; }
@@ -2920,6 +2941,17 @@ function closeChat(){ stopChatPolling(); State.activeChat = null; render(); }
 function shareListing(id){
   const l = State.listings.find(x=>x.id===id);
   if(!l) return;
+  if(l.ownerId === State.myId){
+    const last = parseInt(localStorage.getItem('basar:lastsharebump')||'0',10);
+    if(Date.now() - last > 7*86400000){
+      localStorage.setItem('basar:lastsharebump', String(Date.now()));
+      l.dailyBump = l.dailyBump && isBoostActive(l.dailyBump)
+        ? { ...l.dailyBump, lastBumpAt: Date.now() }
+        : { active:true, until: Date.now()+3600000, lastBumpAt: Date.now() };
+      persistListings();
+      toast(t('toast_share_bump'));
+    }
+  }
   const deepLink = `https://t.me/${BOT_USERNAME}?startapp=listing_${id}`;
   const text = `${l.title} – ${priceLabel(l)}`;
   try{
