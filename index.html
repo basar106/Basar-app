@@ -683,7 +683,8 @@ const I18N = {
     redeem_free_boost:'Kostenlos einlösen ({n} Tage)', toast_free_boost_redeemed:'Kostenloser Boost eingelöst ({n} Tage)',
     view_grid:'Kachelansicht', view_list:'Listenansicht',
     swipe_delete:'Löschen', swipe_archive:'Archivieren', swipe_unarchive:'Wiederherstellen', archived_label:'Archiviert', back_to_inbox:'Zurück',
-    giveaway_title:'Gewinnspiel', giveaway_desc:'Lade Freunde ein und gewinne! Jeder geworbene Freund = 1 Los.', giveaway_tickets:'Deine Lose: {n}', giveaway_later:'Später', copy_btn:'Kopieren', bot_notify_hint:'Tipp: Starte den Bot (@Basarapp_bot), um Push-Benachrichtigungen zu erhalten', giveaway_invited_count:'{n} Freund(e) eingeladen', giveaway_invited_label:'Deine eingeladenen Freunde', giveaway_empty:'Noch keine Freunde eingeladen. Teile deinen Link und sichere dir Lose!', giveaway_terms:'Teilnahme kostenlos. Der Gewinner wird unter allen Teilnehmern mit mindestens 1 Los ausgelost und per Telegram benachrichtigt. Der Rechtsweg ist ausgeschlossen.', nav_giveaway:'Gewinnspiel',
+    giveaway_title:'Gewinnspiel', giveaway_desc:'Lade Freunde ein und gewinne! Jeder geworbene Freund = 1 Los.', giveaway_tickets:'Deine Lose: {n}', giveaway_later:'Später', copy_btn:'Kopieren', bot_notify_hint:'Tipp: Starte den Bot (@Basarapp_bot), um Push-Benachrichtigungen zu erhalten',
+    ob1_title:'Anzeige erstellen', ob1_text:'Fotos hochladen, Titel und Preis festlegen – deine Anzeige ist in unter einer Minute online.', ob2_title:'Direkt chatten', ob2_text:'Interessenten schreiben dich privat an. Verhandelt direkt in der App – ohne Nummerntausch.', ob3_title:'Sicher handeln', ob3_text:'Nach jedem bestätigten Kauf könnt ihr euch gegenseitig bewerten. So wissen alle, wem sie vertrauen können.', ob_next:'Weiter', ob_skip:'Überspringen', ob_start:'Los geht\'s!', giveaway_invited_count:'{n} Freund(e) eingeladen', giveaway_invited_label:'Deine eingeladenen Freunde', giveaway_empty:'Noch keine Freunde eingeladen. Teile deinen Link und sichere dir Lose!', giveaway_terms:'Teilnahme kostenlos. Der Gewinner wird unter allen Teilnehmern mit mindestens 1 Los ausgelost und per Telegram benachrichtigt. Der Rechtsweg ist ausgeschlossen.', nav_giveaway:'Gewinnspiel',
     confirm_premium:'Premium für {months} Monat(e) aktivieren – {stars} ★ (~{eur} €)?\n(Demo-Zahlung, keine echte Belastung)',
     toast_premium_activated:'Premium aktiviert (Demo)', toast_listing_limit:'Limit von {max} aktiven Anzeigen erreicht – mit Premium unbegrenzt.',
     reset_all_demo_data:'Alle Demo-Daten zurücksetzen', toast_reset_done:'Zurückgesetzt – die App lädt neu …',
@@ -799,7 +800,8 @@ const I18N = {
     redeem_free_boost:'Redeem for free ({n} days)', toast_free_boost_redeemed:'Free boost redeemed ({n} days)',
     view_grid:'Grid view', view_list:'List view',
     swipe_delete:'Delete', swipe_archive:'Archive', swipe_unarchive:'Unarchive', archived_label:'Archived', back_to_inbox:'Back',
-    giveaway_title:'Giveaway', giveaway_desc:'Invite friends and win! Each referred friend = 1 ticket.', giveaway_tickets:'Your tickets: {n}', giveaway_later:'Later', copy_btn:'Copy', bot_notify_hint:'Tip: Start the bot (@Basarapp_bot) to receive push notifications', giveaway_invited_count:'{n} friend(s) invited', giveaway_invited_label:'Your invited friends', giveaway_empty:'No friends invited yet. Share your link and collect tickets!', giveaway_terms:'Free to enter. The winner is drawn from all participants with at least 1 ticket and notified via Telegram. Legal recourse is excluded.', nav_giveaway:'Giveaway',
+    giveaway_title:'Giveaway', giveaway_desc:'Invite friends and win! Each referred friend = 1 ticket.', giveaway_tickets:'Your tickets: {n}', giveaway_later:'Later', copy_btn:'Copy', bot_notify_hint:'Tip: Start the bot (@Basarapp_bot) to receive push notifications',
+    ob1_title:'Create a listing', ob1_text:'Upload photos, set a title and price – your listing is live in under a minute.', ob2_title:'Chat directly', ob2_text:'Buyers message you privately. Negotiate right in the app – no sharing phone numbers.', ob3_title:'Trade safely', ob3_text:'After every confirmed deal you can rate each other. Everyone knows who to trust.', ob_next:'Next', ob_skip:'Skip', ob_start:'Let\'s go!', giveaway_invited_count:'{n} friend(s) invited', giveaway_invited_label:'Your invited friends', giveaway_empty:'No friends invited yet. Share your link and collect tickets!', giveaway_terms:'Free to enter. The winner is drawn from all participants with at least 1 ticket and notified via Telegram. Legal recourse is excluded.', nav_giveaway:'Giveaway',
     confirm_premium:'Activate Premium for {months} month(s) – {stars} ★ (~€{eur})?\n(Demo payment, no real charge)',
     toast_premium_activated:'Premium activated (demo)', toast_listing_limit:'Limit of {max} active listings reached – unlimited with Premium.',
     reset_all_demo_data:'Reset all demo data', toast_reset_done:'Reset done – reloading the app …',
@@ -824,7 +826,7 @@ const State = {
   adminSub:'listings', adminBanTarget:null,
   reportTarget:null, reviewTarget:null, reviewStar:0, replyTarget:null,
   formType:null, pendingImages:null, formDraft:null, promoteTarget:null, justPublished:false, searchStats:{categories:{}}, lastTrackedSearchTerm:'', theme:'light', lang:'de', tgInitData:'', viewMode:'list',
-  hiddenConvos:{}, archivedConvos:[], showArchived:false, catOverlayOpen:false, giveawayPopup:false,
+  hiddenConvos:{}, archivedConvos:[], showArchived:false, catOverlayOpen:false, giveawayPopup:false, onboardingSlide:null,
 };
 
 function uid(p){ return (p||'id_') + Date.now().toString(36) + Math.random().toString(36).slice(2,8); }
@@ -2187,6 +2189,33 @@ function renderOverlays(){
     document.body.appendChild(div);
   }
 
+  if(State.onboardingSlide !== null){
+    const slides = [
+      { icon:'📸', title:t('ob1_title'), text:t('ob1_text') },
+      { icon:'💬', title:t('ob2_title'), text:t('ob2_text') },
+      { icon:'⭐', title:t('ob3_title'), text:t('ob3_text') },
+    ];
+    const s = slides[State.onboardingSlide];
+    const last = State.onboardingSlide === slides.length-1;
+    const div = document.createElement('div');
+    div.className = 'cat-overlay';
+    div.style.zIndex = '150';
+    div.innerHTML = `
+      <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:30px">
+        <div style="font-size:72px;margin-bottom:18px">${s.icon}</div>
+        <h2 style="margin:0 0 10px;font-size:24px;color:var(--text)">${s.title}</h2>
+        <div style="font-size:15px;color:var(--muted);line-height:1.5;max-width:300px">${s.text}</div>
+        <div style="display:flex;gap:7px;margin-top:28px">
+          ${slides.map((_,i)=>`<span style="width:8px;height:8px;border-radius:50%;background:${i===State.onboardingSlide?'var(--blue)':'var(--fill2)'}"></span>`).join('')}
+        </div>
+      </div>
+      <div style="padding:0 24px 34px;display:flex;flex-direction:column;gap:10px">
+        <button class="submit-btn" data-action="obnext" style="width:100%">${last ? t('ob_start') : t('ob_next')}</button>
+        ${!last ? `<button class="btn-secondary" data-action="obskip" style="width:100%">${t('ob_skip')}</button>` : ''}
+      </div>`;
+    document.body.appendChild(div);
+  }
+
   if(State.giveawayPopup){
     const myTickets = Object.values(State.users).filter(u2=>u2.referredBy===State.myId).length;
     const div = document.createElement('div');
@@ -2984,6 +3013,19 @@ document.addEventListener('click', async (e)=>{
   if(action==='share') return shareListing(btn.dataset.id);
   if(action==='invitefriend') return inviteFriend();
   if(action==='closegiveaway'){ State.giveawayPopup=false; render(); return; }
+  if(action==='obnext' || action==='obskip'){
+    if(action==='obskip' || State.onboardingSlide >= 2){
+      State.onboardingSlide = null;
+      localStorage.setItem('basar:onboarded','1');
+      if(!localStorage.getItem('basar:giveawayseen')){
+        State.giveawayPopup = true;
+        localStorage.setItem('basar:giveawayseen','1');
+      }
+    } else {
+      State.onboardingSlide++;
+    }
+    render(); return;
+  }
   if(action==='openbot'){
     try{ window.Telegram.WebApp.openTelegramLink('https://t.me/' + BOT_USERNAME); }catch(e){}
     return;
@@ -3114,7 +3156,9 @@ document.addEventListener('change', (e)=>{
     touchLastSeen();
     setInterval(touchLastSeen, 60000);
     if(State.justReferred) toast(t('toast_referral_welcome',{n:REFERRAL_REWARD_DAYS}));
-    if(!localStorage.getItem('basar:giveawayseen')){
+    if(!localStorage.getItem('basar:onboarded')){
+      State.onboardingSlide = 0;
+    } else if(!localStorage.getItem('basar:giveawayseen')){
       State.giveawayPopup = true;
       localStorage.setItem('basar:giveawayseen', '1');
     }
