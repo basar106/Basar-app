@@ -683,7 +683,7 @@ const I18N = {
     redeem_free_boost:'Kostenlos einlösen ({n} Tage)', toast_free_boost_redeemed:'Kostenloser Boost eingelöst ({n} Tage)',
     view_grid:'Kachelansicht', view_list:'Listenansicht',
     swipe_delete:'Löschen', swipe_archive:'Archivieren', swipe_unarchive:'Wiederherstellen', archived_label:'Archiviert', back_to_inbox:'Zurück',
-    giveaway_title:'Gewinnspiel', giveaway_desc:'Lade Freunde ein und gewinne! Jeder geworbene Freund = 1 Los.', giveaway_tickets:'Deine Lose: {n}', giveaway_later:'Später', copy_btn:'Kopieren', giveaway_invited_count:'{n} Freund(e) eingeladen', giveaway_invited_label:'Deine eingeladenen Freunde', giveaway_empty:'Noch keine Freunde eingeladen. Teile deinen Link und sichere dir Lose!', giveaway_terms:'Teilnahme kostenlos. Der Gewinner wird unter allen Teilnehmern mit mindestens 1 Los ausgelost und per Telegram benachrichtigt. Der Rechtsweg ist ausgeschlossen.', nav_giveaway:'Gewinnspiel',
+    giveaway_title:'Gewinnspiel', giveaway_desc:'Lade Freunde ein und gewinne! Jeder geworbene Freund = 1 Los.', giveaway_tickets:'Deine Lose: {n}', giveaway_later:'Später', copy_btn:'Kopieren', bot_notify_hint:'Tipp: Starte den Bot (@Basarapp_bot), um Push-Benachrichtigungen zu erhalten', giveaway_invited_count:'{n} Freund(e) eingeladen', giveaway_invited_label:'Deine eingeladenen Freunde', giveaway_empty:'Noch keine Freunde eingeladen. Teile deinen Link und sichere dir Lose!', giveaway_terms:'Teilnahme kostenlos. Der Gewinner wird unter allen Teilnehmern mit mindestens 1 Los ausgelost und per Telegram benachrichtigt. Der Rechtsweg ist ausgeschlossen.', nav_giveaway:'Gewinnspiel',
     confirm_premium:'Premium für {months} Monat(e) aktivieren – {stars} ★ (~{eur} €)?\n(Demo-Zahlung, keine echte Belastung)',
     toast_premium_activated:'Premium aktiviert (Demo)', toast_listing_limit:'Limit von {max} aktiven Anzeigen erreicht – mit Premium unbegrenzt.',
     reset_all_demo_data:'Alle Demo-Daten zurücksetzen', toast_reset_done:'Zurückgesetzt – die App lädt neu …',
@@ -799,7 +799,7 @@ const I18N = {
     redeem_free_boost:'Redeem for free ({n} days)', toast_free_boost_redeemed:'Free boost redeemed ({n} days)',
     view_grid:'Grid view', view_list:'List view',
     swipe_delete:'Delete', swipe_archive:'Archive', swipe_unarchive:'Unarchive', archived_label:'Archived', back_to_inbox:'Back',
-    giveaway_title:'Giveaway', giveaway_desc:'Invite friends and win! Each referred friend = 1 ticket.', giveaway_tickets:'Your tickets: {n}', giveaway_later:'Later', copy_btn:'Copy', giveaway_invited_count:'{n} friend(s) invited', giveaway_invited_label:'Your invited friends', giveaway_empty:'No friends invited yet. Share your link and collect tickets!', giveaway_terms:'Free to enter. The winner is drawn from all participants with at least 1 ticket and notified via Telegram. Legal recourse is excluded.', nav_giveaway:'Giveaway',
+    giveaway_title:'Giveaway', giveaway_desc:'Invite friends and win! Each referred friend = 1 ticket.', giveaway_tickets:'Your tickets: {n}', giveaway_later:'Later', copy_btn:'Copy', bot_notify_hint:'Tip: Start the bot (@Basarapp_bot) to receive push notifications', giveaway_invited_count:'{n} friend(s) invited', giveaway_invited_label:'Your invited friends', giveaway_empty:'No friends invited yet. Share your link and collect tickets!', giveaway_terms:'Free to enter. The winner is drawn from all participants with at least 1 ticket and notified via Telegram. Legal recourse is excluded.', nav_giveaway:'Giveaway',
     confirm_premium:'Activate Premium for {months} month(s) – {stars} ★ (~€{eur})?\n(Demo payment, no real charge)',
     toast_premium_activated:'Premium activated (demo)', toast_listing_limit:'Limit of {max} active listings reached – unlimited with Premium.',
     reset_all_demo_data:'Reset all demo data', toast_reset_done:'Reset done – reloading the app …',
@@ -933,7 +933,7 @@ async function loadAll(){
   const rp = await storageGet('basar:reports', true); State.reports = rp ? JSON.parse(rp) : [];
   const rf = await storageGet('basar:favorites', false); State.favorites = rf ? JSON.parse(rf) : [];
   const rpu = await storageGet('basar:purchases', true); State.purchases = rpu ? JSON.parse(rpu) : [];
-  const rm = await storageGet('basar:messages', true); State.messages = rm ? JSON.parse(rm) : [];
+  State.messages = await fetchMyMessages();
   const rlr = await storageGet('basar:lastread', false); State.lastRead = rlr ? JSON.parse(rlr) : {};
   const rss = await storageGet('basar:searchstats', false); State.searchStats = rss ? JSON.parse(rss) : {categories:{}};
   const rsv = await storageGet('basar:savedsearches', false); State.savedSearches = rsv ? JSON.parse(rsv) : [];
@@ -1993,9 +1993,10 @@ function renderMessagesTab(){
   const active = all.filter(c=>!State.archivedConvos.includes(c.conversationId));
   const convos = State.showArchived ? archived : active;
 
-  const header = State.showArchived
+  const header = (State.showArchived
     ? `<div class="archive-toggle" data-action="closearchive">← ${t('back_to_inbox')}</div>`
-    : (archived.length ? `<div class="archive-toggle" data-action="openarchive">📥 ${t('archived_label')} (${archived.length})</div>` : '');
+    : (archived.length ? `<div class="archive-toggle" data-action="openarchive">📥 ${t('archived_label')} (${archived.length})</div>` : ''))
+    + `<div class="hint" style="margin-bottom:10px;cursor:pointer" data-action="openbot">💡 ${t('bot_notify_hint')}</div>`;
 
   if(convos.length===0){
     return header + `<div class="empty"><div class="big">${t('messages_empty')}</div><div class="small">${t('messages_empty_sub')}</div></div>`;
@@ -2464,12 +2465,23 @@ function renderChatMessages(){
   box.scrollTop = box.scrollHeight;
 }
 
+async function fetchMyMessages(){
+  try{
+    const res = await fetch(EDGE_BASE + '/read-messages', {
+      method:'POST',
+      headers:{ 'Content-Type':'application/json', 'apikey': SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + SUPABASE_ANON_KEY },
+      body: JSON.stringify({ initData: State.tgInitData })
+    });
+    const j = await res.json();
+    return Array.isArray(j.messages) ? j.messages : [];
+  }catch(e){ return State.messages || []; }
+}
+
 function startChatPolling(){
   stopChatPolling();
   State.chatPollTimer = setInterval(async ()=>{
     if(!State.activeChat) return;
-    const fresh = await storageGet('basar:messages', true);
-    const parsed = fresh ? JSON.parse(fresh) : [];
+    const parsed = await fetchMyMessages();
     if(JSON.stringify(parsed) !== JSON.stringify(State.messages)){
       State.messages = parsed;
       renderChatMessages();
@@ -2717,6 +2729,18 @@ async function purchaseBoost(listingId, boostKey, tierIndex){
   });
 }
 
+async function uploadImageToStorage(dataUrl){
+  try{
+    const res = await fetch(EDGE_BASE + '/upload-image', {
+      method:'POST',
+      headers:{ 'Content-Type':'application/json', 'apikey': SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + SUPABASE_ANON_KEY },
+      body: JSON.stringify({ initData: State.tgInitData, image: dataUrl })
+    });
+    const j = await res.json();
+    return j && j.url ? j.url : null;
+  }catch(e){ return null; }
+}
+
 function compressImage(file){
   return new Promise((resolve,reject)=>{
     const reader = new FileReader();
@@ -2761,7 +2785,8 @@ async function handleImgFiles(e){
     try{
       const dataUrl = await compressImage(file);
       if(dataUrl.length > MAX_IMAGE_BASE64_LEN){ skipped++; continue; }
-      imgs.push(dataUrl);
+      const url = await uploadImageToStorage(dataUrl);
+      imgs.push(url || dataUrl);
     }catch(err){ skipped++; }
   }
   State.pendingImages = imgs;
@@ -2909,12 +2934,22 @@ async function sendChatMessage(){
   const text = input.value.trim();
   if(!text) return;
   const { conversationId, listingId, otherId } = State.activeChat;
-  State.messages.push({ id:uid('m_'), conversationId, listingId, fromId:State.myId, toId:otherId, text, createdAt:Date.now() });
+  const msg = { id:uid('m_'), conversationId, listingId, fromId:State.myId, toId:otherId, text, createdAt:Date.now() };
+  State.messages.push(msg);
   input.value = '';
-  await persistMessages();
+  await appendMessage(msg);
   State.lastRead[conversationId] = Date.now();
   await persistLastRead();
   renderChatMessages();
+}
+async function appendMessage(msg){
+  try{
+    await fetch(EDGE_BASE + '/write-data', {
+      method:'POST',
+      headers:{ 'Content-Type':'application/json', 'apikey': SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + SUPABASE_ANON_KEY },
+      body: JSON.stringify({ initData: State.tgInitData, key:'basar:messages', shared:true, appendMessage: msg })
+    });
+  }catch(e){ toast(t('toast_share_unavailable')); }
 }
 
 // ---------- Events ----------
@@ -2949,6 +2984,10 @@ document.addEventListener('click', async (e)=>{
   if(action==='share') return shareListing(btn.dataset.id);
   if(action==='invitefriend') return inviteFriend();
   if(action==='closegiveaway'){ State.giveawayPopup=false; render(); return; }
+  if(action==='openbot'){
+    try{ window.Telegram.WebApp.openTelegramLink('https://t.me/' + BOT_USERNAME); }catch(e){}
+    return;
+  }
   if(action==='copyreflink'){
     const link = `https://t.me/${BOT_USERNAME}?startapp=ref_${State.myId}`;
     if(navigator.clipboard){ navigator.clipboard.writeText(link).then(()=>toast(t('toast_link_copied'))).catch(()=>toast(t('toast_share_unavailable'))); }
