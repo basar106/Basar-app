@@ -513,11 +513,7 @@
         <h1>Basar</h1>
         <p>Kleinanzeigen für deinen Telegram-Shop</p>
       </div>
-      <div class="header-actions">
-        <button class="dinar-header-pill" data-action="opendinar" id="dinarPill">🪙 <span id="dinarPillAmt">0</span></button>
-        <button class="theme-toggle" id="langToggle" title="Language / Sprache">DE</button>
-        <button class="theme-toggle" id="themeToggle" title="Darstellung wechseln"></button>
-      </div>
+      <div class="header-actions" id="headerActions"></div>
     </div>
   </header>
 
@@ -532,10 +528,16 @@
     <div class="dropdown-row">
       <div class="dropdown" id="catDropdown"></div>
       <div class="dropdown" id="sortDropdown"></div>
-      <button class="price-filter-btn" data-action="openpricefilter" id="priceFilterChip">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M6 12h12M9 18h6"/></svg>
-      </button>
-      <button class="view-toggle-btn" data-action="toggleview" id="viewToggleBtn"></button>
+      <div class="dropdown">
+        <button class="dropdown-trigger ${State.openDropdown==='more'?'open':''}" data-action="toggledropdown" data-dropdown="more" style="width:38px;justify-content:center;padding:9px 0;position:relative" title="Mehr">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg>
+          <span id="moreFilterDot" style="display:none;position:absolute;top:6px;right:6px;width:7px;height:7px;border-radius:50%;background:var(--blue)"></span>
+        </button>
+        ${State.openDropdown==='more' ? `<div class="dropdown-panel" style="right:0;left:auto;width:200px">
+          <button class="dropdown-option" data-action="openpricefilter" id="priceFilterOption">${t('sort_pricefilter')}</button>
+          <button class="dropdown-option" data-action="toggleview" id="viewToggleOption"></button>
+        </div>` : ''}
+      </div>
     </div>
     <div class="chip-row" id="typeChips">
       <button class="chip active" data-type="all">Alle</button>
@@ -657,7 +659,7 @@ const I18N = {
     profile_sub_reviews:'Bewertungen', profile_sub_saved:'Suchen',
     profile_anzeigen:'Anzeigen', profile_deals:'Abgeschl. Handel', profile_member_since:'Mitglied seit',
     profile_verified:'✓ Telegram', profile_unverified:'Nicht verifiziert', profile_premium:'⭐ Premium',
-    tooltip_theme:'Darstellung wechseln', tooltip_save_search:'Suche speichern',
+    tooltip_theme:'Darstellung wechseln', tooltip_save_search:'Suche speichern', tooltip_lang:'Sprache',
     profile_hint_unverified:'Öffne die App über Telegram, damit deine ID automatisch und vertrauenswürdig erkannt wird.',
     profile_name_field:'Anzeigename', profile_username_field:'Telegram-Username (optional, für externen Kontakt)',
     profile_channel_field:'Telegram-Kanal / Feed (optional)', profile_channel_hint:'Wird bei all deinen Anzeigen angezeigt, damit Käufer deinen Kanal finden.',
@@ -786,7 +788,7 @@ const I18N = {
     profile_sub_reviews:'Reviews', profile_sub_saved:'Searches',
     profile_anzeigen:'Listings', profile_deals:'Completed deals', profile_member_since:'Member since',
     profile_verified:'✓ Telegram', profile_unverified:'Not verified', profile_premium:'⭐ Premium',
-    tooltip_theme:'Toggle appearance', tooltip_save_search:'Save search',
+    tooltip_theme:'Toggle appearance', tooltip_save_search:'Save search', tooltip_lang:'Language',
     profile_hint_unverified:'Open the app via Telegram so your ID is detected automatically and reliably.',
     profile_name_field:'Display name', profile_username_field:'Telegram username (optional, for external contact)',
     profile_channel_field:'Telegram channel / feed (optional)', profile_channel_hint:'Shown on all your listings so buyers can find your channel.',
@@ -917,12 +919,6 @@ function toast(msg){
 function applyTheme(){
   document.documentElement.setAttribute('data-theme', State.theme);
   document.documentElement.setAttribute('data-design', State.design);
-  const btn = document.getElementById('themeToggle');
-  if(btn){
-    btn.innerHTML = State.theme==='dark'
-      ? `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v3M12 20v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M1 12h3M20 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></svg>`
-      : `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8z"/></svg>`;
-  }
 }
 async function setDesign(design){
   if(design!=='aurora' && design!=='pur') return;
@@ -935,6 +931,7 @@ async function toggleTheme(){
   State.theme = State.theme==='dark' ? 'light' : 'dark';
   applyTheme();
   await storageSet('basar:theme', State.theme, false);
+  render();
 }
 async function toggleLang(){
   State.lang = State.lang==='de' ? 'en' : 'de';
@@ -2181,10 +2178,20 @@ function render(){
     }
   }
   document.documentElement.lang = State.lang;
-  const langBtn = document.getElementById('langToggle');
-  if(langBtn) langBtn.textContent = State.lang.toUpperCase();
-  const themeBtn = document.getElementById('themeToggle');
-  if(themeBtn) themeBtn.title = t('tooltip_theme');
+  const themeIcon = State.theme==='dark'
+    ? `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;vertical-align:-2px;margin-right:6px"><circle cx="12" cy="12" r="5"/><path d="M12 1v3M12 20v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M1 12h3M20 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></svg>`
+    : `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;vertical-align:-2px;margin-right:6px"><path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8z"/></svg>`;
+  document.getElementById('headerActions').innerHTML = `
+    <button class="dinar-header-pill" data-action="opendinar" id="dinarPill">🪙 <span id="dinarPillAmt">${dinarBalanceOf(State.myId)}</span></button>
+    <div class="dropdown" style="flex:none">
+      <button class="theme-toggle ${State.openDropdown==='headermenu'?'open':''}" data-action="toggledropdown" data-dropdown="headermenu" title="Mehr">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg>
+      </button>
+      ${State.openDropdown==='headermenu' ? `<div class="dropdown-panel" style="right:0;left:auto;width:190px">
+        <button class="dropdown-option" data-action="headerlang">🌐 ${t('tooltip_lang')}: ${State.lang.toUpperCase()}</button>
+        <button class="dropdown-option" data-action="headertheme">${themeIcon}${t('tooltip_theme')}</button>
+      </div>` : ''}
+    </div>`;
   const saveSearchBtn = document.querySelector('.save-search-btn');
   if(saveSearchBtn) saveSearchBtn.title = t('tooltip_save_search');
   const tagline = document.querySelector('header.top p');
@@ -2219,24 +2226,18 @@ function render(){
 
   document.getElementById('searchInput').value = State.search;
   document.querySelectorAll('#typeChips .chip').forEach(c=>c.classList.toggle('active', c.dataset.type===State.typeFilter));
-  const priceChip = document.getElementById('priceFilterChip');
+  const hasFilter = State.priceMin!=null || State.priceMax!=null;
+  const priceChip = document.getElementById('priceFilterOption');
   if(priceChip){
-    const hasFilter = State.priceMin!=null || State.priceMax!=null;
+    priceChip.textContent = hasFilter ? `${t('sort_pricefilter')}: ${State.priceMin||0}–${State.priceMax!=null?State.priceMax:'∞'} €` : t('sort_pricefilter');
     priceChip.classList.toggle('active', hasFilter);
-    priceChip.innerHTML = hasFilter
-      ? `<span>${State.priceMin||0}–${State.priceMax!=null?State.priceMax:'∞'} €</span>`
-      : `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M6 12h12M9 18h6"/></svg>`;
-    priceChip.title = t('sort_pricefilter');
   }
   const dinarAmt = document.getElementById('dinarPillAmt');
   if(dinarAmt) dinarAmt.textContent = dinarBalanceOf(State.myId);
-  const viewBtn = document.getElementById('viewToggleBtn');
-  if(viewBtn){
-    viewBtn.title = State.viewMode==='grid' ? t('view_list') : t('view_grid');
-    viewBtn.innerHTML = State.viewMode==='grid'
-      ? `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg>`
-      : `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="8" rx="1.5"/><rect x="3" y="13" width="8" height="8" rx="1.5"/><rect x="13" y="13" width="8" height="8" rx="1.5"/></svg>`;
-  }
+  const viewBtn = document.getElementById('viewToggleOption');
+  if(viewBtn){ viewBtn.textContent = State.viewMode==='grid' ? t('view_list') : t('view_grid'); }
+  const moreDot = document.getElementById('moreFilterDot');
+  if(moreDot) moreDot.style.display = hasFilter ? 'inline-block' : 'none';
   document.querySelectorAll('nav.tabbar button').forEach(b=>b.classList.toggle('active', b.dataset.tab===State.tab));
   const badge = document.getElementById('msgBadge');
   if(badge) badge.style.display = hasUnreadMessages() ? 'block' : 'none';
@@ -3699,8 +3700,10 @@ document.addEventListener('click', async (e)=>{
     State.galleryIndex = Math.min(max, (State.galleryIndex||0)+1); render(); return;
   }
   if(action==='gallerydot'){ State.galleryIndex = parseInt(btn.dataset.idx,10); render(); return; }
-  if(action==='openpricefilter'){ State.priceFilterOpen=true; render(); return; }
-  if(action==='toggleview'){ State.viewMode = State.viewMode==='grid'?'list':'grid'; storageSet('basar:viewmode', State.viewMode, false); render(); return; }
+  if(action==='headerlang'){ State.openDropdown=null; return toggleLang(); }
+  if(action==='headertheme'){ State.openDropdown=null; return toggleTheme(); }
+  if(action==='openpricefilter'){ State.priceFilterOpen=true; State.openDropdown=null; render(); return; }
+  if(action==='toggleview'){ State.viewMode = State.viewMode==='grid'?'list':'grid'; storageSet('basar:viewmode', State.viewMode, false); State.openDropdown=null; render(); return; }
   if(action==='openarchive'){ State.showArchived=true; render(); return; }
   if(action==='closearchive'){ State.showArchived=false; render(); return; }
   if(action==='savesearch') return saveCurrentSearch();
