@@ -9,6 +9,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
+  /* ===== Design "Aurora" (Standard) – Liquid-Glass-Look mit Mesh-Gradient ===== */
   :root{
     --mesh:
       radial-gradient(circle at 12% 0%, #FFD9EC 0%, transparent 42%),
@@ -43,6 +44,38 @@
     --text:#E7EAF0; --muted:#9AA5B3; --soft:rgba(255,255,255,0.07);
     --fill1:rgba(255,255,255,0.10); --fill2:rgba(255,255,255,0.14);
     --glow:0 8px 28px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.08);
+  }
+
+  /* ===== Design "Pur" – flaches, minimalistisches Design ===== */
+  html[data-design="pur"]{
+    --mesh:#F7F7F8;
+    --navy:#111318;
+    --blue:#2F6FED; --blue-dark:#1E4FBF;
+    --yellow:#C98A00; --heart:#E13950;
+    --bg:#F7F7F8; --card:#FFFFFF; --card-strong:#FFFFFF;
+    --dropdown-bg:#FFFFFF;
+    --border:#E3E3E7; --line:#ECECEF;
+    --text:#16171B; --muted:#6B6E76; --soft:#F2F2F4;
+    --fill1:#F1F1F3; --fill2:#E7E7EA;
+    --blur:0px;
+    --glow:0 1px 2px rgba(15,15,20,0.05);
+  }
+  html[data-design="pur"][data-theme="dark"]{
+    --mesh:#0F0F11;
+    --navy:#F4F4F6;
+    --blue:#5B8DFF; --blue-dark:#8AB0FF;
+    --yellow:#E0B34A; --heart:#FF5E74;
+    --bg:#0F0F11; --card:#18181B; --card-strong:#18181B;
+    --dropdown-bg:#1C1C20;
+    --border:#28282C; --line:#212124;
+    --text:#EDEDEF; --muted:#8B8D94; --soft:#1C1C1F;
+    --fill1:#1F1F22; --fill2:#28282C;
+    --blur:0px;
+    --glow:0 1px 2px rgba(0,0,0,0.4);
+  }
+  /* Im Pur-Design werden alle Glas-/Weichzeichner-Effekte global deaktiviert */
+  html[data-design="pur"] *{
+    backdrop-filter:none !important; -webkit-backdrop-filter:none !important;
   }
   *{box-sizing:border-box;}
   body{
@@ -692,7 +725,7 @@ const I18N = {
     premium_desc:'Unbegrenzte Anzeigen (statt {max} kostenlos), automatisch TOP-Hervorhebung + 2x Sichtbarkeit für alle Anzeigen, {imgmax} statt {imgfree} Bilder pro Anzeige, {pinbonus} reservierte Pin-Plätze pro Kategorie, PRO-Badge, Statistiken, Shop-Branding und Datenexport.',
     premium_months:'{n} Monat(e)', premium_covers_this:'Durch dein PRO-Abo bereits aktiv',
     premium_pin_bonus_note:'+{n} reserviert für Premium', export_data_btn:'📦 Eigene Daten exportieren (JSON)', toast_export_done:'Export heruntergeladen',
-    status_online:'Online', status_lastseen:'Zuletzt {time}', show_online_status:'Online-Status anzeigen', show_online_status_hint:'Andere sehen, wann du zuletzt aktiv warst.',
+    status_online:'Online', status_lastseen:'Zuletzt {time}', show_online_status:'Online-Status anzeigen', show_online_status_hint:'Andere sehen, wann du zuletzt aktiv warst.', design_label:'App-Design', design_hint:'Wähle zwischen Aurora (Glas-Look) und Pur (minimalistisch).',
     referral_section_label:'Freunde einladen', referral_desc:'Lade Freunde ein: Ihr bekommt beide {n} Tage kostenlose Hervorhebung für eine Anzeige.',
     referral_balance:'Du hast {n} Tage kostenlose Hervorhebung übrig', referral_invite_btn:'Einladungslink teilen',
     referral_share_text:'Schau dir Basar an – wir bekommen beide {n} Tage kostenlose Anzeigen-Hervorhebung!',
@@ -821,7 +854,7 @@ const I18N = {
     premium_desc:'Unlimited listings (instead of {max} free), automatic TOP highlight + 2x visibility for all listings, {imgmax} instead of {imgfree} photos per listing, {pinbonus} reserved pin slots per category, PRO badge, stats, shop branding and data export.',
     premium_months:'{n} month(s)', premium_covers_this:'Already included via your PRO subscription',
     premium_pin_bonus_note:'+{n} reserved for Premium', export_data_btn:'📦 Export your data (JSON)', toast_export_done:'Export downloaded',
-    status_online:'Online', status_lastseen:'Last seen {time}', show_online_status:'Show online status', show_online_status_hint:'Others can see when you were last active.',
+    status_online:'Online', status_lastseen:'Last seen {time}', show_online_status:'Show online status', show_online_status_hint:'Others can see when you were last active.', design_label:'App design', design_hint:'Switch between Aurora (glass look) and Pur (minimalist).',
     referral_section_label:'Invite friends', referral_desc:'Invite friends: you both get {n} days of free listing highlight.',
     referral_balance:'You have {n} days of free highlight left', referral_invite_btn:'Share invite link',
     referral_share_text:'Check out Basar – we both get {n} days of free listing highlight!',
@@ -866,7 +899,7 @@ const State = {
   editingId:null, viewProfileId:null, viewListingId:null, galleryIndex:0, fullscreenImage:null, activeChat:null, chatPollTimer:null, viewLegal:false,
   adminSub:'listings', adminBanTarget:null, broadcastDraft:'', broadcastSending:false, broadcastResult:null, adminUserSearch:'',
   reportTarget:null, reviewTarget:null, reviewStar:0, replyTarget:null,
-  formType:null, pendingImages:null, formDraft:null, promoteTarget:null, justPublished:false, searchStats:{categories:{}}, lastTrackedSearchTerm:'', theme:'light', lang:'de', tgInitData:'', viewMode:'list',
+  formType:null, pendingImages:null, formDraft:null, promoteTarget:null, justPublished:false, searchStats:{categories:{}}, lastTrackedSearchTerm:'', theme:'light', lang:'de', tgInitData:'', viewMode:'list', design:'aurora',
   hiddenConvos:{}, archivedConvos:[], showArchived:false, catOverlayOpen:false, giveawayPopup:false, onboardingSlide:null,
   dinarBalances:{}, dinarPageOpen:false, dinarSendTarget:null, dinarSendIsOffer:false, dinarTx:[], pendingPayOffer:null,
 };
@@ -882,12 +915,20 @@ function toast(msg){
 // ---------- Theme (Light/Dark) ----------
 function applyTheme(){
   document.documentElement.setAttribute('data-theme', State.theme);
+  document.documentElement.setAttribute('data-design', State.design);
   const btn = document.getElementById('themeToggle');
   if(btn){
     btn.innerHTML = State.theme==='dark'
       ? `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v3M12 20v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M1 12h3M20 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></svg>`
       : `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8z"/></svg>`;
   }
+}
+async function setDesign(design){
+  if(design!=='aurora' && design!=='pur') return;
+  State.design = design;
+  applyTheme();
+  await storageSet('basar:design', design, false);
+  render();
 }
 async function toggleTheme(){
   State.theme = State.theme==='dark' ? 'light' : 'dark';
@@ -913,7 +954,7 @@ const supabaseClient = (window.supabase && SUPABASE_URL.startsWith('https://') &
 // Rein geräte-lokale Werte (kein Sync nötig) laufen über localStorage statt Supabase
 function localGet(key){ try{ return localStorage.getItem(key); }catch(e){ return null; } }
 function localSet(key, value){ try{ localStorage.setItem(key, value); }catch(e){} }
-const LOCAL_ONLY_KEYS = ['basar:anonId', 'basar:theme', 'basar:lang', 'basar:viewmode'];
+const LOCAL_ONLY_KEYS = ['basar:anonId', 'basar:theme', 'basar:lang', 'basar:viewmode', 'basar:design'];
 
 async function storageGet(key, shared){
   if(LOCAL_ONLY_KEYS.includes(key)) return localGet(key);
@@ -946,6 +987,8 @@ async function loadAll(){
   else if(window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches){ State.theme = 'dark'; }
   const rvm = await storageGet('basar:viewmode', false);
   if(rvm==='grid' || rvm==='list'){ State.viewMode = rvm; }
+  const rds = await storageGet('basar:design', false);
+  if(rds==='pur' || rds==='aurora'){ State.design = rds; }
 
   let tgUser = null;
   try{
@@ -1729,6 +1772,17 @@ function renderProfile(){
               <div class="settings-row-sub">${t('show_online_status_hint')}</div>
             </div>
             <button class="toggle-switch ${u.showOnlineStatus!==false?'on':''}" data-action="toggleonline"></button>
+          </div>
+          <div class="settings-row" style="cursor:default">
+            <div class="settings-row-icon" style="background:rgba(10,132,255,0.15)">🎨</div>
+            <div class="settings-row-mid">
+              <div class="settings-row-label">${t('design_label')}</div>
+              <div class="settings-row-sub">${t('design_hint')}</div>
+              <div style="display:flex;gap:8px;margin-top:8px">
+                <button class="btn-secondary" style="flex:1;padding:8px;font-size:12.5px;${State.design==='aurora'?`border-color:var(--blue);color:var(--blue)`:''}" data-action="setdesign" data-design="aurora">✨ Aurora</button>
+                <button class="btn-secondary" style="flex:1;padding:8px;font-size:12.5px;${State.design==='pur'?`border-color:var(--blue);color:var(--blue)`:''}" data-action="setdesign" data-design="pur">◻️ Pur</button>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -3612,6 +3666,7 @@ document.addEventListener('click', async (e)=>{
     State.users[State.myId] = { ...getUser(State.myId), showOnlineStatus: getUser(State.myId).showOnlineStatus===false };
     await persistUsers(); render(); return;
   }
+  if(action==='setdesign') return setDesign(btn.dataset.design);
   if(action==='buyverified') return purchaseVerifiedBadge();
   if(action==='buypremium') return purchasePremium(parseInt(btn.dataset.plan,10));
   if(action==='setbanner') return setShopBanner(btn.dataset.banner);
