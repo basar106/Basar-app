@@ -18,7 +18,7 @@
       radial-gradient(circle at 95% 90%, #E8DBFF 0%, transparent 48%),
       linear-gradient(160deg,#EFF4FC 0%,#F6F0FB 100%);
     --navy:#0E2A4A;
-    --blue:#0A84FF; --blue-dark:#0064D6;
+    --blue:var(--blue); --blue-dark:var(--blue-dark);
     --yellow:#FFB300; --heart:#FF375F;
     --bg:#EFF4FC; --card:rgba(255,255,255,0.30); --card-strong:rgba(255,255,255,0.78);
     --dropdown-bg:rgba(255,255,255,0.92);
@@ -78,6 +78,81 @@
     backdrop-filter:none !important; -webkit-backdrop-filter:none !important;
     border-radius:0 !important;
   }
+
+  /* ===== Design "Basar" – warm, thematisch (Terrakotta/Sand/Oliv) ===== */
+  html[data-design="basar"]{
+    --mesh:
+      radial-gradient(circle at 12% 0%, rgba(224,138,90,0.20) 0%, transparent 42%),
+      radial-gradient(circle at 88% 6%, rgba(201,154,74,0.20) 0%, transparent 48%),
+      radial-gradient(circle at 15% 95%, rgba(150,168,120,0.18) 0%, transparent 42%),
+      radial-gradient(circle at 95% 90%, rgba(214,120,90,0.16) 0%, transparent 48%),
+      linear-gradient(160deg,#FAF3E9 0%,#F5ECDD 100%);
+    --navy:#4A2F1E;
+    --blue:#C1592E; --blue-dark:#9C4322;
+    --yellow:#C98A1F; --heart:#B23A3A;
+    --bg:#FAF3E9; --card:rgba(255,250,242,0.55); --card-strong:rgba(255,250,242,0.85);
+    --dropdown-bg:rgba(255,250,242,0.95);
+    --border:rgba(140,100,60,0.22); --line:rgba(90,60,30,0.10);
+    --text:#3A2718; --muted:#8A7156; --soft:rgba(255,250,242,0.5);
+    --fill1:rgba(255,250,242,0.55); --fill2:rgba(255,250,242,0.72);
+    --blur:18px;
+    --glow:0 8px 28px rgba(90,55,20,0.16), inset 0 1px 0 rgba(255,255,255,0.5);
+  }
+  html[data-design="basar"][data-theme="dark"]{
+    --mesh:
+      radial-gradient(circle at 12% 0%, rgba(224,138,90,0.22) 0%, transparent 42%),
+      radial-gradient(circle at 88% 6%, rgba(201,154,74,0.18) 0%, transparent 48%),
+      radial-gradient(circle at 15% 95%, rgba(120,140,100,0.16) 0%, transparent 42%),
+      radial-gradient(circle at 95% 90%, rgba(180,90,60,0.20) 0%, transparent 48%),
+      linear-gradient(160deg,#1E1712 0%,#241B14 100%);
+    --navy:#F5E9D8;
+    --blue:#E08A5A; --blue-dark:#F0AE84;
+    --yellow:#E0B33E; --heart:#E06A6A;
+    --bg:#1A140F; --card:rgba(255,235,210,0.07); --card-strong:rgba(38,30,22,0.75);
+    --dropdown-bg:rgba(28,22,16,0.92);
+    --border:rgba(255,230,200,0.14); --line:rgba(255,230,200,0.08);
+    --text:#F0E4D4; --muted:#B39D82; --soft:rgba(255,235,210,0.07);
+    --fill1:rgba(255,235,210,0.10); --fill2:rgba(255,235,210,0.14);
+    --glow:0 8px 28px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.06);
+  }
+
+  /* ===== Design "Mono" – hoher Kontrast, monochrom, barrierefrei ===== */
+  html[data-design="mono"]{
+    --mesh:#FFFFFF;
+    --navy:#000000;
+    --blue:#000000; --blue-dark:#000000;
+    --yellow:#8A6D00; --heart:#B00020;
+    --bg:#FFFFFF; --card:#FFFFFF; --card-strong:#FFFFFF;
+    --dropdown-bg:#FFFFFF;
+    --border:#000000; --line:#D0D0D0;
+    --text:#000000; --muted:#4A4A4A; --soft:#F0F0F0;
+    --fill1:#F0F0F0; --fill2:#E2E2E2;
+    --blur:0px;
+    --glow:0 1px 0 rgba(0,0,0,0.9);
+  }
+  html[data-design="mono"][data-theme="dark"]{
+    --mesh:#000000;
+    --navy:#FFFFFF;
+    --blue:#FFFFFF; --blue-dark:#FFFFFF;
+    --yellow:#E0C550; --heart:#FF6B6B;
+    --bg:#000000; --card:#000000; --card-strong:#000000;
+    --dropdown-bg:#0A0A0A;
+    --border:#FFFFFF; --line:#333333;
+    --text:#FFFFFF; --muted:#B5B5B5; --soft:#111111;
+    --fill1:#111111; --fill2:#1C1C1C;
+    --blur:0px;
+    --glow:0 1px 0 rgba(255,255,255,0.9);
+  }
+  html[data-design="mono"] *{
+    backdrop-filter:none !important; -webkit-backdrop-filter:none !important;
+  }
+  html[data-design="mono"] .chip.active,
+  html[data-design="mono"] .submit-btn,
+  html[data-design="mono"] .dinar-header-pill,
+  html[data-design="mono"] .tier-row button:hover{
+    color:var(--bg) !important;
+  }
+
   *{box-sizing:border-box;}
   body{
     margin:0;
@@ -131,9 +206,9 @@
     box-shadow:inset 0 1px 0 rgba(255,255,255,0.5);
   }
   .chip.active{
-    background:linear-gradient(160deg, rgba(10,132,255,0.95), rgba(0,100,214,0.9));
+    background:linear-gradient(160deg, color-mix(in srgb, var(--blue) 95%, transparent), color-mix(in srgb, var(--blue-dark) 90%, transparent));
     color:#fff; border-color:transparent;
-    box-shadow:inset 0 1px 0 rgba(255,255,255,0.35), 0 4px 14px rgba(10,132,255,0.35);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,0.35), 0 4px 14px color-mix(in srgb, var(--blue) 35%, transparent);
   }
 
   .dropdown-row{ display:flex; gap:8px; }
@@ -176,7 +251,7 @@
     box-shadow:inset 0 1px 0 rgba(255,255,255,0.3);
   }
   .price-filter-btn svg{ width:16px; height:16px; }
-  .price-filter-btn.active{ background:linear-gradient(160deg, rgba(10,132,255,0.95), rgba(0,100,214,0.9)); color:#fff; border-color:transparent; width:auto; padding:0 12px; gap:5px; font-size:12px; font-weight:700; }
+  .price-filter-btn.active{ background:linear-gradient(160deg, color-mix(in srgb, var(--blue) 95%, transparent), color-mix(in srgb, var(--blue-dark) 90%, transparent)); color:#fff; border-color:transparent; width:auto; padding:0 12px; gap:5px; font-size:12px; font-weight:700; }
 
   main{ flex:1; padding:16px 16px 118px; }
 
@@ -215,10 +290,10 @@
   .price{ font-size:16px; font-weight:800; color:var(--navy); margin:3px 0 5px; }
   .tag-row{ display:flex; gap:5px; flex-wrap:wrap; margin-bottom:5px; }
   .tag{ font-size:10px; font-weight:700; padding:3px 9px; border-radius:999px; background:var(--fill1); color:var(--muted); white-space:nowrap; }
-  .tag.offer{ background:rgba(10,132,255,0.14); color:var(--blue-dark); }
+  .tag.offer{ background:color-mix(in srgb, var(--blue) 14%, transparent); color:var(--blue-dark); }
   .tag.request{ background:rgba(92,107,126,0.12); color:#52525B; }
   .tag.boost-pin{ background:rgba(255,179,0,0.18); color:#8A6200; }
-  .tag.boost-bump{ background:rgba(10,132,255,0.14); color:var(--blue-dark); }
+  .tag.boost-bump{ background:color-mix(in srgb, var(--blue) 14%, transparent); color:var(--blue-dark); }
   .tag.boost-dv{ background:rgba(110,79,140,0.16); color:#6E4F8C; }
   .card-desc{ font-size:12.5px; color:var(--muted); line-height:1.4; margin:0; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; }
   .preview-img{ width:100%; max-height:220px; object-fit:contain; background:var(--fill1); border-radius:14px; margin-bottom:8px; border:1px solid var(--border); }
@@ -263,7 +338,7 @@
   .status-pill.confirmed{ background:#D6F0DC; color:#1E7A3C; }
   .status-pill.rejected{ background:#E5E5E5; color:#666; }
   .mini-btn{ border:1px solid var(--border); background:var(--fill1); backdrop-filter:blur(6px); border-radius:999px; padding:5px 11px; font-size:11px; font-weight:700; cursor:pointer; color:var(--navy); white-space:nowrap; }
-  .mini-btn.primary{ background:linear-gradient(160deg, rgba(10,132,255,0.95), rgba(0,100,214,0.9)); color:#fff; border-color:transparent; }
+  .mini-btn.primary{ background:linear-gradient(160deg, color-mix(in srgb, var(--blue) 95%, transparent), color-mix(in srgb, var(--blue-dark) 90%, transparent)); color:#fff; border-color:transparent; }
   .mini-btn[disabled]{ opacity:0.55; cursor:default; }
 
   .form-wrap h2{ font-size:18px; font-weight:700; margin:4px 0 16px; color:var(--navy); }
@@ -283,14 +358,14 @@
   .toggle-switch.on{ background:var(--blue); }
   .toggle-switch::after{ content:''; position:absolute; width:20px; height:20px; border-radius:50%; background:#fff; top:3px; left:3px; transition:transform .2s; }
   .toggle-switch.on::after{ transform:translateX(18px); }
-  .premium-status-card{ padding:14px 16px; border-radius:18px; background:linear-gradient(135deg,rgba(122,30,92,0.25),rgba(10,132,255,0.25)); border:1px solid rgba(122,30,92,0.3); margin-bottom:14px; }
+  .premium-status-card{ padding:14px 16px; border-radius:18px; background:linear-gradient(135deg,rgba(122,30,92,0.25),color-mix(in srgb, var(--blue) 25%, transparent)); border:1px solid rgba(122,30,92,0.3); margin-bottom:14px; }
 
   .dinar-chip{ display:inline-flex; align-items:center; gap:3px; font-size:10.5px; font-weight:700; background:rgba(230,170,20,0.16); color:#B8860B; padding:2px 7px; border-radius:8px; }
   html[data-theme="dark"] .dinar-chip{ color:#F0C550; background:rgba(240,197,80,0.15); }
   .dinar-header-pill{ display:flex; align-items:center; gap:5px; padding:6px 12px; border-radius:999px; background:var(--fill1); border:1px solid var(--border); backdrop-filter:blur(10px); color:var(--text); font-size:12.5px; font-weight:700; cursor:pointer; }
   .dinar-balance-hero{ text-align:center; padding:26px 0 18px; }
   .dinar-balance-hero .amount{ font-size:44px; font-weight:800; color:var(--text); }
-  .dinar-promo-banner{ background:linear-gradient(135deg,rgba(255,179,0,0.18),rgba(10,132,255,0.12)); border:1px solid rgba(255,179,0,0.3); border-radius:16px; padding:12px 14px; font-size:12.5px; color:var(--text); margin-bottom:16px; }
+  .dinar-promo-banner{ background:linear-gradient(135deg,rgba(255,179,0,0.18),color-mix(in srgb, var(--blue) 12%, transparent)); border:1px solid rgba(255,179,0,0.3); border-radius:16px; padding:12px 14px; font-size:12.5px; color:var(--text); margin-bottom:16px; }
   .dinar-pkg-grid{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
   .dinar-pkg-btn{ border:1px solid var(--border); border-radius:16px; background:var(--card); padding:14px 10px; text-align:center; cursor:pointer; }
   .dinar-pkg-btn .d-amt{ font-size:18px; font-weight:800; color:var(--text); }
@@ -300,7 +375,7 @@
   .dinar-spend-btn{ font-size:10.5px; padding:5px 9px; border-radius:9px; border:1px solid rgba(230,170,20,0.4); background:rgba(230,170,20,0.1); color:#B8860B; font-weight:700; cursor:pointer; white-space:nowrap; }
   html[data-theme="dark"] .dinar-spend-btn{ color:#F0C550; }
   .pay-offer-banner{ margin:0 0 10px; padding:12px 14px; border-radius:14px; background:rgba(255,179,0,0.14); border:1px solid rgba(255,179,0,0.35); font-size:13px; color:var(--text); }
-  .premium-status-card.active{ background:linear-gradient(135deg,rgba(30,122,60,0.2),rgba(10,132,255,0.15)); border-color:rgba(30,122,60,0.35); }
+  .premium-status-card.active{ background:linear-gradient(135deg,rgba(30,122,60,0.2),color-mix(in srgb, var(--blue) 15%, transparent)); border-color:rgba(30,122,60,0.35); }
   .field label{ display:block; font-size:12px; font-weight:600; margin-bottom:5px; }
   .field input[type=text], .field input[type=number], .field textarea, .field select{
     width:100%; border:1px solid var(--border); background:var(--fill1);
@@ -312,15 +387,15 @@
   .field textarea{ resize:vertical; min-height:80px; }
   .type-toggle{ display:flex; gap:8px; }
   .type-toggle button{ flex:1; padding:11px; border:1px solid var(--border); border-radius:14px; background:var(--fill1); backdrop-filter:blur(8px); font-weight:700; font-size:13px; cursor:pointer; color:var(--text); }
-  .type-toggle button.active{ background:linear-gradient(160deg, rgba(10,132,255,0.95), rgba(0,100,214,0.9)); color:#fff; border-color:transparent; }
+  .type-toggle button.active{ background:linear-gradient(160deg, color-mix(in srgb, var(--blue) 95%, transparent), color-mix(in srgb, var(--blue-dark) 90%, transparent)); color:#fff; border-color:transparent; }
   .price-row{ display:flex; gap:8px; align-items:center; }
   .price-row input{ flex:1; }
   .vb-check{ display:flex; align-items:center; gap:5px; font-size:12px; color:var(--muted); white-space:nowrap; }
   .submit-btn{
-    width:100%; background:linear-gradient(160deg, rgba(10,132,255,0.96), rgba(0,100,214,0.92));
+    width:100%; background:linear-gradient(160deg, color-mix(in srgb, var(--blue) 96%, transparent), color-mix(in srgb, var(--blue-dark) 92%, transparent));
     backdrop-filter:blur(14px) saturate(180%); -webkit-backdrop-filter:blur(14px) saturate(180%);
     color:#fff; border:none; border-radius:999px; padding:14px; font-size:15px; font-weight:700; cursor:pointer; margin-top:6px;
-    box-shadow:inset 0 1px 0 rgba(255,255,255,0.4), 0 8px 20px rgba(10,132,255,0.32);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,0.4), 0 8px 20px color-mix(in srgb, var(--blue) 32%, transparent);
   }
   .hint{ font-size:11px; color:var(--muted); margin-top:4px; }
   .cancel-edit{ text-align:center; font-size:12px; color:var(--muted); text-decoration:underline; margin-top:10px; cursor:pointer; }
@@ -334,13 +409,13 @@
     box-shadow:0 12px 30px rgba(20,50,90,0.2), inset 0 1px 0 rgba(255,255,255,0.6);
   }
   nav.tabbar button{ flex:1; background:none; border:none; display:flex; flex-direction:column; align-items:center; gap:2px; padding:8px 2px; color:var(--muted); font-size:10px; font-weight:600; cursor:pointer; border-radius:18px; position:relative; transition:background 0.2s,color 0.2s; }
-  nav.tabbar button.active{ color:var(--blue); background:rgba(10,132,255,0.12); }
+  nav.tabbar button.active{ color:var(--blue); background:color-mix(in srgb, var(--blue) 12%, transparent); }
   nav.tabbar svg{ width:21px; height:21px; }
   .tab-badge{ position:absolute; top:4px; right:18%; width:8px; height:8px; border-radius:50%; background:var(--heart); display:none; }
 
   .subtabs{ display:flex; gap:8px; margin-bottom:14px; overflow-x:auto; }
   .subtabs button{ border:1px solid var(--border); background:var(--fill1); backdrop-filter:blur(8px); border-radius:999px; padding:7px 14px; font-size:12px; font-weight:600; cursor:pointer; color:var(--text); white-space:nowrap; }
-  .subtabs button.active{ background:linear-gradient(160deg, rgba(10,132,255,0.95), rgba(0,100,214,0.9)); color:#fff; border-color:transparent; }
+  .subtabs button.active{ background:linear-gradient(160deg, color-mix(in srgb, var(--blue) 95%, transparent), color-mix(in srgb, var(--blue-dark) 90%, transparent)); color:#fff; border-color:transparent; }
 
   .toast{ position:fixed; bottom:96px; left:50%; transform:translateX(-50%); background:rgba(20,30,46,0.78); backdrop-filter:blur(14px); color:#fff; padding:10px 17px; border-radius:999px; font-size:12.5px; font-weight:600; z-index:120; opacity:0; transition:opacity 0.25s; pointer-events:none; white-space:nowrap; max-width:90%; text-align:center; box-shadow:0 6px 20px rgba(0,0,0,0.25); }
   .toast.show{ opacity:1; }
@@ -352,7 +427,7 @@
   .unverified-badge{ font-size:9.5px; font-weight:700; background:var(--soft); color:var(--muted); padding:2px 6px; border-radius:5px; text-transform:uppercase; }
   .premium-badge{ font-size:9.5px; font-weight:700; background:linear-gradient(135deg,#FFD56B,#FFB300); color:#3A2A00; padding:2px 6px; border-radius:5px; text-transform:uppercase; }
   .verified-check{ width:15px; height:15px; vertical-align:-2px; margin-left:3px; flex-shrink:0; display:inline-block; }
-  .pro-badge{ font-size:9.5px; font-weight:700; background:linear-gradient(135deg,#7A1E5C,#0A84FF); color:#fff; padding:2px 6px; border-radius:5px; text-transform:uppercase; }
+  .pro-badge{ font-size:9.5px; font-weight:700; background:linear-gradient(135deg,#7A1E5C,var(--blue)); color:#fff; padding:2px 6px; border-radius:5px; text-transform:uppercase; }
   .profile-header.branded{ padding:16px; border-radius:18px; margin-bottom:12px; box-shadow:0 6px 18px rgba(20,50,90,0.18); }
   .profile-header.branded .name, .profile-header.branded .username-line, .profile-header.branded .rating-line{ color:#fff; }
   .profile-header.branded .avatar{ border:2px solid rgba(255,255,255,0.7); }
@@ -469,11 +544,11 @@
   .chat-messages{ flex:1; overflow-y:auto; padding:14px 16px; display:flex; flex-direction:column; gap:8px; }
   .bubble{ max-width:78%; padding:9px 13px; border-radius:16px; font-size:13.5px; line-height:1.4; backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); }
   .bubble.theirs{ background:var(--fill1); border:1px solid var(--border); align-self:flex-start; border-bottom-left-radius:5px; color:var(--text); }
-  .bubble.mine{ background:linear-gradient(160deg, rgba(10,132,255,0.94), rgba(0,100,214,0.9)); color:#fff; align-self:flex-end; border-bottom-right-radius:5px; }
+  .bubble.mine{ background:linear-gradient(160deg, color-mix(in srgb, var(--blue) 94%, transparent), color-mix(in srgb, var(--blue-dark) 90%, transparent)); color:#fff; align-self:flex-end; border-bottom-right-radius:5px; }
   .bubble-time{ display:block; font-size:9.5px; opacity:0.65; margin-top:3px; text-align:right; }
   .chat-input-row{ display:flex; gap:8px; padding:10px 14px calc(10px + env(safe-area-inset-bottom)); background:var(--card-strong); backdrop-filter:blur(var(--blur)) saturate(180%); border-top:1px solid var(--border); }
   .chat-input-row input{ flex:1; border:1px solid var(--border); background:var(--fill1); backdrop-filter:blur(8px); border-radius:999px; padding:10px 16px; font-size:14px; color:var(--text); }
-  .chat-send{ width:40px; height:40px; border-radius:50%; background:linear-gradient(160deg, rgba(10,132,255,0.96), rgba(0,100,214,0.92)); color:#fff; border:none; font-size:16px; cursor:pointer; flex-shrink:0; box-shadow:inset 0 1px 0 rgba(255,255,255,0.4), 0 4px 12px rgba(10,132,255,0.35); }
+  .chat-send{ width:40px; height:40px; border-radius:50%; background:linear-gradient(160deg, color-mix(in srgb, var(--blue) 96%, transparent), color-mix(in srgb, var(--blue-dark) 92%, transparent)); color:#fff; border:none; font-size:16px; cursor:pointer; flex-shrink:0; box-shadow:inset 0 1px 0 rgba(255,255,255,0.4), 0 4px 12px color-mix(in srgb, var(--blue) 35%, transparent); }
 
   .convo-swipe-wrap{ position:relative; margin-bottom:8px; border-radius:16px; overflow:hidden; }
   .convo-swipe-bg{ position:absolute; inset:0; display:flex; align-items:center; padding:0 20px; font-weight:700; font-size:13px; color:#fff; }
@@ -924,7 +999,7 @@ function applyTheme(){
   document.documentElement.setAttribute('data-design', State.design);
 }
 async function setDesign(design){
-  if(design!=='aurora' && design!=='pur') return;
+  if(!['aurora','pur','basar','mono'].includes(design)) return;
   State.design = design;
   applyTheme();
   await storageSet('basar:design', design, false);
@@ -989,7 +1064,7 @@ async function loadAll(){
   const rvm = await storageGet('basar:viewmode', false);
   if(rvm==='grid' || rvm==='list'){ State.viewMode = rvm; }
   const rds = await storageGet('basar:design', false);
-  if(rds==='pur' || rds==='aurora'){ State.design = rds; }
+  if(['aurora','pur','basar','mono'].includes(rds)){ State.design = rds; }
 
   let tgUser = null;
   try{
@@ -1126,7 +1201,7 @@ function isAdmin(id){ return ADMIN_IDS.includes(id); }
 function displayName(u){ return (u.customName && u.customName.trim()) || u.name || 'Nutzer'; }
 function verifiedCheckHTML(u){
   if(!u || !u.verifiedBadge) return '';
-  return `<svg class="verified-check" viewBox="0 0 24 24" title="${escapeHtml(t('verified_badge_active'))}"><path fill="#0A84FF" d="M12 2l2.2 1.4 2.6-.6 1.1 2.4 2.4 1.1-.6 2.6L21 11l-1.3 2.1.6 2.6-2.4 1.1-1.1 2.4-2.6-.6L12 20l-2.2-1.4-2.6.6-1.1-2.4-2.4-1.1.6-2.6L3 11l1.3-2.1-.6-2.6 2.4-1.1 1.1-2.4 2.6.6z"/><path stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" d="M8.5 11l2.3 2.3L15.5 9"/></svg>`;
+  return `<svg class="verified-check" viewBox="0 0 24 24" title="${escapeHtml(t('verified_badge_active'))}"><path style="fill:var(--blue)" d="M12 2l2.2 1.4 2.6-.6 1.1 2.4 2.4 1.1-.6 2.6L21 11l-1.3 2.1.6 2.6-2.4 1.1-1.1 2.4-2.6-.6L12 20l-2.2-1.4-2.6.6-1.1-2.4-2.4-1.1.6-2.6L3 11l1.3-2.1-.6-2.6 2.4-1.1 1.1-2.4 2.6.6z"/><path stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" d="M8.5 11l2.3 2.3L15.5 9"/></svg>`;
 }
 function isVerified(id){ return (id||'').startsWith('tg_'); }
 function hasPremiumSub(userId){ const sub = getUser(userId).premiumSub; return !!(sub && sub.active && sub.until && sub.until > Date.now()); }
@@ -1741,28 +1816,28 @@ function renderProfile(){
         <div class="settings-section-title">Profil</div>
         <div class="settings-card">
           <label class="settings-row" style="cursor:pointer">
-            <div class="settings-row-icon" style="background:rgba(10,132,255,0.15)">✏️</div>
+            <div class="settings-row-icon" style="background:color-mix(in srgb, var(--blue) 15%, transparent)">✏️</div>
             <div class="settings-row-mid">
               <div class="settings-row-label">${t('profile_name_field')}</div>
               <input type="text" id="p_name" value="${escapeHtml(u.customName)}" placeholder="${escapeHtml(u.name)}" style="border:none;background:none;color:var(--text);font-size:13px;width:100%;padding:0;outline:none;margin-top:2px">
             </div>
           </label>
           <label class="settings-row" style="cursor:pointer">
-            <div class="settings-row-icon" style="background:rgba(10,132,255,0.15)">@</div>
+            <div class="settings-row-icon" style="background:color-mix(in srgb, var(--blue) 15%, transparent)">@</div>
             <div class="settings-row-mid">
               <div class="settings-row-label">${t('profile_username_field')}</div>
               <input type="text" id="p_username" value="${escapeHtml(u.username)}" placeholder="@dein_name" style="border:none;background:none;color:var(--text);font-size:13px;width:100%;padding:0;outline:none;margin-top:2px">
             </div>
           </label>
           <label class="settings-row" style="cursor:pointer">
-            <div class="settings-row-icon" style="background:rgba(10,132,255,0.15)">📢</div>
+            <div class="settings-row-icon" style="background:color-mix(in srgb, var(--blue) 15%, transparent)">📢</div>
             <div class="settings-row-mid">
               <div class="settings-row-label">${t('profile_channel_field')}</div>
               <input type="text" id="p_channel" value="${escapeHtml(u.channel)}" placeholder="@kanal" style="border:none;background:none;color:var(--text);font-size:13px;width:100%;padding:0;outline:none;margin-top:2px">
             </div>
           </label>
           <label class="settings-row" style="cursor:pointer;align-items:flex-start">
-            <div class="settings-row-icon" style="background:rgba(10,132,255,0.15);margin-top:2px">📝</div>
+            <div class="settings-row-icon" style="background:color-mix(in srgb, var(--blue) 15%, transparent);margin-top:2px">📝</div>
             <div class="settings-row-mid">
               <div class="settings-row-label">${t('profile_bio_field')}</div>
               <textarea id="p_bio" maxlength="300" placeholder="${t('profile_bio_ph')}" style="border:none;background:none;color:var(--text);font-size:13px;width:100%;padding:0;outline:none;margin-top:2px;resize:none;min-height:48px">${escapeHtml(u.bio)}</textarea>
@@ -1784,13 +1859,15 @@ function renderProfile(){
             <button class="toggle-switch ${u.showOnlineStatus!==false?'on':''}" data-action="toggleonline"></button>
           </div>
           <div class="settings-row" style="cursor:default">
-            <div class="settings-row-icon" style="background:rgba(10,132,255,0.15)">🎨</div>
+            <div class="settings-row-icon" style="background:color-mix(in srgb, var(--blue) 15%, transparent)">🎨</div>
             <div class="settings-row-mid">
               <div class="settings-row-label">${t('design_label')}</div>
               <div class="settings-row-sub">${t('design_hint')}</div>
-              <div style="display:flex;gap:8px;margin-top:8px">
-                <button class="btn-secondary" style="flex:1;padding:8px;font-size:12.5px;${State.design==='aurora'?`border-color:var(--blue);color:var(--blue)`:''}" data-action="setdesign" data-design="aurora">✨ Aurora</button>
-                <button class="btn-secondary" style="flex:1;padding:8px;font-size:12.5px;${State.design==='pur'?`border-color:var(--blue);color:var(--blue)`:''}" data-action="setdesign" data-design="pur">◻️ Pur</button>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px">
+                <button class="btn-secondary" style="padding:8px;font-size:12.5px;${State.design==='aurora'?`border-color:var(--blue);color:var(--blue)`:''}" data-action="setdesign" data-design="aurora">✨ Aurora</button>
+                <button class="btn-secondary" style="padding:8px;font-size:12.5px;${State.design==='pur'?`border-color:var(--blue);color:var(--blue)`:''}" data-action="setdesign" data-design="pur">◻️ Pur</button>
+                <button class="btn-secondary" style="padding:8px;font-size:12.5px;${State.design==='basar'?`border-color:var(--blue);color:var(--blue)`:''}" data-action="setdesign" data-design="basar">🏺 Basar</button>
+                <button class="btn-secondary" style="padding:8px;font-size:12.5px;${State.design==='mono'?`border-color:var(--blue);color:var(--blue)`:''}" data-action="setdesign" data-design="mono">◐ Mono</button>
               </div>
             </div>
           </div>
@@ -1821,7 +1898,7 @@ function renderProfile(){
 
         <div class="settings-card">
           <div class="settings-row" ${!u.verifiedBadge?`data-action="buyverified" style="cursor:pointer"`:''}> 
-            <div class="settings-row-icon" style="background:rgba(10,132,255,0.15)">${verifiedCheckHTML({verifiedBadge:true})}</div>
+            <div class="settings-row-icon" style="background:color-mix(in srgb, var(--blue) 15%, transparent)">${verifiedCheckHTML({verifiedBadge:true})}</div>
             <div class="settings-row-mid">
               <div class="settings-row-label">${t('verified_section_label')}</div>
               <div class="settings-row-sub">${u.verifiedBadge ? t('verified_badge_active') : `${VERIFIED_BADGE_STARS} ★ (~${eur(VERIFIED_BADGE_STARS)} €)`}</div>
@@ -1841,7 +1918,7 @@ function renderProfile(){
           </div>` : ''}
           ${isPro ? `
           <div class="settings-row" data-action="exportdata" style="cursor:pointer">
-            <div class="settings-row-icon" style="background:rgba(10,132,255,0.15)">📦</div>
+            <div class="settings-row-icon" style="background:color-mix(in srgb, var(--blue) 15%, transparent)">📦</div>
             <div class="settings-row-mid"><div class="settings-row-label">${t('export_data_btn')}</div></div>
             <div class="settings-row-right"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></div>
           </div>` : ''}
@@ -2404,7 +2481,7 @@ function renderOverlays(){
         <div class="settings-section-title">${t('dinar_spend_title')}</div>
         <div class="settings-card" style="margin-bottom:20px">
           <div class="settings-row">
-            <div class="settings-row-icon" style="background:rgba(10,132,255,0.15)">${verifiedCheckHTML({verifiedBadge:true})}</div>
+            <div class="settings-row-icon" style="background:color-mix(in srgb, var(--blue) 15%, transparent)">${verifiedCheckHTML({verifiedBadge:true})}</div>
             <div class="settings-row-mid"><div class="settings-row-label">${t('verified_section_label')}</div></div>
             <button class="dinar-spend-btn" data-action="spenddinar" data-item="verified" ${getUser(State.myId).verifiedBadge?'disabled':''}>🪙 ${DINAR_CATALOG.verified.price}</button>
           </div>
@@ -2513,7 +2590,7 @@ function renderOverlays(){
             </div>
           </div>
           <div class="settings-row" style="cursor:default">
-            <div class="settings-row-icon" style="background:rgba(10,132,255,0.15)">🤝</div>
+            <div class="settings-row-icon" style="background:color-mix(in srgb, var(--blue) 15%, transparent)">🤝</div>
             <div class="settings-row-mid">
               <div class="settings-row-label">${t('dinarintro_pay_title')}</div>
               <div class="settings-row-sub">${t('dinarintro_pay_text')}</div>
