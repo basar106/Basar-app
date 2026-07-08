@@ -528,16 +528,7 @@
     <div class="dropdown-row">
       <div class="dropdown" id="catDropdown"></div>
       <div class="dropdown" id="sortDropdown"></div>
-      <div class="dropdown">
-        <button class="dropdown-trigger ${State.openDropdown==='more'?'open':''}" data-action="toggledropdown" data-dropdown="more" style="width:38px;justify-content:center;padding:9px 0;position:relative" title="Mehr">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg>
-          <span id="moreFilterDot" style="display:none;position:absolute;top:6px;right:6px;width:7px;height:7px;border-radius:50%;background:var(--blue)"></span>
-        </button>
-        ${State.openDropdown==='more' ? `<div class="dropdown-panel" style="right:0;left:auto;width:200px">
-          <button class="dropdown-option" data-action="openpricefilter" id="priceFilterOption">${t('sort_pricefilter')}</button>
-          <button class="dropdown-option" data-action="toggleview" id="viewToggleOption"></button>
-        </div>` : ''}
-      </div>
+      <div class="dropdown" id="moreFilterDropdown"></div>
     </div>
     <div class="chip-row" id="typeChips">
       <button class="chip active" data-type="all">Alle</button>
@@ -2255,20 +2246,23 @@ function render(){
     </button>
     ${State.openDropdown==='sort' ? `<div class="dropdown-panel">${Object.entries(sortLabels).map(([k,label])=>`<button class="dropdown-option ${k===State.sortBy?'active':''}" data-action="selectsort" data-sort="${k}">${label}</button>`).join('')}</div>` : ''}`;
 
+  const hasFilter = State.priceMin!=null || State.priceMax!=null;
+  const priceLabel = hasFilter ? `${t('sort_pricefilter')}: ${State.priceMin||0}–${State.priceMax!=null?State.priceMax:'∞'} €` : t('sort_pricefilter');
+  const viewLabel = State.viewMode==='grid' ? t('view_list') : t('view_grid');
+  document.getElementById('moreFilterDropdown').innerHTML = `
+    <button class="dropdown-trigger ${State.openDropdown==='more'?'open':''}" data-action="toggledropdown" data-dropdown="more" style="width:38px;justify-content:center;padding:9px 0;position:relative" title="Mehr">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg>
+      <span style="display:${hasFilter?'inline-block':'none'};position:absolute;top:6px;right:6px;width:7px;height:7px;border-radius:50%;background:var(--blue)"></span>
+    </button>
+    ${State.openDropdown==='more' ? `<div class="dropdown-panel" style="right:0;left:auto;width:200px">
+      <button class="dropdown-option ${hasFilter?'active':''}" data-action="openpricefilter">${priceLabel}</button>
+      <button class="dropdown-option" data-action="toggleview">${viewLabel}</button>
+    </div>` : ''}`;
+
   document.getElementById('searchInput').value = State.search;
   document.querySelectorAll('#typeChips .chip').forEach(c=>c.classList.toggle('active', c.dataset.type===State.typeFilter));
-  const hasFilter = State.priceMin!=null || State.priceMax!=null;
-  const priceChip = document.getElementById('priceFilterOption');
-  if(priceChip){
-    priceChip.textContent = hasFilter ? `${t('sort_pricefilter')}: ${State.priceMin||0}–${State.priceMax!=null?State.priceMax:'∞'} €` : t('sort_pricefilter');
-    priceChip.classList.toggle('active', hasFilter);
-  }
   const dinarAmt = document.getElementById('dinarPillAmt');
   if(dinarAmt) dinarAmt.textContent = dinarBalanceOf(State.myId);
-  const viewBtn = document.getElementById('viewToggleOption');
-  if(viewBtn){ viewBtn.textContent = State.viewMode==='grid' ? t('view_list') : t('view_grid'); }
-  const moreDot = document.getElementById('moreFilterDot');
-  if(moreDot) moreDot.style.display = hasFilter ? 'inline-block' : 'none';
   document.querySelectorAll('nav.tabbar button').forEach(b=>b.classList.toggle('active', b.dataset.tab===State.tab));
   const badge = document.getElementById('msgBadge');
   if(badge) badge.style.display = hasUnreadMessages() ? 'block' : 'none';
