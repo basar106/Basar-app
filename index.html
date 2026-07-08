@@ -864,7 +864,7 @@ const State = {
   priceMin:null, priceMax:null, priceFilterOpen:false, openDropdown:null,
   savedSearches:[],
   editingId:null, viewProfileId:null, viewListingId:null, galleryIndex:0, fullscreenImage:null, activeChat:null, chatPollTimer:null, viewLegal:false,
-  adminSub:'listings', adminBanTarget:null,
+  adminSub:'listings', adminBanTarget:null, broadcastDraft:'', broadcastSending:false, broadcastResult:null,
   reportTarget:null, reviewTarget:null, reviewStar:0, replyTarget:null,
   formType:null, pendingImages:null, formDraft:null, promoteTarget:null, justPublished:false, searchStats:{categories:{}}, lastTrackedSearchTerm:'', theme:'light', lang:'de', tgInitData:'', viewMode:'list',
   hiddenConvos:{}, archivedConvos:[], showArchived:false, catOverlayOpen:false, giveawayPopup:false, onboardingSlide:null,
@@ -1983,6 +1983,7 @@ function renderAdminTab(){
     <button class="${State.adminSub==='listings'?'active':''}" data-action="adminsub" data-sub="listings">Anzeigen (${State.listings.length})</button>
     <button class="${State.adminSub==='users'?'active':''}" data-action="adminsub" data-sub="users">Nutzer (${Object.keys(State.users).length})</button>
     <button class="${State.adminSub==='reports'?'active':''}" data-action="adminsub" data-sub="reports">Meldungen (${State.reports.length})</button>
+    <button class="${State.adminSub==='broadcast'?'active':''}" data-action="adminsub" data-sub="broadcast">📢 Broadcast</button>
   </div>`;
 
   if(State.adminSub==='listings'){
@@ -2027,6 +2028,19 @@ function renderAdminTab(){
       </div>`;
     }).join('');
     return sub + rows;
+  }
+
+  if(State.adminSub==='broadcast'){
+    const userCount = Object.keys(State.users).filter(id=>id.startsWith('tg_')).length;
+    return sub + `
+      <div class="field">
+        <label>📢 Nachricht an alle Nutzer (${userCount} Telegram-Nutzer)</label>
+        <textarea id="broadcastText" maxlength="3500" placeholder="Deine Ankündigung …" style="min-height:160px">${escapeHtml(State.broadcastDraft||'')}</textarea>
+        <div class="hint" style="margin-top:6px">Wird als echte Telegram-Nachricht direkt vom Bot an jeden Nutzer gesendet (kein In-App-Chat).</div>
+      </div>
+      <button class="submit-btn" data-action="sendbroadcast" ${State.broadcastSending?'disabled':''}>${State.broadcastSending ? 'Wird gesendet …' : `An alle ${userCount} Nutzer senden`}</button>
+      ${State.broadcastResult ? `<div class="hint" style="margin-top:12px;font-weight:700">✅ Gesendet: ${State.broadcastResult.sent} / ${State.broadcastResult.total} ${State.broadcastResult.failed?`(${State.broadcastResult.failed} fehlgeschlagen — z. B. Bot von Nutzer blockiert)`:''}</div>` : ''}
+    `;
   }
 
   // reports
@@ -2966,6 +2980,28 @@ async function setShopBanner(key){
   await persistUsers(); render();
 }
 
+async function sendBroadcast(){
+  if(!isAdmin(State.myId)) return;
+  const ta = document.getElementById('broadcastText');
+  const text = ta ? ta.value.trim() : '';
+  State.broadcastDraft = ta ? ta.value : '';
+  if(!text){ toast('Bitte Text eingeben'); return; }
+  const userCount = Object.keys(State.users).filter(id=>id.startsWith('tg_')).length;
+  const ok = confirm(`Nachricht wirklich an ${userCount} Nutzer senden? Das kann nicht rückgängig gemacht werden.`);
+  if(!ok) return;
+  State.broadcastSending = true; State.broadcastResult = null; render();
+  try{
+    const resp = await fetch(EDGE_BASE + '/broadcast', {
+      method:'POST', headers:{ 'Content-Type':'application/json', 'Authorization':'Bearer '+SUPABASE_ANON_KEY },
+      body: JSON.stringify({ initData: State.tgInitData, text }),
+    });
+    const data = await resp.json();
+    if(!resp.ok || data.error){ toast(data.error || 'Broadcast fehlgeschlagen'); }
+    else { State.broadcastResult = data; State.broadcastDraft = ''; toast('Broadcast gesendet!'); }
+  }catch(e){ toast('Broadcast fehlgeschlagen'); }
+  State.broadcastSending = false; render();
+}
+
 async function resetAllDemoData(){
   if(!isAdmin(State.myId)) return;
   const ok = confirm(t('confirm_reset_all'));
@@ -3547,6 +3583,7 @@ document.addEventListener('click', async (e)=>{
   if(action==='setbanner') return setShopBanner(btn.dataset.banner);
   if(action==='exportdata') return exportMyData();
   if(action==='adminsub'){ State.adminSub = btn.dataset.sub; render(); return; }
+  if(action==='sendbroadcast') return sendBroadcast();
   if(action==='adminviewlisting'){ State.viewListingId = btn.dataset.id; State.galleryIndex = 0; render(); return; }
   if(action==='admineditlisting') return startEdit(btn.dataset.id);
   if(action==='admindeletelisting'){ if(confirm('Anzeige als Admin löschen?')) deleteListing(btn.dataset.id); return; }
