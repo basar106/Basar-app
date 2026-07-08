@@ -704,7 +704,7 @@ const I18N = {
     empty_browse_title:'Noch nichts gefunden', empty_browse_sub:'Ändere die Filter oder gib selbst die erste Anzeige auf.',
     recommended_title:'Für dich empfohlen', recommended_sub:'Weil du oft nach „{term}“ suchst', all_listings:'Alle Anzeigen',
     badge_offer:'Angebot', badge_request:'Gesuch',
-    btn_promote:'Bewerben', btn_edit:'Bearbeiten', btn_delete:'Löschen',
+    btn_promote:'Bewerben', btn_edit:'Bearbeiten', btn_delete:'Löschen', btn_push:'Push', toast_push_success:'Anzeige nach oben gepusht! 🚀',
     status_pending:'Anfrage gesendet', status_confirmed:'Bestätigt', status_rejected:'Abgelehnt',
     req_count:'{n} Anfrage{plural}',
     deal_interest:'Interesse?', deal_request_btn:'Kauf anfragen', deal_reapply:'Erneut anfragen',
@@ -839,7 +839,7 @@ const I18N = {
     empty_browse_title:'Nothing here yet', empty_browse_sub:'Change the filters or post the first listing yourself.',
     recommended_title:'Recommended for you', recommended_sub:'Because you often search for "{term}"', all_listings:'All listings',
     badge_offer:'Offer', badge_request:'Wanted',
-    btn_promote:'Promote', btn_edit:'Edit', btn_delete:'Delete',
+    btn_promote:'Promote', btn_edit:'Edit', btn_delete:'Delete', btn_push:'Push', toast_push_success:'Listing pushed to the top! 🚀',
     status_pending:'Request sent', status_confirmed:'Confirmed', status_rejected:'Rejected',
     req_count:'{n} request{plural}',
     deal_interest:'Interested?', deal_request_btn:'Request purchase', deal_reapply:'Request again',
@@ -1367,8 +1367,23 @@ async function applySavedSearch(id){
 function sortScore(l){
   let t = l.createdAt;
   if(isBoostActive(l.dailyBump)) t = Math.max(t, l.dailyBump.lastBumpAt || l.createdAt);
+  if(l.lastFreePush) t = Math.max(t, l.lastFreePush);
   if(effectiveDoubleVis(l)) t += 12*3600*1000;
   return t;
+}
+const FREE_PUSH_COOLDOWN_NORMAL = 24*3600*1000;
+const FREE_PUSH_COOLDOWN_PRO = 6*3600*1000;
+function freePushCooldownFor(userId){ return hasPremiumSub(userId) ? FREE_PUSH_COOLDOWN_PRO : FREE_PUSH_COOLDOWN_NORMAL; }
+function freePushRemainingMs(l){
+  if(!l.lastFreePush) return 0;
+  const cd = freePushCooldownFor(l.ownerId);
+  const remain = (l.lastFreePush + cd) - Date.now();
+  return remain > 0 ? remain : 0;
+}
+function formatRemaining(ms){
+  const h = Math.floor(ms/3600000);
+  const m = Math.floor((ms%3600000)/60000);
+  return h>0 ? `${h}h ${m}m` : `${m}m`;
 }
 function activePinCountInCategory(category, excludeListingId){
   return State.listings.filter(l=>l.id!==excludeListingId && l.category===category && isBoostActive(l.pin)).length;
@@ -1541,6 +1556,9 @@ function cardHTML(l, ownerView){
           <span class="meta-right">
             ${statusPill}
             ${ownerView && isOwn ? `<span class="owner-actions">
+                ${(()=>{ const rem=freePushRemainingMs(l); return rem>0
+                  ? `<button disabled style="color:var(--muted);text-decoration:none;cursor:default">⬆ ${formatRemaining(rem)}</button>`
+                  : `<button data-action="freepush" data-id="${l.id}">⬆ ${t('btn_push')}</button>`; })()}
                 <button data-action="promote" data-id="${l.id}">${t('btn_promote')}</button>
                 <button data-action="edit" data-id="${l.id}">${t('btn_edit')}</button>
                 <button data-action="delete" data-id="${l.id}">${t('btn_delete')}</button>
@@ -1600,7 +1618,10 @@ function renderListingDetailInner(l){
     ${(!isOwn && handle) ? `<a href="#" class="telegram-link" data-action="contact" data-handle="${escapeHtml(handle)}">${t('via_telegram',{handle:escapeHtml(seller.username)})}</a>` : ''}
     ${dealBoxHTML(l)}
     ${isOwn
-      ? `<div class="owner-actions" style="margin-top:16px;justify-content:center;gap:18px">
+      ? `<div class="owner-actions" style="margin-top:16px;justify-content:center;gap:18px;flex-wrap:wrap">
+          ${(()=>{ const rem=freePushRemainingMs(l); return rem>0
+            ? `<button disabled style="color:var(--muted);text-decoration:none;cursor:default">⬆ ${formatRemaining(rem)}</button>`
+            : `<button data-action="freepush" data-id="${l.id}">⬆ ${t('btn_push')}</button>`; })()}
           <button data-action="promote" data-id="${l.id}">${t('btn_promote')}</button>
           <button data-action="edit" data-id="${l.id}">${t('btn_edit')}</button>
           <button data-action="delete" data-id="${l.id}">${t('btn_delete')}</button>
@@ -3477,6 +3498,16 @@ async function redeemFreeBoost(listingId){
   toast(t('toast_free_boost_redeemed',{n:days})); render();
 }
 
+async function pushListing(listingId){
+  const l = State.listings.find(x=>x.id===listingId);
+  if(!l || l.ownerId!==State.myId) return;
+  if(freePushRemainingMs(l) > 0) return;
+  l.lastFreePush = Date.now();
+  await persistListings();
+  toast(t('toast_push_success'));
+  render();
+}
+
 async function purchaseBoost(listingId, boostKey, tierIndex){
   const l = State.listings.find(x=>x.id===listingId);
   const cfg = BOOSTS[boostKey];
@@ -3893,6 +3924,7 @@ document.addEventListener('click', async (e)=>{
   }
   if(action==='openlegal'){ State.viewLegal=true; render(); return; }
   if(action==='closelegal'){ State.viewLegal=false; render(); return; }
+  if(action==='freepush') return pushListing(btn.dataset.id);
   if(action==='promote'){ State.promoteTarget = btn.dataset.id; render(); return; }
   if(action==='closepromote'){ State.promoteTarget=null; State.justPublished=false; render(); return; }
   if(action==='buyboost') return purchaseBoost(btn.dataset.listingid, btn.dataset.boost, parseInt(btn.dataset.tier,10));
