@@ -250,6 +250,22 @@
   .toggle-switch::after{ content:''; position:absolute; width:20px; height:20px; border-radius:50%; background:#fff; top:3px; left:3px; transition:transform .2s; }
   .toggle-switch.on::after{ transform:translateX(18px); }
   .premium-status-card{ padding:14px 16px; border-radius:18px; background:linear-gradient(135deg,rgba(122,30,92,0.25),rgba(10,132,255,0.25)); border:1px solid rgba(122,30,92,0.3); margin-bottom:14px; }
+
+  .dinar-chip{ display:inline-flex; align-items:center; gap:3px; font-size:10.5px; font-weight:700; background:rgba(230,170,20,0.16); color:#B8860B; padding:2px 7px; border-radius:8px; }
+  html[data-theme="dark"] .dinar-chip{ color:#F0C550; background:rgba(240,197,80,0.15); }
+  .dinar-header-pill{ display:flex; align-items:center; gap:5px; padding:6px 12px; border-radius:999px; background:var(--fill1); border:1px solid var(--border); backdrop-filter:blur(10px); color:var(--text); font-size:12.5px; font-weight:700; cursor:pointer; }
+  .dinar-balance-hero{ text-align:center; padding:26px 0 18px; }
+  .dinar-balance-hero .amount{ font-size:44px; font-weight:800; color:var(--text); }
+  .dinar-promo-banner{ background:linear-gradient(135deg,rgba(255,179,0,0.18),rgba(10,132,255,0.12)); border:1px solid rgba(255,179,0,0.3); border-radius:16px; padding:12px 14px; font-size:12.5px; color:var(--text); margin-bottom:16px; }
+  .dinar-pkg-grid{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .dinar-pkg-btn{ border:1px solid var(--border); border-radius:16px; background:var(--card); padding:14px 10px; text-align:center; cursor:pointer; }
+  .dinar-pkg-btn .d-amt{ font-size:18px; font-weight:800; color:var(--text); }
+  .dinar-pkg-btn .d-eur{ font-size:12px; color:var(--muted); margin-top:2px; }
+  .dinar-tx-row{ display:flex; justify-content:space-between; align-items:center; padding:10px 14px; border-bottom:1px solid var(--line); font-size:12.5px; }
+  .dinar-tx-row:last-child{ border-bottom:none; }
+  .dinar-spend-btn{ font-size:10.5px; padding:5px 9px; border-radius:9px; border:1px solid rgba(230,170,20,0.4); background:rgba(230,170,20,0.1); color:#B8860B; font-weight:700; cursor:pointer; white-space:nowrap; }
+  html[data-theme="dark"] .dinar-spend-btn{ color:#F0C550; }
+  .pay-offer-banner{ margin:0 0 10px; padding:12px 14px; border-radius:14px; background:rgba(255,179,0,0.14); border:1px solid rgba(255,179,0,0.35); font-size:13px; color:var(--text); }
   .premium-status-card.active{ background:linear-gradient(135deg,rgba(30,122,60,0.2),rgba(10,132,255,0.15)); border-color:rgba(30,122,60,0.35); }
   .field label{ display:block; font-size:12px; font-weight:600; margin-bottom:5px; }
   .field input[type=text], .field input[type=number], .field textarea, .field select{
@@ -464,6 +480,7 @@
         <p>Kleinanzeigen für deinen Telegram-Shop</p>
       </div>
       <div class="header-actions">
+        <button class="dinar-header-pill" data-action="opendinar" id="dinarPill">🪙 <span id="dinarPillAmt">0</span></button>
         <button class="theme-toggle" id="langToggle" title="Language / Sprache">DE</button>
         <button class="theme-toggle" id="themeToggle" title="Darstellung wechseln"></button>
       </div>
@@ -685,6 +702,18 @@ const I18N = {
     swipe_delete:'Löschen', swipe_archive:'Archivieren', swipe_unarchive:'Wiederherstellen', archived_label:'Archiviert', back_to_inbox:'Zurück',
     giveaway_title:'Gewinnspiel', giveaway_desc:'Lade Freunde ein und gewinne! Jeder geworbene Freund = 1 Los.', giveaway_tickets:'Deine Lose: {n}', giveaway_later:'Später', copy_btn:'Kopieren', bot_notify_hint:'Tipp: Starte den Bot (@Basarapp_bot), um Push-Benachrichtigungen zu erhalten',
     ob1_title:'Anzeige erstellen', ob1_text:'Fotos hochladen, Titel und Preis festlegen – deine Anzeige ist in unter einer Minute online.', ob2_title:'Direkt chatten', ob2_text:'Interessenten schreiben dich privat an. Verhandelt direkt in der App – ohne Nummerntausch.', ob3_title:'Sicher handeln', ob3_text:'Nach jedem bestätigten Kauf könnt ihr euch gegenseitig bewerten. So wissen alle, wem sie vertrauen können.', ob_next:'Weiter', ob_skip:'Überspringen', ob_start:'Los geht\'s!', new_this_week:'Neu diese Woche', toast_welcome_boost:'Anzeige veröffentlicht! 🎁 Willkommensgeschenk: 3 Tage kostenlos hervorgehoben', toast_share_bump:'Danke fürs Teilen! Deine Anzeige wurde nach oben gesetzt 🚀 (1x pro Woche)', toast_draft_saved:'Entwurf gespeichert', draft_restored_hint:'Entwurf wiederhergestellt – wird beim Tab-Wechsel automatisch gespeichert', giveaway_invited_count:'{n} Freund(e) eingeladen', giveaway_invited_label:'Deine eingeladenen Freunde', giveaway_empty:'Noch keine Freunde eingeladen. Teile deinen Link und sichere dir Lose!', giveaway_terms:'Teilnahme kostenlos. Der Gewinner wird unter allen Teilnehmern mit mindestens 1 Los ausgelost und per Telegram benachrichtigt. Der Rechtsweg ist ausgeschlossen.', nav_giveaway:'Gewinnspiel',
+    dinar_balance_label:'Dein Guthaben', dinar_promo_title:'Aktion bis 31.07.2026', dinar_promo_desc:'Gib eine Bewertung ab und ihr bekommt beide {n} Dinar geschenkt!',
+    dinar_buy_title:'Dinar aufladen', dinar_send_title:'Dinar senden', dinar_send_hint:'Sende Dinar an andere Nutzer – z. B. als Geschenk oder Zahlung.',
+    dinar_send_generic_btn:'Dinar an Nutzer senden', dinar_send_btn:'Dinar senden', dinar_spend_title:'Vorteile mit Dinar kaufen',
+    dinar_boost_hint:'Boosts für einzelne Anzeigen kannst du auch direkt beim Bewerben einer Anzeige mit Dinar bezahlen.',
+    dinar_history_title:'Verlauf', dinar_tx_purchase:'Aufgeladen', dinar_tx_review:'Bewertungs-Bonus', dinar_tx_spend:'Ausgegeben',
+    dinar_tx_sent:'Gesendet', dinar_tx_received:'Erhalten', dinar_tx_payment:'Zahlung',
+    dinar_recipient_label:'Empfänger (Telegram-ID)', dinar_amount_label:'Betrag', dinar_send_confirm:'Senden',
+    dinar_invalid_recipient:'Ungültiger Empfänger', dinar_invalid_amount:'Ungültiger Betrag', dinar_insufficient:'Nicht genügend Dinar',
+    dinar_sent_success:'{n} Dinar gesendet!', dinar_offer_sent:'Zahlungsangebot gesendet – wartet auf Bestätigung',
+    dinar_offer_incoming:'möchte dir als Zahlung senden', dinar_offer_waiting:'Zahlungsangebot über {n} Dinar wartet auf Bestätigung',
+    dinar_accept:'Annehmen', dinar_decline:'Ablehnen', dinar_offer_accepted:'Zahlung angenommen!', dinar_offer_declined:'Zahlung abgelehnt',
+    dinar_terms:'Dinar ist eine In-App-Währung ohne Auszahlungsmöglichkeit und ohne Bargeldwert außerhalb von Basar. Käufe sind final.',
     confirm_premium:'Premium für {months} Monat(e) aktivieren – {stars} ★ (~{eur} €)?\n(Demo-Zahlung, keine echte Belastung)',
     toast_premium_activated:'Premium aktiviert (Demo)', toast_listing_limit:'Limit von {max} aktiven Anzeigen erreicht – mit Premium unbegrenzt.',
     reset_all_demo_data:'Alle Demo-Daten zurücksetzen', toast_reset_done:'Zurückgesetzt – die App lädt neu …',
@@ -802,6 +831,18 @@ const I18N = {
     swipe_delete:'Delete', swipe_archive:'Archive', swipe_unarchive:'Unarchive', archived_label:'Archived', back_to_inbox:'Back',
     giveaway_title:'Giveaway', giveaway_desc:'Invite friends and win! Each referred friend = 1 ticket.', giveaway_tickets:'Your tickets: {n}', giveaway_later:'Later', copy_btn:'Copy', bot_notify_hint:'Tip: Start the bot (@Basarapp_bot) to receive push notifications',
     ob1_title:'Create a listing', ob1_text:'Upload photos, set a title and price – your listing is live in under a minute.', ob2_title:'Chat directly', ob2_text:'Buyers message you privately. Negotiate right in the app – no sharing phone numbers.', ob3_title:'Trade safely', ob3_text:'After every confirmed deal you can rate each other. Everyone knows who to trust.', ob_next:'Next', ob_skip:'Skip', ob_start:'Let\'s go!', new_this_week:'New this week', toast_welcome_boost:'Listing published! 🎁 Welcome gift: highlighted free for 3 days', toast_share_bump:'Thanks for sharing! Your listing was bumped to the top 🚀 (once per week)', toast_draft_saved:'Draft saved', draft_restored_hint:'Draft restored – saved automatically when switching tabs', giveaway_invited_count:'{n} friend(s) invited', giveaway_invited_label:'Your invited friends', giveaway_empty:'No friends invited yet. Share your link and collect tickets!', giveaway_terms:'Free to enter. The winner is drawn from all participants with at least 1 ticket and notified via Telegram. Legal recourse is excluded.', nav_giveaway:'Giveaway',
+    dinar_balance_label:'Your balance', dinar_promo_title:'Promo until 07/31/2026', dinar_promo_desc:'Leave a review and you both get {n} Dinar for free!',
+    dinar_buy_title:'Top up Dinar', dinar_send_title:'Send Dinar', dinar_send_hint:'Send Dinar to other users – e.g. as a gift or payment.',
+    dinar_send_generic_btn:'Send Dinar to a user', dinar_send_btn:'Send Dinar', dinar_spend_title:'Buy perks with Dinar',
+    dinar_boost_hint:'You can also pay for listing boosts with Dinar directly when promoting a listing.',
+    dinar_history_title:'History', dinar_tx_purchase:'Topped up', dinar_tx_review:'Review bonus', dinar_tx_spend:'Spent',
+    dinar_tx_sent:'Sent', dinar_tx_received:'Received', dinar_tx_payment:'Payment',
+    dinar_recipient_label:'Recipient (Telegram ID)', dinar_amount_label:'Amount', dinar_send_confirm:'Send',
+    dinar_invalid_recipient:'Invalid recipient', dinar_invalid_amount:'Invalid amount', dinar_insufficient:'Not enough Dinar',
+    dinar_sent_success:'{n} Dinar sent!', dinar_offer_sent:'Payment offer sent – waiting for confirmation',
+    dinar_offer_incoming:'wants to send you as payment', dinar_offer_waiting:'Payment offer of {n} Dinar awaiting confirmation',
+    dinar_accept:'Accept', dinar_decline:'Decline', dinar_offer_accepted:'Payment accepted!', dinar_offer_declined:'Payment declined',
+    dinar_terms:'Dinar is an in-app currency with no cash payout and no value outside Basar. Purchases are final.',
     confirm_premium:'Activate Premium for {months} month(s) – {stars} ★ (~€{eur})?\n(Demo payment, no real charge)',
     toast_premium_activated:'Premium activated (demo)', toast_listing_limit:'Limit of {max} active listings reached – unlimited with Premium.',
     reset_all_demo_data:'Reset all demo data', toast_reset_done:'Reset done – reloading the app …',
@@ -827,6 +868,7 @@ const State = {
   reportTarget:null, reviewTarget:null, reviewStar:0, replyTarget:null,
   formType:null, pendingImages:null, formDraft:null, promoteTarget:null, justPublished:false, searchStats:{categories:{}}, lastTrackedSearchTerm:'', theme:'light', lang:'de', tgInitData:'', viewMode:'list',
   hiddenConvos:{}, archivedConvos:[], showArchived:false, catOverlayOpen:false, giveawayPopup:false, onboardingSlide:null,
+  dinarBalances:{}, dinarPageOpen:false, dinarSendTarget:null, dinarSendIsOffer:false, dinarTx:[], pendingPayOffer:null,
 };
 
 function uid(p){ return (p||'id_') + Date.now().toString(36) + Math.random().toString(36).slice(2,8); }
@@ -941,6 +983,7 @@ async function loadAll(){
   const rsv = await storageGet('basar:savedsearches', false); State.savedSearches = rsv ? JSON.parse(rsv) : [];
   const rhc = await storageGet('basar:hiddenconvos', false); State.hiddenConvos = rhc ? JSON.parse(rhc) : {};
   const rac = await storageGet('basar:archivedconvos', false); State.archivedConvos = rac ? JSON.parse(rac) : [];
+  await refreshDinarBalances();
 
   const existing = State.users[State.myId] || {};
   const isNewAccount = !existing.createdAt;
@@ -1048,6 +1091,7 @@ function effectiveHighlight(l){ return isBoostActive(l.highlight) || hasPremiumS
 function maxImagesFor(userId){ return hasPremiumSub(userId) ? MAX_IMAGES_PER_LISTING_PREMIUM : MAX_IMAGES_PER_LISTING_FREE; }
 function pinSlotLimitFor(userId){ return PIN_SLOTS_PER_CATEGORY + (hasPremiumSub(userId) ? PREMIUM_PIN_BONUS_SLOTS : 0); }
 function proBadgeHTML(userId){ return hasPremiumSub(userId) ? `<span class="pro-badge">💎 PRO</span>` : ''; }
+function dinarChipHTML(userId){ return `<span class="dinar-chip">🪙 ${dinarBalanceOf(userId)}</span>`; }
 function bannerStyleAttr(u){ return (u.shopBanner && BANNER_PRESETS[u.shopBanner]) ? `style="background:${BANNER_PRESETS[u.shopBanner]}"` : ''; }
 function avatarHTML(user, lg){
   const initial = (displayName(user)||'?').trim().charAt(0).toUpperCase() || '?';
@@ -1111,7 +1155,7 @@ function userLineHTML(userId){
   return `<div class="seller-line ${branded?'branded':''}" ${branded?`style="background:${BANNER_PRESETS[u.shopBanner]}"`:''} data-action="viewprofile" data-id="${userId}">
     ${avatarHTML(u)}
     <div style="flex:1;min-width:0">
-      <div><span>${escapeHtml(displayName(u))}${verifiedCheckHTML(u)}${proBadgeHTML(userId)}${u.premium ? ' ⭐' : ''}</span></div>
+      <div><span>${escapeHtml(displayName(u))}${verifiedCheckHTML(u)}${proBadgeHTML(userId)}${u.premium ? ' ⭐' : ''} ${dinarChipHTML(userId)}</span></div>
       ${branded && u.shopTagline ? `<div class="shop-tagline-inline">${escapeHtml(u.shopTagline)}</div>` : ''}
       <div>${r.count ? `${starsHTML(r.avg)} <span>(${r.count})</span>` : '<span>Noch keine Bewertungen</span>'}</div>
       ${onlineStatusHTML(u) ? `<div class="online-line">${onlineStatusHTML(u)}</div>` : ''}
@@ -1614,7 +1658,7 @@ function renderProfile(){
           <span class="name">${escapeHtml(displayName(u))}</span>${verifiedCheckHTML(u)}
           ${isVerified(State.myId) ? `<span class="verified-badge">${t('profile_verified')}</span>` : `<span class="unverified-badge">${t('profile_unverified')}</span>`}
           ${u.premium ? `<span class="premium-badge">${t('profile_premium')}</span>` : ''}
-          ${proBadgeHTML(State.myId)}
+          ${proBadgeHTML(State.myId)} ${dinarChipHTML(State.myId)}
         </div>
         ${u.username ? `<div class="username-line">${escapeHtml(u.username)}</div>` : ''}
         <div class="rating-line">${r.count ? `${starsHTML(r.avg)} ${r.avg.toFixed(1)} (${r.count} ${t('profile_sub_reviews').toLowerCase()})` : t('no_rating_yet')}</div>
@@ -2101,6 +2145,8 @@ function render(){
       : `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M6 12h12M9 18h6"/></svg>`;
     priceChip.title = t('sort_pricefilter');
   }
+  const dinarAmt = document.getElementById('dinarPillAmt');
+  if(dinarAmt) dinarAmt.textContent = dinarBalanceOf(State.myId);
   const viewBtn = document.getElementById('viewToggleBtn');
   if(viewBtn){
     viewBtn.title = State.viewMode==='grid' ? t('view_list') : t('view_grid');
@@ -2201,6 +2247,96 @@ function renderOverlays(){
           </div>`;
         }).join('')}
       </div>`;
+    document.body.appendChild(div);
+  }
+
+  if(State.dinarPageOpen){
+    const bal = dinarBalanceOf(State.myId);
+    const promoActive = Date.now() <= DINAR_REVIEW_PROMO_END;
+    const div = document.createElement('div');
+    div.className = 'cat-overlay';
+    div.innerHTML = `
+      <div class="cat-overlay-header">
+        <button data-action="closedinar">←</button>
+        <h2>🪙 Dinar</h2>
+        <button data-action="closedinar">✕</button>
+      </div>
+      <div class="cat-overlay-list" style="padding:0 16px 30px">
+        <div class="dinar-balance-hero">
+          <div class="amount">${bal}</div>
+          <div style="font-size:13px;color:var(--muted);margin-top:2px">${t('dinar_balance_label')}</div>
+        </div>
+        ${promoActive ? `<div class="dinar-promo-banner">🎉 <b>${t('dinar_promo_title')}</b><br>${t('dinar_promo_desc',{n:DINAR_REVIEW_REWARD})}</div>` : ''}
+
+        <div class="settings-section-title">${t('dinar_buy_title')}</div>
+        <div class="dinar-pkg-grid" style="margin-bottom:20px">
+          ${DINAR_PACKAGES.map((p,i)=>`<div class="dinar-pkg-btn" data-action="buydinar" data-idx="${i}">
+            <div class="d-amt">🪙 ${p.dinar}</div>
+            <div class="d-eur">${(p.dinar/100).toFixed(0)} €</div>
+          </div>`).join('')}
+        </div>
+
+        <div class="settings-section-title">${t('dinar_send_title')}</div>
+        <div class="hint" style="margin-bottom:10px">${t('dinar_send_hint')}</div>
+        <button class="btn-secondary" style="width:100%;margin-bottom:20px" data-action="opensenddinar" data-to="">${t('dinar_send_generic_btn')}</button>
+
+        <div class="settings-section-title">${t('dinar_spend_title')}</div>
+        <div class="settings-card" style="margin-bottom:20px">
+          <div class="settings-row">
+            <div class="settings-row-icon" style="background:rgba(10,132,255,0.15)">${verifiedCheckHTML({verifiedBadge:true})}</div>
+            <div class="settings-row-mid"><div class="settings-row-label">${t('verified_section_label')}</div></div>
+            <button class="dinar-spend-btn" data-action="spenddinar" data-item="verified" ${getUser(State.myId).verifiedBadge?'disabled':''}>🪙 ${DINAR_CATALOG.verified.price}</button>
+          </div>
+          <div class="settings-row">
+            <div class="settings-row-icon" style="background:rgba(122,30,92,0.15)">💎</div>
+            <div class="settings-row-mid"><div class="settings-row-label">PRO · 1 ${t('premium_months',{n:1}).split(' ').pop()}</div></div>
+            <button class="dinar-spend-btn" data-action="spenddinar" data-item="premium_1">🪙 ${DINAR_CATALOG.premium_1.price}</button>
+          </div>
+          <div class="settings-row">
+            <div class="settings-row-icon" style="background:rgba(122,30,92,0.15)">💎</div>
+            <div class="settings-row-mid"><div class="settings-row-label">PRO · 3 ${t('premium_months',{n:3}).split(' ').pop()}</div></div>
+            <button class="dinar-spend-btn" data-action="spenddinar" data-item="premium_3">🪙 ${DINAR_CATALOG.premium_3.price}</button>
+          </div>
+          <div class="settings-row">
+            <div class="settings-row-icon" style="background:rgba(122,30,92,0.15)">💎</div>
+            <div class="settings-row-mid"><div class="settings-row-label">PRO · 12 ${t('premium_months',{n:12}).split(' ').pop()}</div></div>
+            <button class="dinar-spend-btn" data-action="spenddinar" data-item="premium_12">🪙 ${DINAR_CATALOG.premium_12.price}</button>
+          </div>
+        </div>
+        <div class="hint" style="margin-bottom:16px">${t('dinar_boost_hint')}</div>
+
+        ${State.dinarTx.length ? `
+        <div class="settings-section-title">${t('dinar_history_title')}</div>
+        <div class="settings-card">
+          ${State.dinarTx.map(tx=>{
+            const mine_out = tx.from_id===State.myId;
+            const sign = mine_out ? '−' : '+';
+            const label = tx.kind==='purchase' ? t('dinar_tx_purchase') : tx.kind==='review_reward' ? t('dinar_tx_review') : tx.kind==='spend' ? t('dinar_tx_spend') : tx.kind==='send' ? (mine_out?t('dinar_tx_sent'):t('dinar_tx_received')) : t('dinar_tx_payment');
+            return `<div class="dinar-tx-row"><span>${label}</span><span style="font-weight:700;color:${mine_out?'var(--heart)':'#1E7A3C'}">${sign}${tx.amount} 🪙</span></div>`;
+          }).join('')}
+        </div>` : ''}
+
+        <div class="hint" style="margin-top:16px;font-size:11px">${t('dinar_terms')}</div>
+      </div>`;
+    document.body.appendChild(div);
+  }
+
+  if(State.dinarSendTarget !== null){
+    const target = State.dinarSendTarget;
+    const div = document.createElement('div');
+    div.className = 'modal-overlay';
+    div.innerHTML = `<div class="modal-sheet">
+      <h3 style="margin:0 0 10px">🪙 ${t('dinar_send_title')}</h3>
+      ${!target ? `<div class="field"><label>${t('dinar_recipient_label')}</label>
+        <input type="text" id="dinarToId" placeholder="tg_123456789"></div>` : `<input type="hidden" id="dinarToId" value="${escapeHtml(target)}">`}
+      <div class="field"><label>${t('dinar_amount_label')}</label>
+        <input type="number" id="dinarAmount" min="1" step="1" placeholder="100"></div>
+      <div class="hint" style="margin-bottom:14px">${t('dinar_balance_label')}: ${dinarBalanceOf(State.myId)} 🪙</div>
+      <div class="modal-actions" style="flex-direction:column">
+        <button class="submit-btn" data-action="confirmsenddinar" style="width:100%">${t('dinar_send_confirm')}</button>
+        <button class="btn-secondary" data-action="closesenddinar" style="width:100%">${t('cancel')}</button>
+      </div>
+    </div>`;
     document.body.appendChild(div);
   }
 
@@ -2322,7 +2458,7 @@ function renderOverlays(){
               <span class="name">${escapeHtml(displayName(u))}</span>${verifiedCheckHTML(u)}
               ${isVerified(id) ? `<span class="verified-badge">${t('profile_verified')}</span>` : `<span class="unverified-badge">${t('profile_unverified')}</span>`}
               ${u.premium ? `<span class="premium-badge">${t('profile_premium')}</span>` : ''}
-              ${proBadgeHTML(id)}
+              ${proBadgeHTML(id)} ${dinarChipHTML(id)}
             </div>
             ${u.username ? `<div class="username-line">${escapeHtml(u.username)}</div>` : ''}
             <div class="rating-line">${r.count ? `${starsHTML(r.avg)} ${r.avg.toFixed(1)} (${r.count} ${t('profile_sub_reviews').toLowerCase()})` : t('no_rating_yet')}</div>
@@ -2334,6 +2470,7 @@ function renderOverlays(){
         ${u.bio ? `<p class="bio-text">${escapeHtml(u.bio)}</p>` : ''}
         ${u.channel ? `<a href="#" class="telegram-link" style="margin-bottom:14px" data-action="openchannel" data-url="${escapeHtml(channelUrl(u.channel))}">📢 ${State.lang==='de'?'Kanal ansehen':'View channel'}</a>` : ''}
         <button class="submit-btn" style="margin-bottom:10px" data-action="openchat" data-listingid="${theirListings[0]?theirListings[0].id:''}" data-otherid="${id}">💬 ${t('message_btn')}</button>
+        <button class="btn-secondary" style="margin-bottom:10px" data-action="opensenddinar" data-to="${id}">🪙 ${t('dinar_send_btn')}</button>
         <button class="btn-secondary" data-action="report" data-type="user" data-id="${id}" data-label="${escapeHtml(displayName(u))}" style="margin-bottom:20px">${t('report_user_btn')}</button>
         <div class="section-title">${t('section_listings')}</div>
         ${theirListings.length ? theirListings.map(l=>cardHTML(l,false)).join('') : `<div class="empty"><div class="small">${t('no_active_listings')}</div></div>`}
@@ -2488,9 +2625,11 @@ function renderOverlays(){
         </div>
         <span style="width:22px"></span>
       </div>
+      <div id="payOfferBanner"></div>
       <div class="chat-messages" id="chatMessages"></div>
       <div class="chat-input-row">
         <label style="display:flex;align-items:center;cursor:pointer;flex-shrink:0;font-size:20px;padding:0 2px">📷<input type="file" accept="image/*" id="chatImgInput" style="display:none"></label>
+        <button style="flex-shrink:0;font-size:20px;background:none;border:none;padding:0 2px;cursor:pointer" data-action="opensenddinar" data-to="${otherId}" data-offer="1" title="Mit Dinar bezahlen">💰</button>
         <input type="text" id="chatInput" maxlength="500" placeholder="${t('chat_ph')}">
         <button class="chat-send" data-action="sendchat">➤</button>
       </div>`;
@@ -2499,6 +2638,7 @@ function renderOverlays(){
     if(cImg) cImg.addEventListener('change', sendChatImage);
     renderChatMessages();
     startChatPolling();
+    refreshPendingPayOffer().then(renderPayOfferBanner);
   } else {
     stopChatPolling();
   }
@@ -2516,6 +2656,7 @@ async function refreshSharedData(){
   if(rd) State.deals = JSON.parse(rd);
   if(rr) State.reviews = JSON.parse(rr);
   State.messages = await fetchMyMessages();
+  await refreshDinarBalances();
   render();
 }
 
@@ -2619,6 +2760,22 @@ async function fetchMyMessages(){
   }catch(e){ return State.messages || []; }
 }
 
+function renderPayOfferBanner(){
+  const box = document.getElementById('payOfferBanner');
+  if(!box) return;
+  const o = State.pendingPayOffer;
+  if(!o){ box.innerHTML = ''; return; }
+  const iAmRecipient = o.to_id === State.myId;
+  box.innerHTML = `<div class="pay-offer-banner">
+    ${iAmRecipient
+      ? `💰 <b>${o.amount} 🪙</b> ${t('dinar_offer_incoming')}<div style="display:flex;gap:8px;margin-top:8px">
+          <button class="submit-btn" style="flex:1;padding:8px" data-action="respondpay" data-tx="${o.id}" data-accept="1">${t('dinar_accept')}</button>
+          <button class="btn-secondary" style="flex:1;padding:8px" data-action="respondpay" data-tx="${o.id}" data-accept="0">${t('dinar_decline')}</button>
+        </div>`
+      : `⏳ ${t('dinar_offer_waiting',{n:o.amount})}`}
+  </div>`;
+}
+
 function startChatPolling(){
   stopChatPolling();
   State.chatPollTimer = setInterval(async ()=>{
@@ -2627,6 +2784,12 @@ function startChatPolling(){
     if(JSON.stringify(parsed) !== JSON.stringify(State.messages)){
       State.messages = parsed;
       renderChatMessages();
+    }
+    const prevOfferId = State.pendingPayOffer ? State.pendingPayOffer.id : null;
+    await refreshPendingPayOffer();
+    if((State.pendingPayOffer?State.pendingPayOffer.id:null) !== prevOfferId){
+      renderPayOfferBanner();
+      await refreshDinarBalances();
     }
   }, CHAT_POLL_MS);
 }
@@ -2816,6 +2979,167 @@ async function resetAllDemoData(){
 }
 
 const VERIFIED_BADGE_STARS = 770; // ≈ 10 €
+
+// ---------- Dinar (In-App-Währung) ----------
+const DINAR_PACKAGES = [
+  { dinar:1000, stars:770 }, { dinar:1500, stars:1155 }, { dinar:2500, stars:1925 },
+  { dinar:5000, stars:3850 }, { dinar:10000, stars:7700 },
+];
+const DINAR_CATALOG = {
+  verified: { price:1000, label:'verified_section_label' },
+  premium_1: { price:1560, label:null, months:1 },
+  premium_3: { price:3900, label:null, months:3 },
+  premium_12: { price:12470, label:null, months:12 },
+  highlight_3:{ price:80 }, highlight_7:{ price:160 }, highlight_14:{ price:260 },
+  bump_3:{ price:195 }, bump_7:{ price:390 }, bump_14:{ price:650 },
+  doublevis_3:{ price:130 }, doublevis_7:{ price:260 }, doublevis_14:{ price:455 },
+  pin_1:{ price:195 }, pin_3:{ price:455 }, pin_7:{ price:780 },
+};
+const DINAR_REVIEW_PROMO_END = new Date('2026-07-31T23:59:59Z').getTime();
+const DINAR_REVIEW_REWARD = 50;
+function dinarBalanceOf(userId){ return State.dinarBalances[userId] || 0; }
+async function refreshDinarBalances(){
+  try{
+    const { data } = await supabaseClient.from('dinar_wallets').select('user_id,balance');
+    if(data){ State.dinarBalances = {}; data.forEach(r=>{ State.dinarBalances[r.user_id] = r.balance; }); }
+  }catch(e){}
+}
+async function refreshMyDinarTx(){
+  try{
+    const { data } = await supabaseClient.from('dinar_tx').select('*')
+      .or(`from_id.eq.${State.myId},to_id.eq.${State.myId}`).order('created_at',{ascending:false}).limit(30);
+    State.dinarTx = data || [];
+  }catch(e){}
+}
+async function refreshPendingPayOffer(){
+  if(!State.activeChat){ State.pendingPayOffer = null; return; }
+  try{
+    const { conversationId, otherId, listingId } = State.activeChat;
+    const { data } = await supabaseClient.from('dinar_tx').select('*')
+      .eq('status','pending').eq('kind','payment_offer')
+      .or(`and(from_id.eq.${State.myId},to_id.eq.${otherId}),and(from_id.eq.${otherId},to_id.eq.${State.myId})`)
+      .order('created_at',{ascending:false}).limit(1);
+    State.pendingPayOffer = (data && data[0]) || null;
+  }catch(e){ State.pendingPayOffer = null; }
+}
+// ---------- Dinar: Kauf, Senden, Ausgeben ----------
+async function buyDinar(idx){
+  const pkg = DINAR_PACKAGES[idx];
+  if(!pkg) return;
+  if(!(window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.openInvoice)){
+    toast(t('toast_payments_telegram_only')); return;
+  }
+  try{
+    const resp = await fetch(EDGE_BASE + '/dinar-buy', {
+      method:'POST', headers:{ 'Content-Type':'application/json', 'Authorization':'Bearer '+SUPABASE_ANON_KEY },
+      body: JSON.stringify({ initData: State.tgInitData, packageIndex: idx }),
+    });
+    const data = await resp.json();
+    if(!data.link){ toast(t('toast_payment_failed')); return; }
+    window.Telegram.WebApp.openInvoice(data.link, async (status)=>{
+      if(status==='paid'){
+        toast(t('toast_payment_success'));
+        setTimeout(async ()=>{ await refreshDinarBalances(); await refreshMyDinarTx(); render(); }, 1500);
+      } else if(status==='failed'){ toast(t('toast_payment_failed')); }
+    });
+  }catch(e){ toast(t('toast_payment_failed')); }
+}
+
+async function confirmSendDinar(){
+  const toEl = document.getElementById('dinarToId');
+  const amtEl = document.getElementById('dinarAmount');
+  const toUserId = toEl ? toEl.value.trim() : '';
+  const amount = amtEl ? parseInt(amtEl.value,10) : 0;
+  if(!toUserId || !toUserId.startsWith('tg_')){ toast(t('dinar_invalid_recipient')); return; }
+  if(toUserId===State.myId){ toast(t('dinar_invalid_recipient')); return; }
+  if(!amount || amount<=0){ toast(t('dinar_invalid_amount')); return; }
+  if(amount > dinarBalanceOf(State.myId)){ toast(t('dinar_insufficient')); return; }
+  const isOffer = !!State.dinarSendIsOffer;
+  try{
+    const resp = await fetch(EDGE_BASE + '/dinar-transfer', {
+      method:'POST', headers:{ 'Content-Type':'application/json', 'Authorization':'Bearer '+SUPABASE_ANON_KEY },
+      body: JSON.stringify({ initData: State.tgInitData, op: isOffer?'offer':'send', toUserId, amount, listingId: State.activeChat?State.activeChat.listingId:null }),
+    });
+    const data = await resp.json();
+    if(!resp.ok || data.error){ toast(data.error || t('toast_payment_failed')); return; }
+    State.dinarSendTarget = null;
+    toast(isOffer ? t('dinar_offer_sent') : t('dinar_sent_success',{n:amount}));
+    await refreshDinarBalances();
+    if(isOffer) await refreshPendingPayOffer();
+    render();
+    renderPayOfferBanner();
+  }catch(e){ toast(t('toast_payment_failed')); }
+}
+
+async function respondPayOffer(txId, accept){
+  try{
+    const resp = await fetch(EDGE_BASE + '/dinar-transfer', {
+      method:'POST', headers:{ 'Content-Type':'application/json', 'Authorization':'Bearer '+SUPABASE_ANON_KEY },
+      body: JSON.stringify({ initData: State.tgInitData, op:'respond', txId, accept }),
+    });
+    const data = await resp.json();
+    if(!resp.ok || data.error){ toast(data.error || t('toast_payment_failed')); return; }
+    toast(accept ? t('dinar_offer_accepted') : t('dinar_offer_declined'));
+    await refreshDinarBalances();
+    await refreshPendingPayOffer();
+    renderPayOfferBanner();
+    render();
+  }catch(e){ toast(t('toast_payment_failed')); }
+}
+
+async function spendDinar(item){
+  const cfg = DINAR_CATALOG[item];
+  if(!cfg) return;
+  if(cfg.price > dinarBalanceOf(State.myId)){ toast(t('dinar_insufficient')); return; }
+  try{
+    const resp = await fetch(EDGE_BASE + '/dinar-spend', {
+      method:'POST', headers:{ 'Content-Type':'application/json', 'Authorization':'Bearer '+SUPABASE_ANON_KEY },
+      body: JSON.stringify({ initData: State.tgInitData, item }),
+    });
+    const data = await resp.json();
+    if(!resp.ok || data.error){ toast(data.error || t('toast_payment_failed')); return; }
+    await applyDinarPerk(item);
+    await refreshDinarBalances();
+    toast(t('toast_payment_success'));
+    render();
+  }catch(e){ toast(t('toast_payment_failed')); }
+}
+
+async function applyDinarPerk(item){
+  if(item==='verified'){
+    State.users[State.myId] = { ...getUser(State.myId), verifiedBadge:true };
+    await persistUsers();
+    State.purchases.push({ id:uid('p_'), type:'verified_badge', dinar:DINAR_CATALOG.verified.price, buyerId:State.myId, purchasedAt:Date.now() });
+    await persistPurchases();
+    return;
+  }
+  if(item.startsWith('premium_')){
+    const months = DINAR_CATALOG[item].months;
+    const u = getUser(State.myId);
+    const base = (u.premiumSub && u.premiumSub.active && u.premiumSub.until > Date.now()) ? u.premiumSub.until : Date.now();
+    State.users[State.myId] = { ...u, premiumSub: { active:true, until: base + months*30*86400000 } };
+    await persistUsers();
+    return;
+  }
+  // Boosts (highlight_3, bump_7, ...) benoetigen eine Anzeige - werden ueber promoteTarget angewandt
+  if(State.promoteTarget){
+    const l = State.listings.find(x=>x.id===State.promoteTarget);
+    if(l){
+      const [boostKey, daysStr] = item.split('_');
+      const days = parseInt(daysStr,10);
+      const cfg = BOOSTS[boostKey];
+      if(cfg){
+        const base = isBoostActive(l[cfg.field]) ? l[cfg.field].until : Date.now();
+        const until = base + days*86400000;
+        if(boostKey==='bump') l[cfg.field] = { active:true, until, lastBumpAt: l[cfg.field] && l[cfg.field].lastBumpAt ? l[cfg.field].lastBumpAt : Date.now() };
+        else if(boostKey==='pin') l[cfg.field] = { active:true, until, category:l.category };
+        else l[cfg.field] = { active:true, until };
+        await persistListings();
+      }
+    }
+  }
+}
+
 async function purchaseVerifiedBadge(){
   if(getUser(State.myId).verifiedBadge) return;
   await startStarsPayment('verified', {}, VERIFIED_BADGE_STARS, t('verified_section_label'), t('verified_badge_desc'), async ()=>{
@@ -3159,6 +3483,18 @@ document.addEventListener('click', async (e)=>{
   if(action==='share') return shareListing(btn.dataset.id);
   if(action==='invitefriend') return inviteFriend();
   if(action==='closegiveaway'){ State.giveawayPopup=false; render(); return; }
+  if(action==='opendinar'){ State.dinarPageOpen=true; await refreshDinarBalances(); await refreshMyDinarTx(); render(); return; }
+  if(action==='closedinar'){ State.dinarPageOpen=false; render(); return; }
+  if(action==='buydinar') return buyDinar(parseInt(btn.dataset.idx,10));
+  if(action==='opensenddinar'){
+    State.dinarSendTarget = btn.dataset.to || null;
+    State.dinarSendIsOffer = btn.dataset.offer==='1';
+    render(); return;
+  }
+  if(action==='closesenddinar'){ State.dinarSendTarget=null; render(); return; }
+  if(action==='confirmsenddinar') return confirmSendDinar();
+  if(action==='spenddinar') return spendDinar(btn.dataset.item);
+  if(action==='respondpay') return respondPayOffer(btn.dataset.tx, btn.dataset.accept==='1');
   if(action==='obnext' || action==='obskip'){
     if(action==='obskip' || State.onboardingSlide >= 2){
       State.onboardingSlide = null;
