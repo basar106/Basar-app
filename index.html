@@ -547,6 +547,13 @@
   .bubble.mine{ background:linear-gradient(160deg, color-mix(in srgb, var(--blue) 94%, transparent), color-mix(in srgb, var(--blue-dark) 90%, transparent)); color:#fff; align-self:flex-end; border-bottom-right-radius:5px; }
   .bubble-time{ display:block; font-size:9.5px; opacity:0.65; margin-top:3px; text-align:right; }
   .chat-input-row{ display:flex; gap:8px; padding:10px 14px calc(10px + env(safe-area-inset-bottom)); background:var(--card-strong); backdrop-filter:blur(var(--blur)) saturate(180%); border-top:1px solid var(--border); }
+  .voice-record-row{ align-items:center; }
+  .rec-dot{ width:9px; height:9px; border-radius:50%; background:var(--heart); animation:recpulse 1.1s infinite; flex-shrink:0; }
+  @keyframes recpulse{ 0%,100%{opacity:1;} 50%{opacity:0.25;} }
+  .voice-bubble{ display:flex; align-items:center; gap:8px; min-width:170px; }
+  .voice-bubble button{ flex-shrink:0; width:30px; height:30px; border-radius:50%; border:none; background:var(--blue); color:#fff; font-size:13px; cursor:pointer; display:flex; align-items:center; justify-content:center; }
+  .voice-bubble .voice-wave{ flex:1; height:22px; background:linear-gradient(90deg, currentColor 0 2px, transparent 2px 5px) repeat-x; background-size:5px 100%; opacity:0.4; border-radius:3px; }
+  .voice-bubble .voice-dur{ font-size:11px; opacity:0.8; flex-shrink:0; }
   .chat-input-row input{ flex:1; border:1px solid var(--border); background:var(--fill1); backdrop-filter:blur(8px); border-radius:999px; padding:10px 16px; font-size:14px; color:var(--text); }
   .chat-send{ width:40px; height:40px; border-radius:50%; background:linear-gradient(160deg, color-mix(in srgb, var(--blue) 96%, transparent), color-mix(in srgb, var(--blue-dark) 92%, transparent)); color:#fff; border:none; font-size:16px; cursor:pointer; flex-shrink:0; box-shadow:inset 0 1px 0 rgba(255,255,255,0.4), 0 4px 12px color-mix(in srgb, var(--blue) 35%, transparent); }
 
@@ -657,6 +664,8 @@ window.addEventListener('error', function(e){
 const CATEGORIES = ["Alle Kategorien","Streaming","Accounts","Social","Clothes & Accessoires","Elektronik","Sammelkarten","Dienstleistungen","Jobs & Aufträge","Earn Money","Trading","Smoke","Glücksspiel","Verschenken & Tauschen","Werbung","Others"];
 const REPORT_REASONS = { de:["Betrug / Abzocke","Spam oder Werbung","Unangemessener Inhalt","Falsche Angaben","Sonstiges"],
   en:["Fraud / scam","Spam or advertising","Inappropriate content","False information","Other"] };
+const DISPUTE_REASONS = { de:["Ware nicht erhalten","Ware entspricht nicht der Beschreibung","Zahlung nicht erhalten","Verkäufer/Käufer antwortet nicht mehr","Sonstiges"],
+  en:["Item not received","Item doesn't match description","Payment not received","Buyer/seller stopped responding","Other"] };
 const PIN_SLOTS_PER_CATEGORY = 5;
 const PREMIUM_PIN_BONUS_SLOTS = 2; // zusätzliche, nur für Premium reservierte Pin-Plätze pro Kategorie
 const FREE_LISTING_LIMIT = 5;
@@ -822,6 +831,14 @@ const I18N = {
     dinar_offer_incoming:'möchte dir als Zahlung senden', dinar_offer_waiting:'Zahlungsangebot über {n} Dinar wartet auf Bestätigung',
     dinar_accept:'Annehmen', dinar_decline:'Ablehnen', dinar_offer_accepted:'Zahlung angenommen!', dinar_offer_declined:'Zahlung abgelehnt',
     dinar_terms:'Dinar ist eine In-App-Währung ohne Auszahlungsmöglichkeit und ohne Bargeldwert außerhalb von Basar. Käufe sind final.',
+    escrow_offer_desc:'Sicher bezahlen? Hinterlege den Betrag in Dinar-Treuhand.', escrow_start_btn:'🔒 Treuhand starten',
+    escrow_amount_prompt:'Wie viele Dinar in Treuhand hinterlegen?', escrow_hold_success:'{n} Dinar in Treuhand hinterlegt 🔒',
+    escrow_held_buyer:'{n} Dinar in Treuhand hinterlegt', escrow_held_seller:'{n} Dinar für dich in Treuhand reserviert',
+    escrow_release_btn:'✅ Erhalten, freigeben', escrow_release_confirm:'Dinar wirklich an den Verkäufer freigeben? Das kannst du nicht rückgängig machen.',
+    escrow_release_success:'Dinar freigegeben ✅', escrow_refund_btn:'↩ Erstatten',
+    escrow_refund_confirm:'Treuhand-Dinar wirklich an den Käufer zurückerstatten?', escrow_refund_success:'Dinar erstattet ↩',
+    dispute_title:'Streitfall melden', dispute_desc:'Läuft bei diesem Deal etwas schief? Melde es direkt an unser Team – wir schauen uns den Fall an.', dispute_submit_btn:'Streitfall senden',
+    voice_record_title:'Sprachnachricht aufnehmen', voice_recording:'Aufnahme läuft …', voice_unsupported:'Sprachnachrichten werden auf diesem Gerät nicht unterstützt', voice_mic_denied:'Mikrofonzugriff verweigert oder nicht verfügbar', voice_too_short:'Aufnahme zu kurz',
     confirm_premium:'Premium für {months} Monat(e) aktivieren – {stars} ★ (~{eur} €)?\n(Demo-Zahlung, keine echte Belastung)',
     toast_premium_activated:'Premium aktiviert (Demo)', toast_listing_limit:'Limit von {max} aktiven Anzeigen erreicht – mit Premium unbegrenzt.',
     reset_all_demo_data:'Alle Demo-Daten zurücksetzen', toast_reset_done:'Zurückgesetzt – die App lädt neu …',
@@ -957,6 +974,14 @@ const I18N = {
     dinar_offer_incoming:'wants to send you as payment', dinar_offer_waiting:'Payment offer of {n} Dinar awaiting confirmation',
     dinar_accept:'Accept', dinar_decline:'Decline', dinar_offer_accepted:'Payment accepted!', dinar_offer_declined:'Payment declined',
     dinar_terms:'Dinar is an in-app currency with no cash payout and no value outside Basar. Purchases are final.',
+    escrow_offer_desc:'Pay securely? Hold the amount in Dinar escrow.', escrow_start_btn:'🔒 Start escrow',
+    escrow_amount_prompt:'How many Dinar to hold in escrow?', escrow_hold_success:'{n} Dinar held in escrow 🔒',
+    escrow_held_buyer:'{n} Dinar held in escrow', escrow_held_seller:'{n} Dinar reserved for you in escrow',
+    escrow_release_btn:'✅ Received, release', escrow_release_confirm:'Really release the Dinar to the seller? This cannot be undone.',
+    escrow_release_success:'Dinar released ✅', escrow_refund_btn:'↩ Refund',
+    escrow_refund_confirm:'Really refund the escrowed Dinar to the buyer?', escrow_refund_success:'Dinar refunded ↩',
+    dispute_title:'Report dispute', dispute_desc:'Something wrong with this deal? Report it directly to our team – we\'ll take a look.', dispute_submit_btn:'Send dispute',
+    voice_record_title:'Record voice message', voice_recording:'Recording …', voice_unsupported:'Voice messages are not supported on this device', voice_mic_denied:'Microphone access denied or unavailable', voice_too_short:'Recording too short',
     confirm_premium:'Activate Premium for {months} month(s) – {stars} ★ (~€{eur})?\n(Demo payment, no real charge)',
     toast_premium_activated:'Premium activated (demo)', toast_listing_limit:'Limit of {max} active listings reached – unlimited with Premium.',
     reset_all_demo_data:'Reset all demo data', toast_reset_done:'Reset done – reloading the app …',
@@ -982,7 +1007,7 @@ const State = {
   reportTarget:null, reviewTarget:null, reviewStar:0, replyTarget:null,
   formType:null, pendingImages:null, formDraft:null, promoteTarget:null, justPublished:false, searchStats:{categories:{}}, lastTrackedSearchTerm:'', theme:'light', lang:'de', tgInitData:'', viewMode:'list', design:'aurora',
   hiddenConvos:{}, archivedConvos:[], showArchived:false, catOverlayOpen:false, giveawayPopup:false, onboardingSlide:null,
-  dinarBalances:{}, dinarPageOpen:false, dinarSendTarget:null, dinarSendIsOffer:false, dinarTx:[], pendingPayOffer:null, dinarIntroOpen:false,
+  dinarBalances:{}, dinarPageOpen:false, dinarSendTarget:null, dinarSendIsOffer:false, dinarTx:[], pendingPayOffer:null, dinarIntroOpen:false, escrowTx:[],
 };
 
 function uid(p){ return (p||'id_') + Date.now().toString(36) + Math.random().toString(36).slice(2,8); }
@@ -1103,6 +1128,7 @@ async function loadAll(){
   const rhc = await storageGet('basar:hiddenconvos', false); State.hiddenConvos = rhc ? JSON.parse(rhc) : {};
   const rac = await storageGet('basar:archivedconvos', false); State.archivedConvos = rac ? JSON.parse(rac) : [];
   await refreshDinarBalances();
+  await refreshEscrowTx();
 
   const existing = State.users[State.myId] || {};
   const isNewAccount = !existing.createdAt;
@@ -1476,8 +1502,11 @@ function dealBoxHTML(l){
       }
       if(d.status==='confirmed'){
         const already = State.reviews.some(r=>r.dealId===d.id && r.raterId===State.myId);
+        const escrow = escrowForDeal(d.id);
         return `<div class="row"><span><span class="status-pill confirmed">${t('status_confirmed')}</span> ${escapeHtml(displayName(buyer))}</span>
-          ${already ? `<span>${t('deal_rated')}</span>` : `<button class="mini-btn" data-action="openreview" data-dealid="${d.id}" data-rateeid="${d.buyerId}" data-rateename="${escapeHtml(displayName(buyer))}">${t('deal_rate_buyer')}</button>`}</div>`;
+          ${already ? `<span>${t('deal_rated')}</span>` : `<button class="mini-btn" data-action="openreview" data-dealid="${d.id}" data-rateeid="${d.buyerId}" data-rateename="${escapeHtml(displayName(buyer))}">${t('deal_rate_buyer')}</button>`}</div>
+          ${escrow ? `<div class="row" style="margin-top:6px"><span>🔒 ${t('escrow_held_seller',{n:escrow.amount})}</span>
+            <button class="mini-btn" data-action="refundescrow" data-dealid="${d.id}">${t('escrow_refund_btn')}</button></div>` : ''}`;
       }
       return `<div class="row"><span><span class="status-pill rejected">${t('status_rejected')}</span> ${escapeHtml(displayName(buyer))}</span></div>`;
     }).join('');
@@ -1493,8 +1522,14 @@ function dealBoxHTML(l){
         <button class="mini-btn" data-action="requestdeal" data-listingid="${l.id}">${t('deal_reapply')}</button></div></div>`;
     const already = State.reviews.some(r=>r.dealId===myDeal.id && r.raterId===State.myId);
     const seller = getUser(l.ownerId);
+    const escrow = escrowForDeal(myDeal.id);
     return `<div class="deal-box"><div class="row"><span class="status-pill confirmed">${t('deal_confirmed')}</span>
-      ${already ? `<span>${t('deal_rated')}</span>` : `<button class="mini-btn" data-action="openreview" data-dealid="${myDeal.id}" data-rateeid="${l.ownerId}" data-rateename="${escapeHtml(displayName(seller))}">${t('deal_rate_seller')}</button>`}</div></div>`;
+      ${already ? `<span>${t('deal_rated')}</span>` : `<button class="mini-btn" data-action="openreview" data-dealid="${myDeal.id}" data-rateeid="${l.ownerId}" data-rateename="${escapeHtml(displayName(seller))}">${t('deal_rate_seller')}</button>`}</div>
+      ${!escrow ? `<div class="row" style="margin-top:6px"><span>${t('escrow_offer_desc')}</span>
+          <button class="mini-btn primary" data-action="startescrow" data-dealid="${myDeal.id}" data-listingid="${l.id}" data-sellerid="${l.ownerId}">${t('escrow_start_btn')}</button></div>`
+        : `<div class="row" style="margin-top:6px"><span>🔒 ${t('escrow_held_buyer',{n:escrow.amount})}</span>
+          <button class="mini-btn primary" data-action="releaseescrow" data-dealid="${myDeal.id}">${t('escrow_release_btn')}</button></div>`}
+    </div>`;
   }
 }
 
@@ -2245,12 +2280,17 @@ function renderAdminTab(){
   if(!State.reports.length) return sub + `<div class="empty"><div class="small">Keine Meldungen vorhanden.</div></div>`;
   const rows = [...State.reports].sort((a,b)=>b.createdAt-a.createdAt).map(r=>{
     const reporter = getUser(r.reporterId);
-    return `<div class="admin-row">
+    const isDispute = r.type==='dispute';
+    const escrow = isDispute ? escrowForDeal(r.dealId) : null;
+    const icon = isDispute ? '🚨' : r.type==='listing' ? '📋' : '👤';
+    return `<div class="admin-row" ${isDispute?'style="border-color:rgba(255,90,90,0.4)"':''}>
       <div class="admin-row-mid">
-        <div class="admin-row-top"><span>${r.type==='listing'?'📋':'👤'} ${escapeHtml(r.targetLabel)}</span><span>${timeAgo(r.createdAt)}</span></div>
-        <div class="admin-row-sub">Grund: ${escapeHtml(r.reason)}${r.details?` — ${escapeHtml(r.details)}`:''}<br>Gemeldet von ${escapeHtml(displayName(reporter))}</div>
+        <div class="admin-row-top"><span>${icon} ${escapeHtml(r.targetLabel)}</span><span>${timeAgo(r.createdAt)}</span></div>
+        <div class="admin-row-sub">Grund: ${escapeHtml(r.reason)}${r.details?` — ${escapeHtml(r.details)}`:''}<br>Gemeldet von ${escapeHtml(displayName(reporter))}${isDispute?`<br>Deal-ID: ${escapeHtml(r.dealId||'-')}${escrow?` · 🔒 ${escrow.amount} Dinar in Treuhand`:' · kein aktives Treuhandguthaben'}`:''}</div>
         <div class="admin-actions">
           ${r.type==='listing' ? `<button class="mini-btn" data-action="adminviewlisting" data-id="${r.targetId}">Anzeige ansehen</button>` : `<button class="mini-btn" data-action="adminviewprofile" data-id="${r.targetId}">Profil ansehen</button>`}
+          ${isDispute && escrow ? `<button class="mini-btn" data-action="releaseescrow" data-dealid="${r.dealId}">An Verkäufer freigeben</button>
+            <button class="mini-btn" data-action="refundescrow" data-dealid="${r.dealId}">An Käufer erstatten</button>` : ''}
           <button class="mini-btn" data-action="admindismissreport" data-id="${r.id}">Meldung verwerfen</button>
         </div>
       </div>
@@ -2748,16 +2788,19 @@ function renderOverlays(){
 
   if(State.reportTarget){
     const rt = State.reportTarget;
+    const isDispute = rt.type==='dispute';
+    const reasons = isDispute ? DISPUTE_REASONS[State.lang] : REPORT_REASONS[State.lang];
     const div = document.createElement('div');
     div.className = 'modal-overlay';
     div.innerHTML = `<div class="modal-sheet">
-      <h3>${t('report_title',{label:escapeHtml(rt.label)})}</h3>
+      <h3>${isDispute ? t('dispute_title') : t('report_title',{label:escapeHtml(rt.label)})}</h3>
+      ${isDispute ? `<div class="hint" style="margin-bottom:12px">${t('dispute_desc')}</div>` : ''}
       <div class="field"><label>${t('report_reason')}</label>
-        <select id="rep_reason">${REPORT_REASONS[State.lang].map(r=>`<option>${r}</option>`).join('')}</select></div>
+        <select id="rep_reason">${reasons.map(r=>`<option>${r}</option>`).join('')}</select></div>
       <div class="field"><label>${t('report_details')}</label><textarea id="rep_details" placeholder="${t('report_details_ph')}"></textarea></div>
       <div class="modal-actions">
         <button class="btn-secondary" data-action="closereport">${t('cancel')}</button>
-        <button class="submit-btn" data-action="submitreport">${t('send_report')}</button>
+        <button class="submit-btn" data-action="submitreport">${isDispute ? t('dispute_submit_btn') : t('send_report')}</button>
       </div>
     </div>`;
     document.body.appendChild(div);
@@ -2887,6 +2930,9 @@ function renderOverlays(){
     const { otherId, listingId } = State.activeChat;
     const other = getUser(otherId);
     const listing = State.listings.find(x=>x.id===listingId);
+    const relevantDeal = State.deals.filter(d=>d.listingId===listingId &&
+      ((d.buyerId===State.myId && d.sellerId===otherId) || (d.sellerId===State.myId && d.buyerId===otherId))
+    ).sort((a,b)=>b.createdAt-a.createdAt)[0];
     const div = document.createElement('div');
     div.className = 'chat-overlay';
     div.innerHTML = `
@@ -2896,15 +2942,23 @@ function renderOverlays(){
           <div style="font-weight:700;font-size:14px">${escapeHtml(displayName(other))}</div>
           <div style="font-size:11px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${onlineStatusHTML(other) || escapeHtml(listing?listing.title:'')}</div>
         </div>
-        <span style="width:22px"></span>
+        ${relevantDeal ? `<button style="width:22px;background:none;border:none;padding:0;cursor:pointer;font-size:17px" data-action="report" data-type="dispute" data-id="${otherId}" data-label="${escapeHtml(displayName(other))}" data-dealid="${relevantDeal.id}" title="${t('dispute_title')}">🚨</button>` : `<span style="width:22px"></span>`}
       </div>
       <div id="payOfferBanner"></div>
       <div class="chat-messages" id="chatMessages"></div>
-      <div class="chat-input-row">
+      <div class="chat-input-row" id="chatInputRow">
         <label style="display:flex;align-items:center;cursor:pointer;flex-shrink:0;font-size:20px;padding:0 2px">📷<input type="file" accept="image/*" id="chatImgInput" style="display:none"></label>
         <button style="flex-shrink:0;font-size:20px;background:none;border:none;padding:0 2px;cursor:pointer" data-action="opensenddinar" data-to="${otherId}" data-offer="1" title="Mit Dinar bezahlen">💰</button>
+        <button style="flex-shrink:0;font-size:20px;background:none;border:none;padding:0 2px;cursor:pointer" data-action="togglevoice" id="voiceMicBtn" title="${t('voice_record_title')}">🎤</button>
         <input type="text" id="chatInput" maxlength="500" placeholder="${t('chat_ph')}">
         <button class="chat-send" data-action="sendchat">➤</button>
+      </div>
+      <div class="chat-input-row voice-record-row" id="voiceRecordRow" style="display:none">
+        <button data-action="cancelvoice" style="flex-shrink:0;background:none;border:none;font-size:20px;cursor:pointer;color:var(--heart)">✕</button>
+        <span style="flex:1;display:flex;align-items:center;gap:8px;color:var(--text);font-size:13px">
+          <span class="rec-dot"></span> ${t('voice_recording')} <span id="voiceTimer">0:00</span>
+        </span>
+        <button data-action="stopvoice" style="flex-shrink:0;background:var(--blue);border:none;border-radius:50%;width:34px;height:34px;color:#fff;font-size:15px;cursor:pointer">➤</button>
       </div>`;
     document.body.appendChild(div);
     const cImg = div.querySelector('#chatImgInput');
@@ -2930,6 +2984,7 @@ async function refreshSharedData(){
   if(rr) State.reviews = JSON.parse(rr);
   State.messages = await fetchMyMessages();
   await refreshDinarBalances();
+  await refreshEscrowTx();
   render();
 }
 
@@ -2996,9 +3051,119 @@ function renderChatMessages(){
   const box = document.getElementById('chatMessages');
   if(!box || !State.activeChat) return;
   const msgs = State.messages.filter(m=>m.conversationId===State.activeChat.conversationId).sort((a,b)=>a.createdAt-b.createdAt);
-  box.innerHTML = msgs.length ? msgs.map(m=>`<div class="bubble ${m.fromId===State.myId?'mine':'theirs'}">${m.image?`<img src="${escapeHtml(m.image)}" style="max-width:100%;border-radius:10px;display:block;cursor:pointer" data-action="viewfullscreen" data-url="${escapeHtml(m.image)}">`:''}${m.text?escapeHtml(m.text):''}<span class="bubble-time">${new Date(m.createdAt).toLocaleTimeString(t('locale'),{hour:'2-digit',minute:'2-digit'})}</span></div>`).join('')
+  box.innerHTML = msgs.length ? msgs.map(m=>{
+    const time = new Date(m.createdAt).toLocaleTimeString(t('locale'),{hour:'2-digit',minute:'2-digit'});
+    if(m.audio){
+      const mm = Math.floor((m.audioDuration||0)/60), ss = String((m.audioDuration||0)%60).padStart(2,'0');
+      return `<div class="bubble ${m.fromId===State.myId?'mine':'theirs'}">
+        <div class="voice-bubble">
+          <button data-action="playvoice" data-url="${escapeHtml(m.audio)}">▶</button>
+          <span class="voice-wave"></span>
+          <span class="voice-dur">${mm}:${ss}</span>
+        </div>
+        <span class="bubble-time">${time}</span>
+      </div>`;
+    }
+    return `<div class="bubble ${m.fromId===State.myId?'mine':'theirs'}">${m.image?`<img src="${escapeHtml(m.image)}" style="max-width:100%;border-radius:10px;display:block;cursor:pointer" data-action="viewfullscreen" data-url="${escapeHtml(m.image)}">`:''}${m.text?escapeHtml(m.text):''}<span class="bubble-time">${time}</span></div>`;
+  }).join('')
     : `<div class="empty"><div class="small">${t('chat_empty')}</div></div>`;
   box.scrollTop = box.scrollHeight;
+}
+
+// ---------- Sprachnachrichten ----------
+let voiceRecorder = null, voiceChunks = [], voiceStream = null, voiceStartedAt = 0, voiceTimerInterval = null;
+const VOICE_MIME_CANDIDATES = ['audio/webm;codecs=opus','audio/mp4','audio/ogg;codecs=opus','audio/webm','audio/mpeg'];
+function pickVoiceMime(){
+  if(typeof MediaRecorder==='undefined' || !MediaRecorder.isTypeSupported) return null;
+  return VOICE_MIME_CANDIDATES.find(m=>MediaRecorder.isTypeSupported(m)) || null;
+}
+async function startVoiceRecording(){
+  if(getUser(State.myId).banned){ toast('Dein Konto ist gesperrt.'); return; }
+  const mime = pickVoiceMime();
+  if(!mime){ toast(t('voice_unsupported')); return; }
+  try{
+    voiceStream = await navigator.mediaDevices.getUserMedia({ audio:true });
+  }catch(e){ toast(t('voice_mic_denied')); return; }
+  voiceChunks = [];
+  voiceRecorder = new MediaRecorder(voiceStream, { mimeType: mime });
+  voiceRecorder.ondataavailable = e=>{ if(e.data && e.data.size>0) voiceChunks.push(e.data); };
+  voiceRecorder.start();
+  voiceStartedAt = Date.now();
+  document.getElementById('chatInputRow').style.display = 'none';
+  const row = document.getElementById('voiceRecordRow');
+  if(row) row.style.display = 'flex';
+  const timerEl = document.getElementById('voiceTimer');
+  voiceTimerInterval = setInterval(()=>{
+    const secs = Math.floor((Date.now()-voiceStartedAt)/1000);
+    if(timerEl) timerEl.textContent = `${Math.floor(secs/60)}:${String(secs%60).padStart(2,'0')}`;
+    if(secs >= 180) stopVoiceRecording(true); // Hard-Limit 3 Minuten
+  }, 250);
+}
+function teardownVoiceRecording(){
+  if(voiceTimerInterval){ clearInterval(voiceTimerInterval); voiceTimerInterval=null; }
+  if(voiceStream){ voiceStream.getTracks().forEach(t=>t.stop()); voiceStream=null; }
+  voiceRecorder = null;
+  const inputRow = document.getElementById('chatInputRow');
+  const recRow = document.getElementById('voiceRecordRow');
+  if(inputRow) inputRow.style.display = 'flex';
+  if(recRow) recRow.style.display = 'none';
+}
+function cancelVoiceRecording(){
+  if(voiceRecorder && voiceRecorder.state!=='inactive'){
+    voiceRecorder.onstop = ()=>{ voiceChunks=[]; };
+    voiceRecorder.stop();
+  }
+  teardownVoiceRecording();
+}
+async function stopVoiceRecording(){
+  if(!voiceRecorder || voiceRecorder.state==='inactive') return;
+  const durationSec = Math.max(1, Math.round((Date.now()-voiceStartedAt)/1000));
+  const mime = voiceRecorder.mimeType;
+  const finalize = ()=>new Promise(resolve=>{
+    voiceRecorder.onstop = ()=>resolve();
+    voiceRecorder.stop();
+  });
+  await finalize();
+  teardownVoiceRecording();
+  if(durationSec < 1) return;
+  const blob = new Blob(voiceChunks, { type: mime });
+  voiceChunks = [];
+  if(blob.size < 500){ toast(t('voice_too_short')); return; }
+  toast('📤 …');
+  try{
+    const dataUrl = await new Promise((resolve,reject)=>{
+      const reader = new FileReader();
+      reader.onload = ()=>resolve(reader.result);
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+    const res = await fetch(EDGE_BASE + '/upload-voice', {
+      method:'POST', headers:{ 'Content-Type':'application/json', 'apikey':SUPABASE_ANON_KEY, 'Authorization':'Bearer '+SUPABASE_ANON_KEY },
+      body: JSON.stringify({ initData: State.tgInitData, audio: dataUrl }),
+    });
+    const j = await res.json();
+    if(!j.url){ toast(t('toast_share_unavailable')); return; }
+    const { conversationId, listingId, otherId } = State.activeChat;
+    const msg = { id:uid('m_'), conversationId, listingId, fromId:State.myId, toId:otherId, text:'', audio:j.url, audioDuration:durationSec, createdAt:Date.now() };
+    State.messages.push(msg);
+    await appendMessage(msg);
+    State.lastRead[conversationId] = Date.now();
+    await persistLastRead();
+    renderChatMessages();
+  }catch(err){ toast(t('toast_share_unavailable')); }
+}
+function toggleAudioPlayback(url, btn){
+  if(!window.__voiceAudioEls) window.__voiceAudioEls = {};
+  const store = window.__voiceAudioEls;
+  if(store.current && store.currentUrl!==url){ store.current.pause(); if(store.currentBtn) store.currentBtn.textContent='▶'; }
+  if(!store.current || store.currentUrl!==url){
+    store.current = new Audio(url);
+    store.currentUrl = url;
+    store.current.onended = ()=>{ if(store.currentBtn) store.currentBtn.textContent='▶'; };
+  }
+  store.currentBtn = btn;
+  if(store.current.paused){ store.current.play(); btn.textContent='⏸'; }
+  else { store.current.pause(); btn.textContent='▶'; }
 }
 
 async function sendChatImage(e){
@@ -3319,6 +3484,13 @@ async function refreshDinarBalances(){
     if(data){ State.dinarBalances = {}; data.forEach(r=>{ State.dinarBalances[r.user_id] = r.balance; }); }
   }catch(e){}
 }
+async function refreshEscrowTx(){
+  try{
+    const { data } = await supabaseClient.from('dinar_tx').select('*').eq('kind','escrow_hold').order('created_at',{ascending:false}).limit(300);
+    State.escrowTx = (data||[]).filter(tx => tx.from_id===State.myId || (tx.meta && tx.meta.sellerId===State.myId));
+  }catch(e){}
+}
+function escrowForDeal(dealId){ return State.escrowTx.find(tx => tx.status==='held' && tx.meta && tx.meta.dealId===dealId); }
 async function refreshMyDinarTx(){
   try{
     const { data } = await supabaseClient.from('dinar_tx').select('*')
@@ -3498,6 +3670,53 @@ async function redeemFreeBoost(listingId){
   toast(t('toast_free_boost_redeemed',{n:days})); render();
 }
 
+async function startEscrow(dealId, listingId, sellerId){
+  const amountStr = prompt(t('escrow_amount_prompt'));
+  if(!amountStr) return;
+  const amount = parseInt(amountStr,10);
+  if(!amount || amount<=0){ toast(t('dinar_invalid_amount')); return; }
+  if(amount > dinarBalanceOf(State.myId)){ toast(t('dinar_insufficient')); return; }
+  try{
+    const resp = await fetch(EDGE_BASE + '/dinar-escrow', {
+      method:'POST', headers:{ 'Content-Type':'application/json', 'Authorization':'Bearer '+SUPABASE_ANON_KEY },
+      body: JSON.stringify({ initData: State.tgInitData, op:'hold', dealId, listingId, sellerId, amount }),
+    });
+    const data = await resp.json();
+    if(!resp.ok || data.error){ toast(data.error || t('toast_payment_failed')); return; }
+    await refreshDinarBalances(); await refreshEscrowTx();
+    toast(t('escrow_hold_success',{n:amount}));
+    render();
+  }catch(e){ toast(t('toast_payment_failed')); }
+}
+async function releaseEscrow(dealId){
+  if(!confirm(t('escrow_release_confirm'))) return;
+  try{
+    const resp = await fetch(EDGE_BASE + '/dinar-escrow', {
+      method:'POST', headers:{ 'Content-Type':'application/json', 'Authorization':'Bearer '+SUPABASE_ANON_KEY },
+      body: JSON.stringify({ initData: State.tgInitData, op:'release', dealId }),
+    });
+    const data = await resp.json();
+    if(!resp.ok || data.error){ toast(data.error || t('toast_payment_failed')); return; }
+    await refreshDinarBalances(); await refreshEscrowTx();
+    toast(t('escrow_release_success'));
+    render();
+  }catch(e){ toast(t('toast_payment_failed')); }
+}
+async function refundEscrow(dealId){
+  if(!confirm(t('escrow_refund_confirm'))) return;
+  try{
+    const resp = await fetch(EDGE_BASE + '/dinar-escrow', {
+      method:'POST', headers:{ 'Content-Type':'application/json', 'Authorization':'Bearer '+SUPABASE_ANON_KEY },
+      body: JSON.stringify({ initData: State.tgInitData, op:'refund', dealId }),
+    });
+    const data = await resp.json();
+    if(!resp.ok || data.error){ toast(data.error || t('toast_payment_failed')); return; }
+    await refreshDinarBalances(); await refreshEscrowTx();
+    toast(t('escrow_refund_success'));
+    render();
+  }catch(e){ toast(t('toast_payment_failed')); }
+}
+
 async function pushListing(listingId){
   const l = State.listings.find(x=>x.id===listingId);
   if(!l || l.ownerId!==State.myId) return;
@@ -3624,9 +3843,20 @@ async function submitReport(){
   const reason = document.getElementById('rep_reason').value;
   const details = document.getElementById('rep_details').value.trim();
   const rt = State.reportTarget;
-  State.reports.push({ id:uid('r_'), type:rt.type, targetId:rt.id, targetLabel:rt.label, reporterId:State.myId, reason, details, createdAt:Date.now() });
+  const report = { id:uid('r_'), type:rt.type, targetId:rt.id, targetLabel:rt.label, reporterId:State.myId, reason, details, createdAt:Date.now() };
+  if(rt.type==='dispute') report.dealId = rt.dealId;
+  State.reports.push(report);
   await persistReports();
+  if(rt.type==='dispute') notifyAdminDispute(report).catch(()=>{});
   State.reportTarget = null; toast(t('toast_report_sent')); render();
+}
+async function notifyAdminDispute(report){
+  try{
+    await fetch(EDGE_BASE + '/broadcast-admin-alert', {
+      method:'POST', headers:{ 'Content-Type':'application/json', 'Authorization':'Bearer '+SUPABASE_ANON_KEY },
+      body: JSON.stringify({ initData: State.tgInitData, text: `🚨 Neuer Streitfall gemeldet\nDeal: ${report.dealId}\nGrund: ${report.reason}${report.details?`\n"${report.details}"`:''}\nGemeldet von: ${displayName(getUser(report.reporterId))}` }),
+    });
+  }catch(e){}
 }
 
 async function submitReview(){
@@ -3685,7 +3915,7 @@ function openChat(listingId, otherId){
   persistLastRead();
   render();
 }
-function closeChat(){ stopChatPolling(); State.activeChat = null; render(); }
+function closeChat(){ stopChatPolling(); cancelVoiceRecording(); State.activeChat = null; render(); }
 
 function shareListing(id){
   const l = State.listings.find(x=>x.id===id);
@@ -3925,6 +4155,13 @@ document.addEventListener('click', async (e)=>{
   if(action==='openlegal'){ State.viewLegal=true; render(); return; }
   if(action==='closelegal'){ State.viewLegal=false; render(); return; }
   if(action==='freepush') return pushListing(btn.dataset.id);
+  if(action==='startescrow') return startEscrow(btn.dataset.dealid, btn.dataset.listingid, btn.dataset.sellerid);
+  if(action==='togglevoice') return startVoiceRecording();
+  if(action==='cancelvoice'){ cancelVoiceRecording(); return; }
+  if(action==='stopvoice') return stopVoiceRecording();
+  if(action==='playvoice') return toggleAudioPlayback(btn.dataset.url, btn);
+  if(action==='releaseescrow') return releaseEscrow(btn.dataset.dealid);
+  if(action==='refundescrow') return refundEscrow(btn.dataset.dealid);
   if(action==='promote'){ State.promoteTarget = btn.dataset.id; render(); return; }
   if(action==='closepromote'){ State.promoteTarget=null; State.justPublished=false; render(); return; }
   if(action==='buyboost') return purchaseBoost(btn.dataset.listingid, btn.dataset.boost, parseInt(btn.dataset.tier,10));
@@ -3932,7 +4169,7 @@ document.addEventListener('click', async (e)=>{
   if(action==='requestdeal') return requestDeal(btn.dataset.listingid);
   if(action==='confirmdeal') return confirmDeal(btn.dataset.id);
   if(action==='rejectdeal') return rejectDeal(btn.dataset.id);
-  if(action==='report'){ State.reportTarget = { type:btn.dataset.type, id:btn.dataset.id, label:btn.dataset.label }; render(); return; }
+  if(action==='report'){ State.reportTarget = { type:btn.dataset.type, id:btn.dataset.id, label:btn.dataset.label, dealId:btn.dataset.dealid||null }; render(); return; }
   if(action==='closereport'){ State.reportTarget=null; render(); return; }
   if(action==='submitreport') return submitReport();
   if(action==='openreview'){ State.reviewTarget = { dealId:btn.dataset.dealid, rateeid:btn.dataset.rateeid, rateename:btn.dataset.rateename }; State.reviewStar=0; render(); return; }
