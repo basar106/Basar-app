@@ -728,7 +728,7 @@ const I18N = {
     premium_desc:'Unbegrenzte Anzeigen (statt {max} kostenlos), automatisch TOP-Hervorhebung + 2x Sichtbarkeit für alle Anzeigen, {imgmax} statt {imgfree} Bilder pro Anzeige, {pinbonus} reservierte Pin-Plätze pro Kategorie, PRO-Badge, Statistiken, Shop-Branding und Datenexport.',
     premium_months:'{n} Monat(e)', premium_covers_this:'Durch dein PRO-Abo bereits aktiv',
     premium_pin_bonus_note:'+{n} reserviert für Premium', export_data_btn:'📦 Eigene Daten exportieren (JSON)', toast_export_done:'Export heruntergeladen',
-    status_online:'Online', status_lastseen:'Zuletzt {time}', show_online_status:'Online-Status anzeigen', show_online_status_hint:'Andere sehen, wann du zuletzt aktiv warst.', design_label:'App-Design', design_hint:'Wähle zwischen Aurora (Glas-Look) und Pur (minimalistisch).',
+    status_online:'Online', status_lastseen:'Zuletzt {time}', show_online_status:'Online-Status anzeigen', show_online_status_hint:'Andere sehen, wann du zuletzt aktiv warst.', design_label:'App-Design', design_hint:'Wähle zwischen Aurora (Glas-Look) und Pur (minimalistisch).', prof_ov_account:'Konto', prof_ov_pro:'PRO & Zahlungen', prof_ov_more:'Mehr',
     referral_section_label:'Freunde einladen', referral_desc:'Lade Freunde ein: Ihr bekommt beide {n} Tage kostenlose Hervorhebung für eine Anzeige.',
     referral_balance:'Du hast {n} Tage kostenlose Hervorhebung übrig', referral_invite_btn:'Einladungslink teilen',
     referral_share_text:'Schau dir Basar an – wir bekommen beide {n} Tage kostenlose Anzeigen-Hervorhebung!',
@@ -857,7 +857,7 @@ const I18N = {
     premium_desc:'Unlimited listings (instead of {max} free), automatic TOP highlight + 2x visibility for all listings, {imgmax} instead of {imgfree} photos per listing, {pinbonus} reserved pin slots per category, PRO badge, stats, shop branding and data export.',
     premium_months:'{n} month(s)', premium_covers_this:'Already included via your PRO subscription',
     premium_pin_bonus_note:'+{n} reserved for Premium', export_data_btn:'📦 Export your data (JSON)', toast_export_done:'Export downloaded',
-    status_online:'Online', status_lastseen:'Last seen {time}', show_online_status:'Show online status', show_online_status_hint:'Others can see when you were last active.', design_label:'App design', design_hint:'Switch between Aurora (glass look) and Pur (minimalist).',
+    status_online:'Online', status_lastseen:'Last seen {time}', show_online_status:'Show online status', show_online_status_hint:'Others can see when you were last active.', design_label:'App design', design_hint:'Switch between Aurora (glass look) and Pur (minimalist).', prof_ov_account:'Account', prof_ov_pro:'PRO & Payments', prof_ov_more:'More',
     referral_section_label:'Invite friends', referral_desc:'Invite friends: you both get {n} days of free listing highlight.',
     referral_balance:'You have {n} days of free highlight left', referral_invite_btn:'Share invite link',
     referral_share_text:'Check out Basar – we both get {n} days of free listing highlight!',
@@ -894,7 +894,7 @@ function t(key, vars){
 }
 
 const State = {
-  tab:'browse', profileSub:'overview',
+  tab:'browse', profileSub:'overview', profileOverviewSub:'konto',
   listings:[], users:{}, deals:[], reviews:[], reports:[], favorites:[], purchases:[], messages:[], lastRead:{},
   myId:null, search:'', typeFilter:'all', catFilter:'Alle Kategorien', sortBy:'newest',
   priceMin:null, priceMax:null, priceFilterOpen:false, openDropdown:null,
@@ -1723,7 +1723,16 @@ function renderProfile(){
   let body = '';
   if(State.profileSub==='overview'){
     const isPro = hasPremiumSub(State.myId);
-    body = `
+    const ovSub = State.profileOverviewSub || 'konto';
+    const ovNav = `<div class="subtabs" style="margin-bottom:14px">
+      <button class="${ovSub==='konto'?'active':''}" data-action="profovsub" data-sub="konto">${t('prof_ov_account')}</button>
+      <button class="${ovSub==='pro'?'active':''}" data-action="profovsub" data-sub="pro">${t('prof_ov_pro')}</button>
+      <button class="${ovSub==='mehr'?'active':''}" data-action="profovsub" data-sub="mehr">${t('prof_ov_more')}</button>
+    </div>`;
+
+    let ovBody = '';
+    if(ovSub==='konto'){
+      ovBody = `
       <!-- PROFIL BEARBEITEN -->
       <div class="settings-section">
         <div class="settings-section-title">Profil</div>
@@ -1785,6 +1794,12 @@ function renderProfile(){
         </div>
       </div>
 
+      <button class="submit-btn" data-action="saveprofile">${t('profile_save')}</button>
+      `;
+    }
+
+    if(ovSub==='pro'){
+      ovBody = `
       <!-- PREMIUM -->
       <div class="settings-section">
         <div class="settings-section-title">PRO & Features</div>
@@ -1840,7 +1855,11 @@ function renderProfile(){
           <div><b>${r.count ? r.avg.toFixed(1) : '–'}</b>${t('stat_rating')}</div>
         </div>
       </div>` : ''}
+      `;
+    }
 
+    if(ovSub==='mehr'){
+      ovBody = `
       <!-- FREUNDE -->
       <div class="settings-section">
         <div class="settings-section-title">Freunde</div>
@@ -1853,12 +1872,24 @@ function renderProfile(){
             </div>
             <div class="settings-row-right"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></div>
           </div>
+          <div class="settings-row" data-action="opengiveawaytab" style="cursor:pointer">
+            <div class="settings-row-icon" style="background:rgba(255,179,0,0.15)">🎉</div>
+            <div class="settings-row-mid"><div class="settings-row-label">${t('giveaway_title')}</div></div>
+            <div class="settings-row-right"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></div>
+          </div>
+          <div class="settings-row" data-action="opendinar" style="cursor:pointer">
+            <div class="settings-row-icon" style="background:rgba(230,170,20,0.15)">🪙</div>
+            <div class="settings-row-mid"><div class="settings-row-label">Dinar</div></div>
+            <div class="settings-row-right"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></div>
+          </div>
         </div>
       </div>
 
-      <button class="submit-btn" data-action="saveprofile">${t('profile_save')}</button>
-      <div class="cancel-edit" data-action="openlegal" style="margin-top:18px;text-align:center">${t('profile_legal_link')}</div>
-    `;
+      <div class="cancel-edit" data-action="openlegal" style="margin-top:6px;text-align:center">${t('profile_legal_link')}</div>
+      `;
+    }
+
+    body = ovNav + ovBody;
   } else if(State.profileSub==='listings'){
     body = own.length ? own.map(l=>cardHTML(l,true)).join('') : `<div class="empty"><div class="big">${t('no_listings_yet')}</div><div class="small">${t('no_listings_sub')}</div></div>`;
   } else if(State.profileSub==='favorites'){
@@ -3663,6 +3694,8 @@ document.addEventListener('click', async (e)=>{
   if(action==='pickimage'){ const inp = document.getElementById('f_imgfile'); if(inp) inp.click(); return; }
   if(action==='submit') return submitForm();
   if(action==='profsub'){ State.profileSub = btn.dataset.sub; render(); return; }
+  if(action==='profovsub'){ State.profileOverviewSub = btn.dataset.sub; render(); return; }
+  if(action==='opengiveawaytab'){ State.tab='giveaway'; render(); return; }
   if(action==='saveprofile') return saveProfile();
   if(action==='toggleonline'){
     State.users[State.myId] = { ...getUser(State.myId), showOnlineStatus: getUser(State.myId).showOnlineStatus===false };
