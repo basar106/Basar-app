@@ -864,7 +864,7 @@ const State = {
   priceMin:null, priceMax:null, priceFilterOpen:false, openDropdown:null,
   savedSearches:[],
   editingId:null, viewProfileId:null, viewListingId:null, galleryIndex:0, fullscreenImage:null, activeChat:null, chatPollTimer:null, viewLegal:false,
-  adminSub:'listings', adminBanTarget:null, broadcastDraft:'', broadcastSending:false, broadcastResult:null,
+  adminSub:'listings', adminBanTarget:null, broadcastDraft:'', broadcastSending:false, broadcastResult:null, adminUserSearch:'',
   reportTarget:null, reviewTarget:null, reviewStar:0, replyTarget:null,
   formType:null, pendingImages:null, formDraft:null, promoteTarget:null, justPublished:false, searchStats:{categories:{}}, lastTrackedSearchTerm:'', theme:'light', lang:'de', tgInitData:'', viewMode:'list',
   hiddenConvos:{}, archivedConvos:[], showArchived:false, catOverlayOpen:false, giveawayPopup:false, onboardingSlide:null,
@@ -2007,19 +2007,33 @@ function renderAdminTab(){
   }
 
   if(State.adminSub==='users'){
-    const ids = Object.keys(State.users).sort((a,b)=>(State.users[b].createdAt||0)-(State.users[a].createdAt||0));
-    if(!ids.length) return sub + `<div class="empty"><div class="small">Keine Nutzer vorhanden.</div></div>`;
+    const searchBox = `<div class="field" style="margin-bottom:12px">
+      <input type="text" id="adminUserSearch" placeholder="🔍 Suche nach Name, Username oder ID …" value="${escapeHtml(State.adminUserSearch||'')}">
+    </div>`;
+    let ids = Object.keys(State.users).sort((a,b)=>(State.users[b].createdAt||0)-(State.users[a].createdAt||0));
+    const q = (State.adminUserSearch||'').trim().toLowerCase();
+    if(q){
+      ids = ids.filter(id=>{
+        const u = getUser(id);
+        return id.toLowerCase().includes(q)
+          || (u.name||'').toLowerCase().includes(q)
+          || (u.customName||'').toLowerCase().includes(q)
+          || (u.username||'').toLowerCase().includes(q);
+      });
+    }
+    if(!ids.length) return sub + searchBox + `<div class="empty"><div class="small">${q?'Keine Treffer.':'Keine Nutzer vorhanden.'}</div></div>`;
     const rows = ids.map(id=>{
       const u = getUser(id);
       const listingCount = State.listings.filter(l=>l.ownerId===id).length;
       return `<div class="admin-row ${u.banned?'banned':''}">
         ${avatarHTML(u)}
         <div class="admin-row-mid">
-          <div class="admin-row-top"><span>${escapeHtml(displayName(u))}${u.banned?' 🚫':''}</span></div>
+          <div class="admin-row-top"><span>${escapeHtml(displayName(u))}${u.banned?' 🚫':''}</span><span class="dinar-chip">🪙 ${dinarBalanceOf(id)}</span></div>
           <div class="admin-row-sub">${escapeHtml(id)} · ${listingCount} Anzeige(n)${u.banned?` · Gesperrt: ${escapeHtml(u.bannedReason||'-')}`:''}</div>
           ${!isAdmin(id) ? `<div class="admin-actions">
             <button class="mini-btn" data-action="adminviewprofile" data-id="${id}">Profil</button>
             <button class="mini-btn" data-action="adminmessage" data-id="${id}">Anschreiben</button>
+            <button class="mini-btn" data-action="admingrantdinar" data-id="${id}">🪙 Dinar geben</button>
             ${u.banned
               ? `<button class="mini-btn" data-action="adminunban" data-id="${id}">Entsperren</button>`
               : `<button class="mini-btn" data-action="adminban" data-id="${id}" style="color:var(--heart)">Sperren</button>`}
@@ -2027,7 +2041,7 @@ function renderAdminTab(){
         </div>
       </div>`;
     }).join('');
-    return sub + rows;
+    return sub + searchBox + rows;
   }
 
   if(State.adminSub==='broadcast'){
@@ -2980,6 +2994,26 @@ async function setShopBanner(key){
   await persistUsers(); render();
 }
 
+async function adminGrantDinar(userId){
+  if(!isAdmin(State.myId)) return;
+  const amountStr = prompt(`Wie viele Dinar an ${displayName(getUser(userId))} vergeben?`);
+  if(!amountStr) return;
+  const amount = parseInt(amountStr,10);
+  if(!amount || amount<=0){ toast('Ungültiger Betrag'); return; }
+  const note = prompt('Optionaler Hinweis für den Nutzer (kann leer bleiben):') || '';
+  try{
+    const resp = await fetch(EDGE_BASE + '/dinar-admin-grant', {
+      method:'POST', headers:{ 'Content-Type':'application/json', 'Authorization':'Bearer '+SUPABASE_ANON_KEY },
+      body: JSON.stringify({ initData: State.tgInitData, toUserId: userId, amount, note }),
+    });
+    const data = await resp.json();
+    if(!resp.ok || data.error){ toast(data.error || 'Fehlgeschlagen'); return; }
+    await refreshDinarBalances();
+    toast(`${amount} Dinar vergeben ✅`);
+    render();
+  }catch(e){ toast('Fehlgeschlagen'); }
+}
+
 async function sendBroadcast(){
   if(!isAdmin(State.myId)) return;
   const ta = document.getElementById('broadcastText');
@@ -3584,6 +3618,7 @@ document.addEventListener('click', async (e)=>{
   if(action==='exportdata') return exportMyData();
   if(action==='adminsub'){ State.adminSub = btn.dataset.sub; render(); return; }
   if(action==='sendbroadcast') return sendBroadcast();
+  if(action==='admingrantdinar') return adminGrantDinar(btn.dataset.id);
   if(action==='adminviewlisting'){ State.viewListingId = btn.dataset.id; State.galleryIndex = 0; render(); return; }
   if(action==='admineditlisting') return startEdit(btn.dataset.id);
   if(action==='admindeletelisting'){ if(confirm('Anzeige als Admin löschen?')) deleteListing(btn.dataset.id); return; }
@@ -3658,6 +3693,13 @@ document.addEventListener('input', (e)=>{
   if(e.target.id==='searchInput'){
     State.search = e.target.value; render();
     scheduleSearchTrack(e.target.value.trim().toLowerCase());
+  }
+  if(e.target.id==='adminUserSearch'){
+    State.adminUserSearch = e.target.value;
+    const pos = e.target.selectionStart;
+    render();
+    const el = document.getElementById('adminUserSearch');
+    if(el){ el.focus(); el.setSelectionRange(pos,pos); }
   }
   if(e.target.id==='f_free'){ document.getElementById('f_price').disabled = e.target.checked; if(e.target.checked) document.getElementById('f_vb').checked=false; }
   if(e.target.id==='f_vb'){ if(e.target.checked) document.getElementById('f_free').checked=false; document.getElementById('f_price').disabled=false; }
