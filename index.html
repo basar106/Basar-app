@@ -755,6 +755,8 @@ const FREE_LISTING_LIMIT = 5;
 const PREMIUM_PLANS = [ {months:1,stars:1200}, {months:3,stars:3000}, {months:12,stars:9600} ];
 const ADMIN_IDS = ['tg_8205036533'];
 const REFERRAL_REWARD_DAYS = 3;
+const REFERRAL_SIGNUP_DINAR = 25;
+const REFERRAL_FIRST_LISTING_DINAR = 50;
 const BANNER_PRESETS = {
   navy:'linear-gradient(135deg,#0E2A4A,#1463E0)',
   sunset:'linear-gradient(135deg,#FF7A59,#FFB300)',
@@ -908,6 +910,13 @@ const I18N = {
     dinar_boost_hint:'Boosts für einzelne Anzeigen kannst du auch direkt beim Bewerben einer Anzeige mit Dinar bezahlen.',
     dinar_history_title:'Verlauf', dinar_tx_purchase:'Aufgeladen', dinar_tx_review:'Bewertungs-Bonus', dinar_tx_spend:'Ausgegeben',
     dinar_tx_sent:'Gesendet', dinar_tx_received:'Erhalten', dinar_tx_payment:'Zahlung', dinar_tx_referral_signup:'Empfehlungs-Bonus', dinar_tx_first_listing:'Bonus: erste Anzeige', dinar_tx_admin_grant:'Vom Team erhalten',
+    referral_page_teaser:'Freunde einladen und Dinar sichern', referral_page_title:'Meine Empfehlungen',
+    referral_perk_signup:'{n} Dinar beim Beitritt', referral_perk_signup_sub:'Dein Freund bekommt sie sofort bei der Anmeldung über deinen Link.',
+    referral_perk_listing:'{n} Dinar extra bei erster Anzeige', referral_perk_listing_sub:'Sobald dein Freund seine erste Anzeige erstellt.',
+    referral_perk_giveaway:'Gewinnspiel-Los', referral_perk_giveaway_sub:'Jeder geworbene Freund zählt zusätzlich als Los im 1.000-€-Gewinnspiel.',
+    referral_perk_days:'+{n} Tage kostenlose Hervorhebung für euch beide',
+    referral_your_referrals:'Deine geworbenen Freunde ({n})', referral_none_yet:'Noch niemand über deinen Link beigetreten. Teile ihn jetzt!',
+    referral_status_both:'{a} + {b} Dinar erhalten (Anzeige erstellt)', referral_status_signup_only:'{n} Dinar erhalten – noch keine Anzeige erstellt',
     dinar_recipient_label:'Empfänger (Telegram-ID)', dinar_amount_label:'Betrag', dinar_send_confirm:'Senden',
     dinar_invalid_recipient:'Ungültiger Empfänger', dinar_invalid_amount:'Ungültiger Betrag', dinar_insufficient:'Nicht genügend Dinar',
     dinar_sent_success:'{n} Dinar gesendet!', dinar_offer_sent:'Zahlungsangebot gesendet – wartet auf Bestätigung',
@@ -1051,6 +1060,13 @@ const I18N = {
     dinar_boost_hint:'You can also pay for listing boosts with Dinar directly when promoting a listing.',
     dinar_history_title:'History', dinar_tx_purchase:'Topped up', dinar_tx_review:'Review bonus', dinar_tx_spend:'Spent',
     dinar_tx_sent:'Sent', dinar_tx_received:'Received', dinar_tx_payment:'Payment', dinar_tx_referral_signup:'Referral bonus', dinar_tx_first_listing:'First listing bonus', dinar_tx_admin_grant:'Received from team',
+    referral_page_teaser:'Invite friends and earn Dinar', referral_page_title:'My referrals',
+    referral_perk_signup:'{n} Dinar on signup', referral_perk_signup_sub:'Your friend gets it instantly when joining via your link.',
+    referral_perk_listing:'{n} extra Dinar on first listing', referral_perk_listing_sub:'As soon as your friend creates their first listing.',
+    referral_perk_giveaway:'Giveaway ticket', referral_perk_giveaway_sub:'Every referred friend also counts as a ticket in the €1,000 giveaway.',
+    referral_perk_days:'+{n} days free highlight for both of you',
+    referral_your_referrals:'Your referred friends ({n})', referral_none_yet:'No one has joined via your link yet. Share it now!',
+    referral_status_both:'{a} + {b} Dinar received (listing created)', referral_status_signup_only:'{n} Dinar received – no listing yet',
     dinar_recipient_label:'Recipient (Telegram ID)', dinar_amount_label:'Amount', dinar_send_confirm:'Send',
     dinar_invalid_recipient:'Invalid recipient', dinar_invalid_amount:'Invalid amount', dinar_insufficient:'Not enough Dinar',
     dinar_sent_success:'{n} Dinar sent!', dinar_offer_sent:'Payment offer sent – waiting for confirmation',
@@ -1168,6 +1184,7 @@ const State = {
   formType:null, pendingImages:null, formDraft:null, promoteTarget:null, justPublished:false, searchStats:{categories:{}}, lastTrackedSearchTerm:'', theme:'light', lang:'de', tgInitData:'', viewMode:'list', design:'aurora',
   hiddenConvos:{}, archivedConvos:[], showArchived:false, catOverlayOpen:false, giveawayPopup:false, onboardingSlide:null,
   dinarBalances:{}, dinarPageOpen:false, dinarSendTarget:null, dinarSendIsOffer:false, dinarTx:[], pendingPayOffer:null, dinarIntroOpen:false, escrowTx:[], otherLastRead:{},
+  referralPageOpen:false, referralBonusTx:[],
 };
 
 function uid(p){ return (p||'id_') + Date.now().toString(36) + Math.random().toString(36).slice(2,8); }
@@ -2167,11 +2184,11 @@ function renderProfile(){
       <div class="settings-section">
         <div class="settings-section-title">Freunde</div>
         <div class="settings-card">
-          <div class="settings-row" data-action="invitefriend" style="cursor:pointer">
+          <div class="settings-row" data-action="openreferralpage" style="cursor:pointer">
             <div class="settings-row-icon" style="background:rgba(255,179,0,0.15)">🎁</div>
             <div class="settings-row-mid">
               <div class="settings-row-label">${t('referral_invite_btn')}</div>
-              <div class="settings-row-sub">${t('referral_desc',{n:REFERRAL_REWARD_DAYS})}${u.freeHighlightDays>0?` · ${t('referral_balance',{n:u.freeHighlightDays})}`:''}</div>
+              <div class="settings-row-sub">${t('referral_page_teaser')}${u.freeHighlightDays>0?` · ${t('referral_balance',{n:u.freeHighlightDays})}`:''}</div>
             </div>
             <div class="settings-row-right"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></div>
           </div>
@@ -2791,6 +2808,59 @@ function renderOverlays(){
       <div style="padding:0 24px 34px;display:flex;flex-direction:column;gap:10px">
         <button class="submit-btn" data-action="obnext" style="width:100%">${last ? t('ob_start') : t('ob_next')}</button>
         ${!last ? `<button class="btn-secondary" data-action="obskip" style="width:100%">${t('ob_skip')}</button>` : ''}
+      </div>`;
+    document.body.appendChild(div);
+  }
+
+  if(State.referralPageOpen){
+    const referred = Object.entries(State.users).filter(([id,u2])=>u2.referredBy===State.myId).map(([id])=>id);
+    const div = document.createElement('div');
+    div.className = 'cat-overlay';
+    div.innerHTML = `
+      <div class="cat-overlay-header">
+        <button data-action="closereferralpage">←</button>
+        <h2>🎁 ${t('referral_page_title')}</h2>
+        <button data-action="closereferralpage">✕</button>
+      </div>
+      <div class="cat-overlay-list" style="padding:0 16px 30px">
+        <div class="settings-card" style="margin:14px 0">
+          <div class="settings-row" style="cursor:default">
+            <div class="settings-row-icon" style="background:rgba(230,170,20,0.15)">${icon('coin',17)}</div>
+            <div class="settings-row-mid"><div class="settings-row-label">${t('referral_perk_signup',{n:REFERRAL_SIGNUP_DINAR})}</div><div class="settings-row-sub">${t('referral_perk_signup_sub')}</div></div>
+          </div>
+          <div class="settings-row" style="cursor:default">
+            <div class="settings-row-icon" style="background:rgba(230,170,20,0.15)">${icon('gift',17)}</div>
+            <div class="settings-row-mid"><div class="settings-row-label">${t('referral_perk_listing',{n:REFERRAL_FIRST_LISTING_DINAR})}</div><div class="settings-row-sub">${t('referral_perk_listing_sub')}</div></div>
+          </div>
+          <div class="settings-row" style="cursor:default">
+            <div class="settings-row-icon" style="background:rgba(10,132,255,0.15)">${icon('party',17)}</div>
+            <div class="settings-row-mid"><div class="settings-row-label">${t('referral_perk_giveaway')}</div><div class="settings-row-sub">${t('referral_perk_giveaway_sub')}</div></div>
+          </div>
+          <div class="settings-row" style="cursor:default">
+            <div class="settings-row-icon" style="background:rgba(255,179,0,0.15)">🏷</div>
+            <div class="settings-row-mid"><div class="settings-row-label">${t('referral_perk_days',{n:REFERRAL_REWARD_DAYS})}</div></div>
+          </div>
+        </div>
+
+        <button class="submit-btn" data-action="invitefriend" style="width:100%;margin-bottom:16px">${t('referral_invite_btn')}</button>
+
+        <div class="settings-section-title">${t('referral_your_referrals',{n:referred.length})}</div>
+        ${referred.length===0 ? `<div class="empty" style="padding:24px 10px"><div class="small">${t('referral_none_yet')}</div></div>` : `
+        <div class="settings-card">
+          ${referred.map(id=>{
+            const ru = getUser(id);
+            const gotListingBonus = referredHasFirstListingBonus(id);
+            return `<div class="settings-row" style="cursor:default">
+              ${avatarHTML(ru)}
+              <div class="settings-row-mid">
+                <div class="settings-row-label">${escapeHtml(displayName(ru))}</div>
+                <div class="settings-row-sub">${gotListingBonus
+                  ? `✅ ${t('referral_status_both',{a:REFERRAL_SIGNUP_DINAR,b:REFERRAL_FIRST_LISTING_DINAR})}`
+                  : `🕓 ${t('referral_status_signup_only',{n:REFERRAL_SIGNUP_DINAR})}`}</div>
+              </div>
+            </div>`;
+          }).join('')}
+        </div>`}
       </div>`;
     document.body.appendChild(div);
   }
@@ -3684,6 +3754,14 @@ async function refreshDinarBalances(){
     if(data){ State.dinarBalances = {}; data.forEach(r=>{ State.dinarBalances[r.user_id] = r.balance; }); }
   }catch(e){}
 }
+async function refreshReferralBonuses(){
+  try{
+    const { data } = await supabaseClient.from('dinar_tx').select('to_id,kind').eq('kind','first_listing_bonus').limit(1000);
+    State.referralBonusTx = data || [];
+  }catch(e){ State.referralBonusTx = []; }
+}
+function referredHasFirstListingBonus(userId){ return State.referralBonusTx.some(tx=>tx.to_id===userId); }
+
 async function refreshEscrowTx(){
   try{
     const { data } = await supabaseClient.from('dinar_tx').select('*').eq('kind','escrow_hold').order('created_at',{ascending:false}).limit(300);
@@ -4257,6 +4335,8 @@ document.addEventListener('click', async (e)=>{
   }
   if(action==='closegiveaway'){ State.giveawayPopup=false; render(); return; }
   if(action==='opendinar'){ State.dinarPageOpen=true; await refreshDinarBalances(); await refreshMyDinarTx(); render(); return; }
+  if(action==='openreferralpage'){ State.referralPageOpen=true; await refreshReferralBonuses(); render(); return; }
+  if(action==='closereferralpage'){ State.referralPageOpen=false; render(); return; }
   if(action==='closedinar'){ State.dinarPageOpen=false; render(); return; }
   if(action==='buydinar') return buyDinar(parseInt(btn.dataset.idx,10));
   if(action==='opensenddinar'){
