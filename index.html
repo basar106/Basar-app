@@ -224,6 +224,7 @@
     border-bottom:1px solid var(--border);
     box-shadow:0 1px 0 rgba(255,255,255,0.5) inset, 0 6px 20px rgba(20,50,90,0.06);
     position:sticky; top:0; z-index:5;
+    transition:transform .25s ease;
   }
   header.top h1{ font-weight:800; font-size:21px; letter-spacing:-0.3px; margin:0 0 1px; color:var(--navy); }
   header.top p{ margin:0; font-size:11.5px; color:var(--muted); letter-spacing:0.2px; }
@@ -236,7 +237,10 @@
     border-bottom:1px solid var(--border);
     position:sticky; top:64px; z-index:4;
     display:flex; flex-direction:column; gap:9px;
+    transition:transform .25s ease;
   }
+  header.top.topbar-hidden{ transform:translateY(-100%); }
+  .filters.topbar-hidden{ transform:translateY(-100%); }
   .search-row{ position:relative; }
   .search-row svg.search-ic{ position:absolute; left:13px; top:50%; transform:translateY(-50%); width:16px; height:16px; color:var(--muted); }
   .search-row input[type=text]{
@@ -3154,6 +3158,26 @@ async function refreshSharedData(){
   render();
 }
 
+function setupTopbarAutoHide(){
+  let lastY = window.scrollY, hidden = false;
+  window.addEventListener('scroll', ()=>{
+    const y = window.scrollY;
+    const dy = y - lastY;
+    const header = document.querySelector('header.top');
+    const filters = document.getElementById('filters');
+    if(y < 40){
+      hidden = false;
+    } else if(dy > 6 && !hidden){
+      hidden = true;
+    } else if(dy < -6 && hidden){
+      hidden = false;
+    }
+    if(header) header.classList.toggle('topbar-hidden', hidden);
+    if(filters) filters.classList.toggle('topbar-hidden', hidden);
+    lastY = y;
+  }, {passive:true});
+}
+
 function setupPullToRefresh(){
   let startY = 0, pulling = false, indicator = null;
   document.addEventListener('touchstart', e=>{
@@ -4432,6 +4456,7 @@ document.addEventListener('change', (e)=>{
     touchLastSeen();
     setInterval(touchLastSeen, 60000);
     setupPullToRefresh();
+    setupTopbarAutoHide();
     if(State.justReferred) toast(t('toast_referral_welcome',{n:REFERRAL_REWARD_DAYS}));
     if(!localStorage.getItem('basar:onboarded')){
       State.onboardingSlide = 0;
