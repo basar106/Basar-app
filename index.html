@@ -796,7 +796,7 @@ const I18N = {
     type_all:'Alle', type_offer:'Angebote', type_request:'Gesuche',
     sort_newest:'Neueste', sort_popular:'Beliebteste', sort_price_asc:'Preis ↑', sort_price_desc:'Preis ↓', sort_pricefilter:'Preisspanne',
     empty_browse_title:'Noch nichts gefunden', empty_browse_sub:'Ändere die Filter oder gib selbst die erste Anzeige auf.',
-    recommended_title:'Für dich empfohlen', recommended_sub:'Weil du oft nach „{term}“ suchst', all_listings:'Alle Anzeigen',
+    recommended_title:'Für dich empfohlen', recommended_sub:'Weil du oft nach „{term}“ suchst', all_listings:'Alle Anzeigen', discover_title:'✨ Entdecken', discover_sub_both:'Neu & interessant für dich – u.a. weil du oft nach „{term}“ suchst',
     badge_offer:'Angebot', badge_request:'Gesuch',
     btn_promote:'Bewerben', btn_edit:'Bearbeiten', btn_delete:'Löschen', btn_push:'Push', toast_push_success:'Anzeige nach oben gepusht! 🚀',
     status_pending:'Anfrage gesendet', status_confirmed:'Bestätigt', status_rejected:'Abgelehnt',
@@ -946,7 +946,7 @@ const I18N = {
     type_all:'All', type_offer:'Offers', type_request:'Wanted',
     sort_newest:'Newest', sort_popular:'Most popular', sort_price_asc:'Price ↑', sort_price_desc:'Price ↓', sort_pricefilter:'Price range',
     empty_browse_title:'Nothing here yet', empty_browse_sub:'Change the filters or post the first listing yourself.',
-    recommended_title:'Recommended for you', recommended_sub:'Because you often search for "{term}"', all_listings:'All listings',
+    recommended_title:'Recommended for you', recommended_sub:'Because you often search for "{term}"', all_listings:'All listings', discover_title:'✨ Discover', discover_sub_both:'New and interesting for you – partly because you often search for "{term}"',
     badge_offer:'Offer', badge_request:'Wanted',
     btn_promote:'Promote', btn_edit:'Edit', btn_delete:'Delete', btn_push:'Push', toast_push_success:'Listing pushed to the top! 🚀',
     status_pending:'Request sent', status_confirmed:'Confirmed', status_rejected:'Rejected',
@@ -1851,37 +1851,35 @@ function cardsHTML(items, ownerView){
 }
 function renderBrowse(){
   document.getElementById('filters').style.display = 'flex';
-  let recommendedBlock = '';
-  let excludeIds = [];
-  if(!State.search && State.catFilter==='Alle Kategorien' && State.typeFilter==='all'){
+  const noFilters = !State.search && State.catFilter==='Alle Kategorien' && State.typeFilter==='all' && State.sortBy==='newest';
+
+  let highlighted = [];
+  let highlightTitle = '', highlightSub = '';
+  if(noFilters){
     const topCat = topSearchedCategory();
-    if(topCat){
-      const recs = recommendationsFor(topCat);
-      if(recs.length){
-        excludeIds = recs.map(r=>r.id);
-        recommendedBlock = `<div class="section-title">${t('recommended_title')}</div>
-          <div class="hint" style="margin-bottom:10px">${t('recommended_sub',{term:escapeHtml(topCat)})}</div>
-          ${cardsHTML(recs,false)}
-          <div class="section-title" style="margin-top:18px">${t('all_listings')}</div>`;
-      }
-    }
-  }
-  const list = filteredListings(State.listings).filter(l=>!excludeIds.includes(l.id));
-  if(list.length===0) return recommendedBlock || `<div class="empty"><div class="big">${t('empty_browse_title')}</div><div class="small">${t('empty_browse_sub')}</div></div>`;
-  if(!State.search && State.catFilter==='Alle Kategorien' && State.typeFilter==='all' && State.sortBy==='newest'){
+    const recs = topCat ? recommendationsFor(topCat) : [];
     const weekAgo = Date.now() - 7*86400000;
-    const fresh = list.filter(l=>l.createdAt > weekAgo);
-    const older = list.filter(l=>l.createdAt <= weekAgo);
-    if(fresh.length && older.length){
-      return recommendedBlock
-        + `<div class="section-title">${t('new_this_week')}</div>` + cardsHTML(fresh,false)
-        + `<div class="section-title" style="margin-top:18px">${t('all_listings')}</div>` + cardsHTML(older,false);
-    }
-    if(fresh.length && !older.length){
-      return recommendedBlock + `<div class="section-title">${t('new_this_week')}</div>` + cardsHTML(fresh,false);
+    const fresh = State.listings.filter(l=>l.createdAt > weekAgo && !recs.some(r=>r.id===l.id));
+
+    highlighted = [...recs, ...fresh].slice(0, 12);
+    if(recs.length && fresh.length){
+      highlightTitle = t('discover_title'); highlightSub = t('discover_sub_both',{term:escapeHtml(topCat)});
+    } else if(recs.length){
+      highlightTitle = t('recommended_title'); highlightSub = t('recommended_sub',{term:escapeHtml(topCat)});
+    } else if(fresh.length){
+      highlightTitle = t('new_this_week');
     }
   }
-  return recommendedBlock + cardsHTML(list,false);
+
+  const excludeIds = highlighted.map(l=>l.id);
+  const list = filteredListings(State.listings).filter(l=>!excludeIds.includes(l.id));
+
+  const highlightBlock = highlighted.length
+    ? `<div class="section-title">${highlightTitle}</div>${highlightSub ? `<div class="hint" style="margin-bottom:10px">${highlightSub}</div>` : ''}${cardsHTML(highlighted,false)}${list.length ? `<div class="section-title" style="margin-top:18px">${t('all_listings')}</div>` : ''}`
+    : '';
+
+  if(list.length===0) return highlightBlock || `<div class="empty"><div class="big">${t('empty_browse_title')}</div><div class="small">${t('empty_browse_sub')}</div></div>`;
+  return highlightBlock + cardsHTML(list,false);
 }
 
 function renderCreate(){
