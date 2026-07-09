@@ -2972,11 +2972,7 @@ function renderOverlays(){
         <h2>${t('legal_title')}</h2>
         <button class="close-btn" data-action="closelegal">✕</button>
       </div>
-      <div class="overlay-body legal-content">${legalHtmlFor()}
-        <div style="margin-top:28px;text-align:center">
-          ${isAdmin(State.myId) ? `<button class="btn-secondary" data-action="resetdemo" style="color:var(--heart)">⚠️ ${t('reset_all_demo_data')}</button>` : ''}
-        </div>
-      </div>`;
+      <div class="overlay-body legal-content">${legalHtmlFor()}</div>`;
     document.body.appendChild(div);
   }
 
@@ -3724,25 +3720,6 @@ async function sendBroadcast(){
   State.broadcastSending = false; render();
 }
 
-async function resetAllDemoData(){
-  if(!isAdmin(State.myId)) return;
-  const ok = confirm(t('confirm_reset_all'));
-  if(!ok) return;
-  await storageSet('basar:listings', JSON.stringify([]), true);
-  await storageSet('basar:users', JSON.stringify({}), true);
-  await storageSet('basar:deals', JSON.stringify([]), true);
-  await storageSet('basar:reviews', JSON.stringify([]), true);
-  await storageSet('basar:reports', JSON.stringify([]), true);
-  await storageSet('basar:purchases', JSON.stringify([]), true);
-  await storageSet('basar:messages', JSON.stringify([]), true);
-  await storageSet('basar:searchstats', JSON.stringify({categories:{}}), false);
-  await storageSet('basar:savedsearches', JSON.stringify([]), false);
-  await storageSet('basar:favorites', JSON.stringify([]), false);
-  await storageSet('basar:lastread', JSON.stringify({}), false);
-  toast(t('toast_reset_done'));
-  setTimeout(()=>location.reload(), 800);
-}
-
 const VERIFIED_BADGE_STARS = 770; // ≈ 10 €
 
 // ---------- Dinar (In-App-Währung) ----------
@@ -4429,7 +4406,6 @@ document.addEventListener('click', async (e)=>{
   if(action==='confirmadminban') return adminBanUser();
   if(action==='adminunban') return adminUnbanUser(btn.dataset.id);
   if(action==='admindismissreport') return adminDismissReport(btn.dataset.id);
-  if(action==='resetdemo') return resetAllDemoData();
   if(action==='viewprofile'){ State.viewProfileId = btn.dataset.id; render(); return; }
   if(action==='closeprofile'){ State.viewProfileId=null; render(); return; }
   if(action==='closedetail'){ State.viewListingId=null; render(); return; }
