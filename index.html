@@ -1185,6 +1185,7 @@ const State = {
   hiddenConvos:{}, archivedConvos:[], showArchived:false, catOverlayOpen:false, giveawayPopup:false, onboardingSlide:null,
   dinarBalances:{}, dinarPageOpen:false, dinarSendTarget:null, dinarSendIsOffer:false, dinarTx:[], pendingPayOffer:null, dinarIntroOpen:false, escrowTx:[], otherLastRead:{},
   referralPageOpen:false, referralBonusTx:[],
+  profileSectionsOpen:{ profilOpen:false, einstOpen:false },
 };
 
 function uid(p){ return (p||'id_') + Date.now().toString(36) + Math.random().toString(36).slice(2,8); }
@@ -2050,11 +2051,18 @@ function renderProfile(){
 
     let ovBody = '';
     if(ovSub==='konto'){
+      const profilExpanded = !!State.profileSectionsOpen.profilOpen;
+      const einstOpen = !!State.profileSectionsOpen.einstOpen;
       ovBody = `
-      <!-- PROFIL BEARBEITEN -->
+      <!-- PROFIL BEARBEITEN (einklappbar) -->
       <div class="settings-section">
-        <div class="settings-section-title">Profil</div>
         <div class="settings-card">
+          <div class="settings-row" data-action="togglesection" data-section="profilOpen" style="cursor:pointer">
+            <div class="settings-row-icon" style="background:color-mix(in srgb, var(--blue) 15%, transparent)">✏️</div>
+            <div class="settings-row-mid"><div class="settings-row-label">Profil</div><div class="settings-row-sub">${t('profile_name_field')}, ${t('profile_username_field')}, ${t('profile_bio_field')}</div></div>
+            <div class="settings-row-right" style="transform:rotate(${profilExpanded?90:0}deg);transition:transform .15s"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px"><path d="M9 18l6-6-6-6"/></svg></div>
+          </div>
+          ${profilExpanded ? `
           <label class="settings-row" style="cursor:pointer">
             <div class="settings-row-icon" style="background:color-mix(in srgb, var(--blue) 15%, transparent)">✏️</div>
             <div class="settings-row-mid">
@@ -2083,13 +2091,20 @@ function renderProfile(){
               <textarea id="p_bio" maxlength="300" placeholder="${t('profile_bio_ph')}" style="border:none;background:none;color:var(--text);font-size:13px;width:100%;padding:0;outline:none;margin-top:2px;resize:none;min-height:48px">${escapeHtml(u.bio)}</textarea>
             </div>
           </label>
+          <button class="submit-btn" data-action="saveprofile" style="margin:10px 12px 12px;width:calc(100% - 24px)">${t('profile_save')}</button>
+          ` : ''}
         </div>
       </div>
 
-      <!-- EINSTELLUNGEN -->
+      <!-- EINSTELLUNGEN (einklappbar) -->
       <div class="settings-section">
-        <div class="settings-section-title">Einstellungen</div>
         <div class="settings-card">
+          <div class="settings-row" data-action="togglesection" data-section="einstOpen" style="cursor:pointer">
+            <div class="settings-row-icon" style="background:rgba(52,199,89,0.15)">⚙️</div>
+            <div class="settings-row-mid"><div class="settings-row-label">Einstellungen</div><div class="settings-row-sub">${t('show_online_status')}, ${t('design_label')}</div></div>
+            <div class="settings-row-right" style="transform:rotate(${einstOpen?90:0}deg);transition:transform .15s"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px"><path d="M9 18l6-6-6-6"/></svg></div>
+          </div>
+          ${einstOpen ? `
           <div class="settings-row">
             <div class="settings-row-icon" style="background:rgba(52,199,89,0.15)">🟢</div>
             <div class="settings-row-mid">
@@ -2111,10 +2126,29 @@ function renderProfile(){
               </div>
             </div>
           </div>
+          ` : ''}
         </div>
       </div>
 
-      <button class="submit-btn" data-action="saveprofile">${t('profile_save')}</button>
+      <!-- FREUNDE WERBEN & DINAR -->
+      <div class="settings-section">
+        <div class="settings-section-title">Freunde & Dinar</div>
+        <div class="settings-card">
+          <div class="settings-row" data-action="openreferralpage" style="cursor:pointer">
+            <div class="settings-row-icon" style="background:rgba(255,179,0,0.15)">🎁</div>
+            <div class="settings-row-mid">
+              <div class="settings-row-label">${t('referral_invite_btn')}</div>
+              <div class="settings-row-sub">${t('referral_page_teaser')}${u.freeHighlightDays>0?` · ${t('referral_balance',{n:u.freeHighlightDays})}`:''}</div>
+            </div>
+            <div class="settings-row-right"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></div>
+          </div>
+          <div class="settings-row" data-action="opendinar" style="cursor:pointer">
+            <div class="settings-row-icon" style="background:rgba(230,170,20,0.15)">${icon('coin',17)}</div>
+            <div class="settings-row-mid"><div class="settings-row-label">Dinar</div><div class="settings-row-sub">${dinarBalanceOf(State.myId)} 🪙</div></div>
+            <div class="settings-row-right"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></div>
+          </div>
+        </div>
+      </div>
       `;
     }
 
@@ -2180,31 +2214,6 @@ function renderProfile(){
 
     if(ovSub==='mehr'){
       ovBody = `
-      <!-- FREUNDE -->
-      <div class="settings-section">
-        <div class="settings-section-title">Freunde</div>
-        <div class="settings-card">
-          <div class="settings-row" data-action="openreferralpage" style="cursor:pointer">
-            <div class="settings-row-icon" style="background:rgba(255,179,0,0.15)">🎁</div>
-            <div class="settings-row-mid">
-              <div class="settings-row-label">${t('referral_invite_btn')}</div>
-              <div class="settings-row-sub">${t('referral_page_teaser')}${u.freeHighlightDays>0?` · ${t('referral_balance',{n:u.freeHighlightDays})}`:''}</div>
-            </div>
-            <div class="settings-row-right"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></div>
-          </div>
-          <div class="settings-row" data-action="opengiveawaytab" style="cursor:pointer">
-            <div class="settings-row-icon" style="background:rgba(255,179,0,0.15)">🎉</div>
-            <div class="settings-row-mid"><div class="settings-row-label">${t('giveaway_title')}</div></div>
-            <div class="settings-row-right"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></div>
-          </div>
-          <div class="settings-row" data-action="opendinar" style="cursor:pointer">
-            <div class="settings-row-icon" style="background:rgba(230,170,20,0.15)">🪙</div>
-            <div class="settings-row-mid"><div class="settings-row-label">Dinar</div></div>
-            <div class="settings-row-right"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></div>
-          </div>
-        </div>
-      </div>
-
       <div class="cancel-edit" data-action="openlegal" style="margin-top:6px;text-align:center">${t('profile_legal_link')}</div>
       `;
     }
@@ -2832,9 +2841,10 @@ function renderOverlays(){
             <div class="settings-row-icon" style="background:rgba(230,170,20,0.15)">${icon('gift',17)}</div>
             <div class="settings-row-mid"><div class="settings-row-label">${t('referral_perk_listing',{n:REFERRAL_FIRST_LISTING_DINAR})}</div><div class="settings-row-sub">${t('referral_perk_listing_sub')}</div></div>
           </div>
-          <div class="settings-row" style="cursor:default">
+          <div class="settings-row" data-action="opengiveawaytab" style="cursor:pointer">
             <div class="settings-row-icon" style="background:rgba(10,132,255,0.15)">${icon('party',17)}</div>
             <div class="settings-row-mid"><div class="settings-row-label">${t('referral_perk_giveaway')}</div><div class="settings-row-sub">${t('referral_perk_giveaway_sub')}</div></div>
+            <div class="settings-row-right"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></div>
           </div>
           <div class="settings-row" style="cursor:default">
             <div class="settings-row-icon" style="background:rgba(255,179,0,0.15)">🏷</div>
@@ -3590,13 +3600,18 @@ async function submitForm(){
 }
 
 async function saveProfile(){
-  const customName = document.getElementById('p_name').value.trim();
-  const username = document.getElementById('p_username').value.trim();
-  const channel = document.getElementById('p_channel').value.trim();
-  const bio = document.getElementById('p_bio').value.trim();
+  const u = getUser(State.myId);
+  const nameEl = document.getElementById('p_name');
+  const userEl = document.getElementById('p_username');
+  const chanEl = document.getElementById('p_channel');
+  const bioEl = document.getElementById('p_bio');
+  const customName = nameEl ? nameEl.value.trim() : u.customName;
+  const username = userEl ? userEl.value.trim() : u.username;
+  const channel = chanEl ? chanEl.value.trim() : u.channel;
+  const bio = bioEl ? bioEl.value.trim() : u.bio;
   const taglineEl = document.getElementById('p_tagline');
-  const shopTagline = taglineEl ? taglineEl.value.trim() : getUser(State.myId).shopTagline;
-  State.users[State.myId] = { ...getUser(State.myId), customName, username, channel, bio, shopTagline };
+  const shopTagline = taglineEl ? taglineEl.value.trim() : u.shopTagline;
+  State.users[State.myId] = { ...u, customName, username, channel, bio, shopTagline };
   await persistUsers(); toast(t('toast_profile_saved')); render();
 }
 
@@ -4384,8 +4399,13 @@ document.addEventListener('click', async (e)=>{
   if(action==='submit') return submitForm();
   if(action==='profsub'){ State.profileSub = btn.dataset.sub; render(); return; }
   if(action==='profovsub'){ State.profileOverviewSub = btn.dataset.sub; render(); return; }
-  if(action==='opengiveawaytab'){ State.tab='giveaway'; render(); return; }
+  if(action==='opengiveawaytab'){ State.tab='giveaway'; State.referralPageOpen=false; render(); return; }
   if(action==='saveprofile') return saveProfile();
+  if(action==='togglesection'){
+    const sec = btn.dataset.section;
+    State.profileSectionsOpen[sec] = !State.profileSectionsOpen[sec];
+    render(); return;
+  }
   if(action==='toggleonline'){
     State.users[State.myId] = { ...getUser(State.myId), showOnlineStatus: getUser(State.myId).showOnlineStatus===false };
     await persistUsers(); render(); return;
