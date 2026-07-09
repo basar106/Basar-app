@@ -887,7 +887,7 @@ const I18N = {
     premium_months:'{n} Monat(e)', premium_covers_this:'Durch dein PRO-Abo bereits aktiv',
     premium_pin_bonus_note:'+{n} reserviert für Premium', export_data_btn:'📦 Eigene Daten exportieren (JSON)', toast_export_done:'Export heruntergeladen',
     status_online:'Online', status_lastseen:'Zuletzt {time}', show_online_status:'Online-Status anzeigen', show_online_status_hint:'Andere sehen, wann du zuletzt aktiv warst.', design_label:'App-Design', design_hint:'Wähle zwischen Aurora (Glas-Look) und Pur (minimalistisch).', prof_ov_account:'Konto', prof_ov_pro:'PRO & Zahlungen', prof_ov_more:'Mehr',
-    referral_section_label:'Freunde einladen', referral_desc:'Lade Freunde ein: Ihr bekommt beide {n} Tage kostenlose Hervorhebung für eine Anzeige.',
+    referral_section_label:'Freunde einladen', referral_desc:'Lade Freunde ein: Ihr bekommt beide {n} Tage kostenlose Hervorhebung. Dein Freund bekommt zusätzlich 25 Dinar beim Beitritt und 50 weitere Dinar für seine erste Anzeige.',
     referral_balance:'Du hast {n} Tage kostenlose Hervorhebung übrig', referral_invite_btn:'Einladungslink teilen',
     referral_share_text:'Schau dir Basar an – wir bekommen beide {n} Tage kostenlose Anzeigen-Hervorhebung!',
     toast_referral_welcome:'Willkommen! Ihr habt beide {n} Tage kostenlose Hervorhebung erhalten 🎁',
@@ -907,7 +907,7 @@ const I18N = {
     dinar_send_generic_btn:'Dinar an Nutzer senden', dinar_send_btn:'Dinar senden', dinar_spend_title:'Vorteile mit Dinar kaufen',
     dinar_boost_hint:'Boosts für einzelne Anzeigen kannst du auch direkt beim Bewerben einer Anzeige mit Dinar bezahlen.',
     dinar_history_title:'Verlauf', dinar_tx_purchase:'Aufgeladen', dinar_tx_review:'Bewertungs-Bonus', dinar_tx_spend:'Ausgegeben',
-    dinar_tx_sent:'Gesendet', dinar_tx_received:'Erhalten', dinar_tx_payment:'Zahlung',
+    dinar_tx_sent:'Gesendet', dinar_tx_received:'Erhalten', dinar_tx_payment:'Zahlung', dinar_tx_referral_signup:'Empfehlungs-Bonus', dinar_tx_first_listing:'Bonus: erste Anzeige', dinar_tx_admin_grant:'Vom Team erhalten',
     dinar_recipient_label:'Empfänger (Telegram-ID)', dinar_amount_label:'Betrag', dinar_send_confirm:'Senden',
     dinar_invalid_recipient:'Ungültiger Empfänger', dinar_invalid_amount:'Ungültiger Betrag', dinar_insufficient:'Nicht genügend Dinar',
     dinar_sent_success:'{n} Dinar gesendet!', dinar_offer_sent:'Zahlungsangebot gesendet – wartet auf Bestätigung',
@@ -1030,7 +1030,7 @@ const I18N = {
     premium_months:'{n} month(s)', premium_covers_this:'Already included via your PRO subscription',
     premium_pin_bonus_note:'+{n} reserved for Premium', export_data_btn:'📦 Export your data (JSON)', toast_export_done:'Export downloaded',
     status_online:'Online', status_lastseen:'Last seen {time}', show_online_status:'Show online status', show_online_status_hint:'Others can see when you were last active.', design_label:'App design', design_hint:'Switch between Aurora (glass look) and Pur (minimalist).', prof_ov_account:'Account', prof_ov_pro:'PRO & Payments', prof_ov_more:'More',
-    referral_section_label:'Invite friends', referral_desc:'Invite friends: you both get {n} days of free listing highlight.',
+    referral_section_label:'Invite friends', referral_desc:'Invite friends: you both get {n} days of free listing highlight. Your friend also gets 25 Dinar for joining and 50 more Dinar for their first listing.',
     referral_balance:'You have {n} days of free highlight left', referral_invite_btn:'Share invite link',
     referral_share_text:'Check out Basar – we both get {n} days of free listing highlight!',
     toast_referral_welcome:'Welcome! You both received {n} days of free highlight 🎁',
@@ -1050,7 +1050,7 @@ const I18N = {
     dinar_send_generic_btn:'Send Dinar to a user', dinar_send_btn:'Send Dinar', dinar_spend_title:'Buy perks with Dinar',
     dinar_boost_hint:'You can also pay for listing boosts with Dinar directly when promoting a listing.',
     dinar_history_title:'History', dinar_tx_purchase:'Topped up', dinar_tx_review:'Review bonus', dinar_tx_spend:'Spent',
-    dinar_tx_sent:'Sent', dinar_tx_received:'Received', dinar_tx_payment:'Payment',
+    dinar_tx_sent:'Sent', dinar_tx_received:'Received', dinar_tx_payment:'Payment', dinar_tx_referral_signup:'Referral bonus', dinar_tx_first_listing:'First listing bonus', dinar_tx_admin_grant:'Received from team',
     dinar_recipient_label:'Recipient (Telegram ID)', dinar_amount_label:'Amount', dinar_send_confirm:'Send',
     dinar_invalid_recipient:'Invalid recipient', dinar_invalid_amount:'Invalid amount', dinar_insufficient:'Not enough Dinar',
     dinar_sent_success:'{n} Dinar sent!', dinar_offer_sent:'Payment offer sent – waiting for confirmation',
@@ -2739,7 +2739,7 @@ function renderOverlays(){
           ${State.dinarTx.map(tx=>{
             const mine_out = tx.from_id===State.myId;
             const sign = mine_out ? '−' : '+';
-            const label = tx.kind==='purchase' ? t('dinar_tx_purchase') : tx.kind==='review_reward' ? t('dinar_tx_review') : tx.kind==='spend' ? t('dinar_tx_spend') : tx.kind==='send' ? (mine_out?t('dinar_tx_sent'):t('dinar_tx_received')) : t('dinar_tx_payment');
+            const label = tx.kind==='purchase' ? t('dinar_tx_purchase') : tx.kind==='review_reward' ? t('dinar_tx_review') : tx.kind==='spend' ? t('dinar_tx_spend') : tx.kind==='send' ? (mine_out?t('dinar_tx_sent'):t('dinar_tx_received')) : tx.kind==='referral_signup' ? t('dinar_tx_referral_signup') : tx.kind==='first_listing_bonus' ? t('dinar_tx_first_listing') : tx.kind==='admin_grant' ? t('dinar_tx_admin_grant') : t('dinar_tx_payment');
             return `<div class="dinar-tx-row"><span>${label}</span><span style="font-weight:700;color:${mine_out?'var(--heart)':'#1E7A3C'}">${sign}${tx.amount} 🪙</span></div>`;
           }).join('')}
         </div>` : ''}
