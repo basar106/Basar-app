@@ -450,6 +450,18 @@
   }
   .field input::placeholder, .field textarea::placeholder{ color:var(--muted); opacity:1; }
   .field textarea{ resize:vertical; min-height:80px; }
+
+  .rte-toolbar{ display:flex; gap:6px; margin-bottom:7px; }
+  .rte-btn{ width:34px; height:34px; border-radius:10px; border:1px solid var(--border); background:var(--fill1); color:var(--text); font-size:14px; cursor:pointer; display:flex; align-items:center; justify-content:center; font-family:inherit; }
+  .rte-btn.active{ background:var(--blue); border-color:var(--blue); color:#fff; }
+  .rte-editor{
+    width:100%; min-height:100px; border:1px solid var(--border); background:var(--fill1);
+    backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);
+    border-radius:14px; padding:11px 13px; font-size:14px; line-height:1.5; color:var(--text); font-family:inherit;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,0.25); outline:none; white-space:pre-wrap; word-wrap:break-word;
+  }
+  .rte-editor:empty:before{ content:attr(data-placeholder); color:var(--muted); }
+  .rte-editor b, .rte-editor strong{ font-weight:800; }
   .type-toggle{ display:flex; gap:8px; }
   .type-toggle button{ flex:1; padding:11px; border:1px solid var(--border); border-radius:14px; background:var(--fill1); backdrop-filter:blur(8px); font-weight:700; font-size:13px; cursor:pointer; color:var(--text); }
   .type-toggle button.active{ background:linear-gradient(160deg, color-mix(in srgb, var(--blue) 95%, transparent), color-mix(in srgb, var(--blue-dark) 90%, transparent)); color:#fff; border-color:transparent; }
@@ -844,7 +856,7 @@ const I18N = {
     price_free:'Zu verschenken', price_vb:'{n} € VB', price_vb_noprice:'VB', price_unknown:'–',
     toast_save_failed:'Speichern fehlgeschlagen', toast_set_filter_first:'Stelle erst eine Suche oder einen Filter ein',
     toast_already_saved:'Diese Suche ist schon gespeichert', toast_search_saved:'Suche gespeichert',
-    toast_no_contact:'Kein Kontakt verfügbar', toast_listing_deleted:'Anzeige gelöscht', toast_title_missing:'Titel fehlt',
+    toast_no_contact:'Kein Kontakt verfügbar', toast_listing_deleted:'Anzeige gelöscht', toast_title_missing:'Titel fehlt', toast_desc_too_long:'Beschreibung ist zu lang (max. 600 Zeichen)',
     toast_changes_saved:'Änderungen gespeichert', toast_listing_published:'Anzeige veröffentlicht', toast_profile_saved:'Profil gespeichert',
     toast_slots_full:'Alle Plätze in dieser Kategorie sind belegt', toast_activated_demo:'Aktiviert (Demo)',
     toast_already_requested:'Bereits angefragt', toast_request_sent:'Anfrage gesendet', toast_deal_confirmed:'Handel bestätigt – ihr könnt euch nun bewerten',
@@ -987,7 +999,7 @@ const I18N = {
     price_free:'Free', price_vb:'€{n} OBO', price_vb_noprice:'OBO', price_unknown:'–',
     toast_save_failed:'Save failed', toast_set_filter_first:'Set a search term or filter first',
     toast_already_saved:'This search is already saved', toast_search_saved:'Search saved',
-    toast_no_contact:'No contact available', toast_listing_deleted:'Listing deleted', toast_title_missing:'Title is missing',
+    toast_no_contact:'No contact available', toast_listing_deleted:'Listing deleted', toast_title_missing:'Title is missing', toast_desc_too_long:'Description is too long (max. 600 characters)',
     toast_changes_saved:'Changes saved', toast_listing_published:'Listing published', toast_profile_saved:'Profile saved',
     toast_slots_full:'All slots in this category are taken', toast_activated_demo:'Activated (demo)',
     toast_already_requested:'Already requested', toast_request_sent:'Request sent', toast_deal_confirmed:'Deal confirmed – you can now rate each other',
@@ -1088,6 +1100,40 @@ function haptic(kind){
 }
 
 function icon(name, size){ return (ICONS[name]||'').replace('<svg ', `<svg style="width:${size||18}px;height:${size||18}px;flex-shrink:0" `); }
+// ---------- Mini-Rich-Text (Fett/Kursiv/Durchgestrichen/Unterstrichen) ----------
+const RTE_ALLOWED_TAGS = new Set(['B','STRONG','I','EM','U','S','STRIKE','BR']);
+function sanitizeRichText(html){
+  const div = document.createElement('div');
+  div.innerHTML = html || '';
+  const BLOCK_TAGS = new Set(['DIV','P']);
+  (function walk(node){
+    [...node.childNodes].forEach(child=>{
+      if(child.nodeType===1){
+        if(BLOCK_TAGS.has(child.tagName)){
+          walk(child);
+          if(child.nextSibling) node.insertBefore(document.createElement('br'), child.nextSibling);
+          while(child.firstChild) node.insertBefore(child.firstChild, child);
+          node.removeChild(child);
+        } else if(!RTE_ALLOWED_TAGS.has(child.tagName)){
+          while(child.firstChild) node.insertBefore(child.firstChild, child);
+          node.removeChild(child);
+        } else {
+          [...child.attributes].forEach(a=>child.removeAttribute(a.name));
+          walk(child);
+        }
+      } else if(child.nodeType!==3){
+        node.removeChild(child);
+      }
+    });
+  })(div);
+  return div.innerHTML;
+}
+function richTextToPlain(html){
+  const div = document.createElement('div');
+  div.innerHTML = html || '';
+  return div.textContent || '';
+}
+
 function skeletonHTML(count){
   return `<div data-loading="1">${Array.from({length:count||5}).map(()=>`
     <div class="skeleton-card">
@@ -1426,7 +1472,7 @@ function bumpCategoryStat(cat){
   persistSearchStats();
 }
 function trackSearchTermCategory(term){
-  const matches = State.listings.filter(l=>textMatchesQuery(l.title + ' ' + l.description, term));
+  const matches = State.listings.filter(l=>textMatchesQuery(l.title + ' ' + richTextToPlain(l.description), term));
   if(!matches.length) return;
   const tally = {};
   matches.forEach(l=>{ tally[l.category] = (tally[l.category]||0) + 1; });
@@ -1463,7 +1509,7 @@ function matchCountFor(saved){
     if(saved.category!=='Alle Kategorien' && l.category!==saved.category) return false;
     if(saved.term){
       const s = saved.term.toLowerCase();
-      if(!l.title.toLowerCase().includes(s) && !l.description.toLowerCase().includes(s)) return false;
+      if(!l.title.toLowerCase().includes(s) && !richTextToPlain(l.description).toLowerCase().includes(s)) return false;
     }
     return true;
   }).length;
@@ -1564,7 +1610,7 @@ function filteredListings(list){
     if(State.typeFilter!=='all' && l.type!==State.typeFilter) return false;
     if(State.catFilter!=='Alle Kategorien' && l.category!==State.catFilter) return false;
     if(State.search){
-      if(!textMatchesQuery(l.title + ' ' + l.description, State.search)) return false;
+      if(!textMatchesQuery(l.title + ' ' + richTextToPlain(l.description), State.search)) return false;
     }
     if(State.priceMin!=null || State.priceMax!=null){
       const pv = priceValue(l);
@@ -1756,7 +1802,7 @@ function renderListingDetailInner(l){
       <span class="tag">${escapeHtml(l.category)}</span>
       ${activeBoosts.map(([k,cfg])=>`<span class="tag ${cfg.cls}">${t(cfg.badgeKey)}</span>`).join('')}
     </div>
-    <p class="detail-desc">${escapeHtml(l.description)}</p>
+    <p class="detail-desc">${sanitizeRichText(l.description)}</p>
     ${userLineHTML(l.ownerId)}
     ${seller.channel ? `<a href="#" class="telegram-link" data-action="openchannel" data-url="${escapeHtml(channelUrl(seller.channel))}">📢 ${State.lang==='de'?'Kanal von':'Channel by'} ${escapeHtml(displayName(seller))} ${State.lang==='de'?'ansehen':''}</a>` : ''}
     ${!isOwn ? `<button class="submit-btn" data-action="openchat" data-listingid="${l.id}" data-otherid="${l.ownerId}">${t('verkaeufer_anschreiben')}</button>` : ''}
@@ -1847,7 +1893,14 @@ function renderCreate(){
     ${draftHint}<div class="field"><label>${t('form_title_field')}</label>
       <input type="text" id="f_title" maxlength="70" value="${escapeHtml(d.title)}" placeholder="${t('form_title_ph')}"></div>
     <div class="field"><label>${t('form_desc_field')}</label>
-      <textarea id="f_desc" maxlength="600" placeholder="${t('form_desc_ph')}">${escapeHtml(d.description)}</textarea></div>
+      <div class="rte-toolbar">
+        <button type="button" class="rte-btn" data-rte="bold" title="Fett"><b>B</b></button>
+        <button type="button" class="rte-btn" data-rte="italic" title="Kursiv"><i>I</i></button>
+        <button type="button" class="rte-btn" data-rte="strikeThrough" title="Durchgestrichen"><s>S</s></button>
+        <button type="button" class="rte-btn" data-rte="underline" title="Unterstrichen"><u>U</u></button>
+      </div>
+      <div id="f_desc" class="rte-editor" contenteditable="true" data-placeholder="${t('form_desc_ph')}">${sanitizeRichText(d.description||'')}</div>
+    </div>
     <div class="field"><label>${t('form_cat_field')}</label>
       <select id="f_cat">${CATEGORIES.slice(1).map(c=>`<option ${c===d.category?'selected':''}>${c}</option>`).join('')}</select></div>
     <div class="field"><label>${t('form_price_field')}</label>
@@ -2451,7 +2504,7 @@ function render(){
     if(titleEl){
       State.formDraft = {
         title: titleEl.value,
-        description: document.getElementById('f_desc').value,
+        description: document.getElementById('f_desc').innerHTML,
         category: document.getElementById('f_cat').value,
         price: document.getElementById('f_price').value,
         vb: document.getElementById('f_vb').checked,
@@ -3401,7 +3454,9 @@ function startEdit(id){ State.editingId = id; State.tab = 'create'; State.viewLi
 async function submitForm(){
   if(getUser(State.myId).banned){ toast('Dein Konto ist gesperrt.'); return; }
   const title = document.getElementById('f_title').value.trim();
-  const description = document.getElementById('f_desc').value.trim();
+  const descEl = document.getElementById('f_desc');
+  let description = sanitizeRichText(descEl.innerHTML).trim();
+  if(richTextToPlain(description).length > 600){ toast(t('toast_desc_too_long')); return; }
   const category = document.getElementById('f_cat').value;
   const isFree = document.getElementById('f_free').checked;
   const isVb = document.getElementById('f_vb').checked;
@@ -4143,9 +4198,9 @@ document.addEventListener('click', async (e)=>{
   if(btn.closest('nav.tabbar')){
     if(State.tab==='create' && btn.dataset.tab!=='create' && !State.editingId){
       const ti = document.getElementById('f_title'), de = document.getElementById('f_desc');
-      if((ti && ti.value.trim()) || (de && de.value.trim())){
+      if((ti && ti.value.trim()) || (de && richTextToPlain(de.innerHTML).trim())){
         State.formDraft = {
-          title: ti ? ti.value : '', description: de ? de.value : '',
+          title: ti ? ti.value : '', description: de ? sanitizeRichText(de.innerHTML) : '',
           category: (document.getElementById('f_cat')||{}).value || '',
           price: (document.getElementById('f_price')||{}).value || '',
           vb: !!(document.getElementById('f_vb')||{}).checked,
@@ -4319,6 +4374,28 @@ document.addEventListener('keydown', (e)=>{
   if(e.target && e.target.id==='chatInput' && e.key==='Enter'){ e.preventDefault(); sendChatMessage(); }
 });
 
+document.addEventListener('selectionchange', ()=>{
+  const editor = document.getElementById('f_desc');
+  if(!editor || document.activeElement!==editor) return;
+  document.querySelectorAll('.rte-btn').forEach(b=>{
+    try{ b.classList.toggle('active', document.queryCommandState(b.dataset.rte)); }catch(err){}
+  });
+});
+document.addEventListener('mousedown', (e)=>{
+  const rteBtn = e.target.closest('[data-rte]');
+  if(rteBtn) e.preventDefault(); // Fokus/Auswahl im contenteditable erhalten
+});
+document.addEventListener('click', (e)=>{
+  const rteBtn = e.target.closest('[data-rte]');
+  if(!rteBtn) return;
+  const editor = document.getElementById('f_desc');
+  if(!editor) return;
+  editor.focus();
+  document.execCommand(rteBtn.dataset.rte, false, null);
+  document.querySelectorAll('.rte-btn').forEach(b=>{
+    try{ b.classList.toggle('active', document.queryCommandState(b.dataset.rte)); }catch(err){}
+  });
+});
 document.addEventListener('input', (e)=>{
   if(e.target.id==='searchInput'){
     State.search = e.target.value; render();
