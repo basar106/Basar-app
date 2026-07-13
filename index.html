@@ -907,7 +907,7 @@ const I18N = {
     form_contact_hint:'Käufer schreiben dich über den App-Chat an – kein Telegram-Username nötig.',
     form_submit_new:'Anzeige veröffentlichen', form_submit_edit:'Änderungen speichern', form_cancel_edit:'Bearbeitung abbrechen',
     profile_sub_overview:'Übersicht', profile_sub_listings:'Meine Anzeigen', profile_sub_favorites:'Merkliste',
-    profile_sub_reviews:'Bewertungen', profile_sub_saved:'Suchen', profile_sub_recent:'Verlauf', no_recent:'Noch nichts angesehen', no_recent_sub:'Zuletzt angesehene Anzeigen erscheinen hier.', fontsize_label:'Schriftgröße', fontsize_hint:'Passe die Textgröße in der App an.', fontsize_small:'Klein', fontsize_normal:'Normal', fontsize_large:'Groß',
+    profile_sub_reviews:'Bewertungen', profile_sub_saved:'Suchen', profile_sub_recent:'Verlauf', no_recent:'Noch nichts angesehen', no_recent_sub:'Zuletzt angesehene Anzeigen erscheinen hier.', fontsize_label:'Schriftgröße', fontsize_hint:'Passe die Textgröße in der App an.', fontsize_small:'Klein', fontsize_normal:'Normal', fontsize_large:'Groß', homescreen_label:'Zum Startbildschirm hinzufügen', homescreen_hint:'Basar wie eine App vom Homescreen öffnen – weiterhin mit deiner Telegram-Identität.', homescreen_unsupported:'Dein Telegram unterstützt das leider noch nicht. Bitte Telegram aktualisieren.', homescreen_already_added:'Basar ist bereits auf deinem Startbildschirm ✅', homescreen_added_success:'Basar wurde zum Startbildschirm hinzugefügt! 🎉',
     profile_anzeigen:'Anzeigen', profile_deals:'Abgeschl. Handel', profile_member_since:'Mitglied seit',
     profile_verified:'✓ Telegram', profile_unverified:'Nicht verifiziert', profile_premium:'⭐ Premium',
     tooltip_theme:'Darstellung wechseln', tooltip_save_search:'Suche speichern', tooltip_lang:'Sprache',
@@ -1061,7 +1061,7 @@ const I18N = {
     form_contact_hint:'Buyers message you via the in-app chat – no Telegram username needed.',
     form_submit_new:'Publish listing', form_submit_edit:'Save changes', form_cancel_edit:'Cancel editing',
     profile_sub_overview:'Overview', profile_sub_listings:'My listings', profile_sub_favorites:'Saved',
-    profile_sub_reviews:'Reviews', profile_sub_saved:'Searches', profile_sub_recent:'History', no_recent:'Nothing viewed yet', no_recent_sub:'Recently viewed listings appear here.', fontsize_label:'Font size', fontsize_hint:'Adjust the text size across the app.', fontsize_small:'Small', fontsize_normal:'Normal', fontsize_large:'Large',
+    profile_sub_reviews:'Reviews', profile_sub_saved:'Searches', profile_sub_recent:'History', no_recent:'Nothing viewed yet', no_recent_sub:'Recently viewed listings appear here.', fontsize_label:'Font size', fontsize_hint:'Adjust the text size across the app.', fontsize_small:'Small', fontsize_normal:'Normal', fontsize_large:'Large', homescreen_label:'Add to home screen', homescreen_hint:'Open Basar like an app from your home screen – still using your Telegram identity.', homescreen_unsupported:'Your Telegram app doesn't support this yet. Please update Telegram.', homescreen_already_added:'Basar is already on your home screen ✅', homescreen_added_success:'Basar was added to your home screen! 🎉',
     profile_anzeigen:'Listings', profile_deals:'Completed deals', profile_member_since:'Member since',
     profile_verified:'✓ Telegram', profile_unverified:'Not verified', profile_premium:'⭐ Premium',
     tooltip_theme:'Toggle appearance', tooltip_save_search:'Save search', tooltip_lang:'Language',
@@ -1327,6 +1327,25 @@ async function setFontScale(scale){
   document.documentElement.style.setProperty('--font-scale', scale);
   await storageSet('basar:fontscale', String(scale), false);
   render();
+}
+
+function addToHomeScreen(){
+  const wa = window.Telegram && window.Telegram.WebApp;
+  if(!wa || typeof wa.addToHomeScreen !== 'function'){
+    toast(t('homescreen_unsupported'));
+    return;
+  }
+  try{
+    if(typeof wa.checkHomeScreenStatus === 'function'){
+      wa.checkHomeScreenStatus((status)=>{
+        if(status === 'unsupported'){ toast(t('homescreen_unsupported')); return; }
+        if(status === 'added'){ toast(t('homescreen_already_added')); return; }
+        wa.addToHomeScreen();
+      });
+    } else {
+      wa.addToHomeScreen();
+    }
+  }catch(e){ toast(t('homescreen_unsupported')); }
 }
 async function toggleTheme(){
   State.theme = State.theme==='dark' ? 'light' : 'dark';
@@ -2272,6 +2291,14 @@ function renderProfile(){
                 <button class="btn-secondary" style="padding:8px;font-size:calc(12.5px * var(--font-scale));${State.fontScale===1.15?`border-color:var(--blue);color:var(--blue)`:''}" data-action="setfontscale" data-scale="1.15">${t('fontsize_large')}</button>
               </div>
             </div>
+          </div>
+          <div class="settings-row" data-action="addhomescreen" style="cursor:pointer">
+            <div class="settings-row-icon" style="background:color-mix(in srgb, var(--blue) 15%, transparent)">📲</div>
+            <div class="settings-row-mid">
+              <div class="settings-row-label">${t('homescreen_label')}</div>
+              <div class="settings-row-sub">${t('homescreen_hint')}</div>
+            </div>
+            <div class="settings-row-right"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></div>
           </div>
           ` : ''}
         </div>
@@ -4633,6 +4660,7 @@ document.addEventListener('click', async (e)=>{
   }
   if(action==='setdesign') return setDesign(btn.dataset.design);
   if(action==='setfontscale') return setFontScale(parseFloat(btn.dataset.scale));
+  if(action==='addhomescreen'){ addToHomeScreen(); return; }
   if(action==='buyverified') return purchaseVerifiedBadge();
   if(action==='buypremium') return purchasePremium(parseInt(btn.dataset.plan,10));
   if(action==='setbanner') return setShopBanner(btn.dataset.banner);
@@ -4779,6 +4807,11 @@ document.addEventListener('change', (e)=>{
     setInterval(touchLastSeen, 60000);
     setupPullToRefresh();
     setupTopbarAutoHide();
+    try{
+      if(window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.onEvent){
+        window.Telegram.WebApp.onEvent('homeScreenAdded', ()=>toast(t('homescreen_added_success')));
+      }
+    }catch(e){}
     if(State.justReferred) toast(t('toast_referral_welcome',{n:REFERRAL_REWARD_DAYS}));
     if(!localStorage.getItem('basar:onboarded')){
       State.onboardingSlide = 0;
