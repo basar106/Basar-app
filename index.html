@@ -185,6 +185,83 @@
     color:var(--bg) !important;
   }
 
+  /* ===== Design "Neon" – schrill, leuchtend, Gaming/Trading-Vibe ===== */
+  html[data-design="neon"]{
+    --mesh:
+      radial-gradient(circle at 15% 10%, rgba(0,229,255,0.10) 0%, transparent 40%),
+      radial-gradient(circle at 90% 15%, rgba(255,46,154,0.08) 0%, transparent 44%),
+      #F5F7FB;
+    --navy:#0B0E14;
+    --blue:#00B8CC; --blue-dark:#008FA0;
+    --yellow:#B7C700; --heart:#E0158A;
+    --bg:#F5F7FB; --card:#FFFFFF; --card-strong:#FFFFFF;
+    --dropdown-bg:#FFFFFF;
+    --border:rgba(0,184,204,0.35); --line:rgba(11,14,20,0.08);
+    --text:#0B0E14; --muted:#5C6470; --soft:#EEF2F7;
+    --fill1:#EEF2F7; --fill2:#E3EAF2;
+    --blur:0px;
+    --text-shadow:none;
+    --elev-1:0 0 0 1px rgba(0,184,204,0.15), 0 2px 8px rgba(11,14,20,0.06);
+    --glow:0 0 18px rgba(0,184,204,0.22), 0 6px 18px rgba(11,14,20,0.08);
+    --elev-3:0 0 28px rgba(0,184,204,0.28), 0 16px 40px rgba(11,14,20,0.14);
+  }
+  html[data-design="neon"][data-theme="dark"]{
+    --mesh:
+      radial-gradient(circle at 12% 8%, rgba(0,229,255,0.20) 0%, transparent 42%),
+      radial-gradient(circle at 88% 12%, rgba(255,46,154,0.18) 0%, transparent 46%),
+      radial-gradient(circle at 20% 92%, rgba(212,255,0,0.08) 0%, transparent 40%),
+      #08090C;
+    --navy:#F2FBFF;
+    --blue:#00E5FF; --blue-dark:#7FF3FF;
+    --yellow:#D4FF00; --heart:#FF2E9A;
+    --bg:#08090C; --card:rgba(0,229,255,0.06); --card-strong:rgba(16,18,26,0.85);
+    --dropdown-bg:rgba(10,12,18,0.94);
+    --border:rgba(0,229,255,0.28); --line:rgba(0,229,255,0.12);
+    --text:#EAFBFF; --muted:#8CA0AA; --soft:rgba(0,229,255,0.06);
+    --fill1:rgba(0,229,255,0.08); --fill2:rgba(0,229,255,0.14);
+    --text-shadow:0 0 8px rgba(0,229,255,0.25);
+    --elev-1:0 0 10px rgba(0,229,255,0.18);
+    --glow:0 0 24px rgba(0,229,255,0.35), 0 8px 24px rgba(0,0,0,0.5);
+    --elev-3:0 0 40px rgba(0,229,255,0.4), 0 18px 44px rgba(0,0,0,0.6);
+  }
+  html[data-design="neon"] .submit-btn, html[data-design="neon"] .dinar-header-pill{
+    box-shadow:0 0 16px rgba(0,229,255,0.4);
+  }
+
+  /* ===== Design "Sage" – ruhig, matt, papierartig-erdig ===== */
+  html[data-design="sage"]{
+    --mesh:#F6F3EC;
+    --navy:#24312A;
+    --blue:#6B8F71; --blue-dark:#4F6E56;
+    --yellow:#C4A24D; --heart:#B25B4B;
+    --bg:#F6F3EC; --card:rgba(255,253,247,0.65); --card-strong:rgba(255,253,247,0.9);
+    --dropdown-bg:rgba(255,253,247,0.96);
+    --border:rgba(100,120,90,0.20); --line:rgba(60,75,55,0.09);
+    --text:#263229; --muted:#78826F; --soft:rgba(255,253,247,0.5);
+    --fill1:rgba(255,253,247,0.6); --fill2:rgba(255,253,247,0.8);
+    --blur:8px;
+    --text-shadow:none;
+    --elev-1:0 2px 6px rgba(60,80,50,0.07);
+    --glow:0 6px 20px rgba(60,80,50,0.10);
+    --elev-3:0 14px 34px rgba(50,65,45,0.16);
+  }
+  html[data-design="sage"][data-theme="dark"]{
+    --mesh:#14201A;
+    --navy:#E7EDE3;
+    --blue:#8FB697; --blue-dark:#B7D4BC;
+    --yellow:#D9BE72; --heart:#D98A72;
+    --bg:#14201A; --card:rgba(230,240,225,0.06); --card-strong:rgba(24,34,27,0.85);
+    --dropdown-bg:rgba(18,26,21,0.95);
+    --border:rgba(230,240,225,0.14); --line:rgba(230,240,225,0.08);
+    --text:#E7EDE3; --muted:#9AA894; --soft:rgba(230,240,225,0.06);
+    --fill1:rgba(230,240,225,0.08); --fill2:rgba(230,240,225,0.12);
+    --blur:8px;
+    --text-shadow:none;
+    --elev-1:0 2px 6px rgba(0,0,0,0.3);
+    --glow:0 6px 20px rgba(0,0,0,0.35);
+    --elev-3:0 14px 34px rgba(0,0,0,0.5);
+  }
+
   *{box-sizing:border-box;}
 
   /* Einheitliches Druck-Feedback beim Antippen (nicht bei disabled-Elementen) */
@@ -1215,7 +1292,7 @@ function applyTheme(){
   document.documentElement.setAttribute('data-design', State.design);
 }
 async function setDesign(design){
-  if(!['aurora','pur','basar','mono'].includes(design)) return;
+  if(!['aurora','pur','basar','mono','neon','sage'].includes(design)) return;
   State.design = design;
   applyTheme();
   await storageSet('basar:design', design, false);
@@ -1280,7 +1357,7 @@ async function loadAll(){
   const rvm = await storageGet('basar:viewmode', false);
   if(rvm==='grid' || rvm==='list'){ State.viewMode = rvm; }
   const rds = await storageGet('basar:design', false);
-  if(['aurora','pur','basar','mono'].includes(rds)){ State.design = rds; }
+  if(['aurora','pur','basar','mono','neon','sage'].includes(rds)){ State.design = rds; }
 
   let tgUser = null;
   try{
@@ -2130,11 +2207,13 @@ function renderProfile(){
             <div class="settings-row-mid">
               <div class="settings-row-label">${t('design_label')}</div>
               <div class="settings-row-sub">${t('design_hint')}</div>
-              <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px">
+              <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:8px">
                 <button class="btn-secondary" style="padding:8px;font-size:12.5px;${State.design==='aurora'?`border-color:var(--blue);color:var(--blue)`:''}" data-action="setdesign" data-design="aurora">✨ Aurora</button>
                 <button class="btn-secondary" style="padding:8px;font-size:12.5px;${State.design==='pur'?`border-color:var(--blue);color:var(--blue)`:''}" data-action="setdesign" data-design="pur">◻️ Pur</button>
                 <button class="btn-secondary" style="padding:8px;font-size:12.5px;${State.design==='basar'?`border-color:var(--blue);color:var(--blue)`:''}" data-action="setdesign" data-design="basar">🏺 Basar</button>
                 <button class="btn-secondary" style="padding:8px;font-size:12.5px;${State.design==='mono'?`border-color:var(--blue);color:var(--blue)`:''}" data-action="setdesign" data-design="mono">◐ Mono</button>
+                <button class="btn-secondary" style="padding:8px;font-size:12.5px;${State.design==='neon'?`border-color:var(--blue);color:var(--blue)`:''}" data-action="setdesign" data-design="neon">⚡ Neon</button>
+                <button class="btn-secondary" style="padding:8px;font-size:12.5px;${State.design==='sage'?`border-color:var(--blue);color:var(--blue)`:''}" data-action="setdesign" data-design="sage">🌿 Sage</button>
               </div>
             </div>
           </div>
